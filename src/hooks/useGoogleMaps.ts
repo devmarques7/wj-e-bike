@@ -31,7 +31,8 @@ function loadGoogleMaps(apiKey: string, libraries: string[]): Promise<any> {
 }
 
 export function useGoogleMaps(libraries: string[] = ["places", "marker"]) {
-  const apiKey = import.meta.env.VITE_GOOGLE_MAPS_API_KEY as string | undefined;
+  const apiKey = (import.meta.env.VITE_GOOGLE_API_KEY ??
+    import.meta.env.VITE_GOOGLE_MAPS_API_KEY) as string | undefined;
   const [ready, setReady] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
