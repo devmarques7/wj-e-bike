@@ -96,8 +96,8 @@ export default function WalletCard() {
         style={{ opacity: theme === "dark" ? 0.85 : 0.7 }}
       />
 
-      {/* Overlay */}
-      <div className="absolute inset-0 bg-gradient-to-br from-wj-forest/60 via-secondary/40 to-wj-deep/70" />
+      {/* Overlay (same bottom-to-top fade used across dashboard cards) */}
+      <div className="absolute inset-0 bg-gradient-to-t from-background via-background/80 to-background/40" />
 
       {/* Card Content */}
       <div className="relative z-10 h-full p-5 flex flex-col justify-between min-h-[180px]">
