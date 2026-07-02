@@ -69,12 +69,6 @@ export default function ServiceCountdown() {
 
   // Booking dialog state
   const [bookingBike, setBookingBike] = useState<Bike | null>(null);
-  const [serviceTypes, setServiceTypes] = useState<{ id: string; name: string; duration_minutes: number }[]>([]);
-  const [bookServiceTypeId, setBookServiceTypeId] = useState<string>("");
-  const [bookDate, setBookDate] = useState<string>("");
-  const [bookTime, setBookTime] = useState<string>("10:00");
-  const [bookNotes, setBookNotes] = useState<string>("");
-  const [booking, setBooking] = useState(false);
 
   const isDemo = !!user?.isDemo;
   const isRealUser = !!user && !isDemo;
