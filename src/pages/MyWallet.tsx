@@ -236,7 +236,7 @@ export default function MyWallet() {
                   onClick={() => setPickerOpen(true)}
                   disabled={!canLinkAnother}
                   title={canLinkAnother ? t("e_pass.add_bike_hint") : t("e_pass.no_other_bike")}
-                  className="absolute left-0 right-0 aspect-[1.6/1] rounded-3xl border-2 border-dashed border-border/50 bg-card/60 backdrop-blur-md flex flex-col items-center justify-center gap-2 text-muted-foreground transition-all duration-300 origin-top hover:-translate-y-4 hover:scale-[1.04] hover:border-wj-green hover:bg-wj-green/10 hover:text-wj-green hover:shadow-[0_35px_70px_-12px_rgba(5,140,66,0.55)] active:scale-[0.99] disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:translate-y-0 disabled:hover:scale-100 disabled:hover:border-border/50 disabled:hover:text-muted-foreground disabled:hover:shadow-none disabled:hover:bg-card/60"
+                  className="absolute left-0 right-0 aspect-[1.6/1] rounded-3xl border-2 border-dashed border-border/50 bg-card/60 backdrop-blur-md flex flex-col items-center justify-center gap-2 text-muted-foreground transition-all duration-300 hover:-translate-y-5 hover:border-wj-green hover:bg-wj-green/10 hover:text-wj-green hover:shadow-[0_35px_70px_-12px_rgba(5,140,66,0.55)] active:translate-y-[-2px] disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:translate-y-0 disabled:hover:border-border/50 disabled:hover:text-muted-foreground disabled:hover:shadow-none disabled:hover:bg-card/60"
                   style={{ top: `-${ghostTop}px`, zIndex: 5 }}
                 >
                   <div className="p-2.5 rounded-full bg-wj-green/10 border border-wj-green/30 transition-colors group-hover:bg-wj-green/20">
