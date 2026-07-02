@@ -99,8 +99,9 @@ export default function UrgentService() {
   const [locError, setLocError] = useState<string | null>(null);
   const [bookingOpen, setBookingOpen] = useState(false);
   const [permissionGranted, setPermissionGranted] = useState(false);
+  const [callOpen, setCallOpen] = useState(false);
 
-  // Swipe slider (only active once on-site)
+  // Repair Now swipe slider (only active once on-site)
   const swipeX = useMotionValue(0);
   const maxSwipe = 240;
   const swipeBg = useTransform(swipeX, [0, maxSwipe], ["rgba(239,68,68,0.08)", "rgba(239,68,68,0.28)"]);
@@ -108,6 +109,23 @@ export default function UrgentService() {
   const swipeCheckOpacity = useTransform(swipeX, [maxSwipe * 0.7, maxSwipe], [0, 1]);
 
   const resetSwipe = () => animate(swipeX, 0, { duration: 0.3, type: "spring", stiffness: 400, damping: 30 });
+
+  // Call Us swipe slider
+  const callSwipeX = useMotionValue(0);
+  const callSwipeBg = useTransform(callSwipeX, [0, maxSwipe], ["rgba(5,140,66,0.08)", "rgba(5,140,66,0.28)"]);
+  const callSwipeTextOpacity = useTransform(callSwipeX, [0, maxSwipe * 0.5], [1, 0]);
+  const callSwipeCheckOpacity = useTransform(callSwipeX, [maxSwipe * 0.7, maxSwipe], [0, 1]);
+
+  const resetCallSwipe = () => animate(callSwipeX, 0, { duration: 0.3, type: "spring", stiffness: 400, damping: 30 });
+
+  const handleCallSwipeEnd = () => {
+    if (callSwipeX.get() >= maxSwipe * 0.8) {
+      animate(callSwipeX, maxSwipe, { duration: 0.2 });
+      window.location.href = "tel:+31201234567";
+    } else {
+      resetCallSwipe();
+    }
+  };
 
   const handleSwipeEnd = () => {
     if (!onSite) {
@@ -131,6 +149,10 @@ export default function UrgentService() {
       if (mapSection) {
         mapSection.scrollIntoView({ behavior: "smooth", block: "start" });
       }
+      return;
+    }
+    if (option.label === "Call Us") {
+      setCallOpen((v) => !v);
       return;
     }
     if (option.href) {
@@ -259,7 +281,8 @@ export default function UrgentService() {
                 <button
                   onClick={() => handleContactAction(option)}
                   className={`relative w-full p-4 rounded-2xl border transition-all duration-300 flex items-center gap-4 group overflow-hidden ${
-                    option.label === "Request Pickup" && pickupOpen
+                    (option.label === "Request Pickup" && pickupOpen) ||
+                    (option.label === "Call Us" && callOpen)
                       ? "border-wj-green/60 bg-wj-green/15"
                       : "border-wj-green/20 bg-wj-green/5 hover:bg-wj-green/10 hover:border-wj-green/40"
                   }`}
@@ -278,7 +301,9 @@ export default function UrgentService() {
                         : pickupOpen
                           ? "Close"
                           : option.action
-                      : option.action}
+                      : option.label === "Call Us" && callOpen
+                        ? "Close"
+                        : option.action}
                   </span>
                 </button>
                 <AnimatePresence initial={false}>
@@ -290,6 +315,45 @@ export default function UrgentService() {
                         setTimeout(() => setPickupRequested(false), 4000);
                       }}
                     />
+                  )}
+                  {option.label === "Call Us" && callOpen && (
+                    <motion.div
+                      initial={{ height: 0, opacity: 0 }}
+                      animate={{ height: "auto", opacity: 1 }}
+                      exit={{ height: 0, opacity: 0 }}
+                      transition={{ duration: 0.25 }}
+                      className="overflow-hidden pt-3"
+                    >
+                      <motion.div
+                        style={{ backgroundColor: callSwipeBg }}
+                        className="relative h-14 rounded-full border border-wj-green/40 overflow-hidden"
+                      >
+                        <motion.div
+                          style={{ opacity: callSwipeTextOpacity }}
+                          className="absolute inset-0 flex items-center justify-center pointer-events-none px-4"
+                        >
+                          <span className="text-xs font-medium tracking-wide text-center text-wj-green">
+                            Slide to call +31 20 123 4567
+                          </span>
+                        </motion.div>
+                        <motion.div
+                          style={{ opacity: callSwipeCheckOpacity }}
+                          className="absolute inset-0 flex items-center justify-center pointer-events-none"
+                        >
+                          <CheckCircle className="h-5 w-5 text-wj-green" />
+                        </motion.div>
+                        <motion.div
+                          drag="x"
+                          dragConstraints={{ left: 0, right: maxSwipe }}
+                          dragElastic={0}
+                          onDragEnd={handleCallSwipeEnd}
+                          style={{ x: callSwipeX }}
+                          className="absolute left-1 top-1 bottom-1 w-12 rounded-full bg-wj-green flex items-center justify-center shadow-lg cursor-grab active:cursor-grabbing shadow-wj-green/30"
+                        >
+                          <ArrowRight className="h-5 w-5 text-background" />
+                        </motion.div>
+                      </motion.div>
+                    </motion.div>
                   )}
                 </AnimatePresence>
               </motion.div>
