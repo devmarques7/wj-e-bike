@@ -1,7 +1,23 @@
 import { useEffect, useState } from "react";
+import { supabase } from "@/integrations/supabase/client";
 
 // Global promise so the script is loaded only once.
 let loadPromise: Promise<any> | null = null;
+
+let cachedKey: string | null = null;
+async function fetchApiKey(): Promise<string> {
+  if (cachedKey) return cachedKey;
+  const inline = (import.meta.env.VITE_GOOGLE_MAPS_API_KEY ??
+    import.meta.env.VITE_GOOGLE_API_KEY) as string | undefined;
+  if (inline) {
+    cachedKey = inline;
+    return inline;
+  }
+  const { data, error } = await supabase.functions.invoke("get-maps-config");
+  if (error) throw error;
+  cachedKey = (data as any)?.apiKey ?? "";
+  return cachedKey;
+}
 
 function loadGoogleMaps(apiKey: string, libraries: string[]): Promise<any> {
   if (typeof window === "undefined") return Promise.reject(new Error("no window"));
@@ -31,21 +47,32 @@ function loadGoogleMaps(apiKey: string, libraries: string[]): Promise<any> {
 }
 
 export function useGoogleMaps(libraries: string[] = ["places", "marker"]) {
-  const apiKey = (import.meta.env.VITE_GOOGLE_API_KEY ??
-    import.meta.env.VITE_GOOGLE_MAPS_API_KEY) as string | undefined;
   const [ready, setReady] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [hasKey, setHasKey] = useState(true);
 
   useEffect(() => {
-    if (!apiKey) {
-      setError("missing_api_key");
-      return;
-    }
-    loadGoogleMaps(apiKey, libraries)
-      .then(() => setReady(true))
-      .catch((e) => setError(e.message ?? "load_failed"));
+    let cancelled = false;
+    fetchApiKey()
+      .then((key) => {
+        if (cancelled) return;
+        if (!key) {
+          setHasKey(false);
+          setError("missing_api_key");
+          return;
+        }
+        return loadGoogleMaps(key, libraries).then(() => {
+          if (!cancelled) setReady(true);
+        });
+      })
+      .catch((e) => {
+        if (!cancelled) setError(e.message ?? "load_failed");
+      });
+    return () => {
+      cancelled = true;
+    };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [apiKey]);
+  }, []);
 
-  return { ready, error, hasKey: Boolean(apiKey) };
+  return { ready, error, hasKey };
 }
