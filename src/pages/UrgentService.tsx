@@ -99,8 +99,9 @@ export default function UrgentService() {
   const [locError, setLocError] = useState<string | null>(null);
   const [bookingOpen, setBookingOpen] = useState(false);
   const [permissionGranted, setPermissionGranted] = useState(false);
+  const [callOpen, setCallOpen] = useState(false);
 
-  // Swipe slider (only active once on-site)
+  // Repair Now swipe slider (only active once on-site)
   const swipeX = useMotionValue(0);
   const maxSwipe = 240;
   const swipeBg = useTransform(swipeX, [0, maxSwipe], ["rgba(239,68,68,0.08)", "rgba(239,68,68,0.28)"]);
@@ -108,6 +109,23 @@ export default function UrgentService() {
   const swipeCheckOpacity = useTransform(swipeX, [maxSwipe * 0.7, maxSwipe], [0, 1]);
 
   const resetSwipe = () => animate(swipeX, 0, { duration: 0.3, type: "spring", stiffness: 400, damping: 30 });
+
+  // Call Us swipe slider
+  const callSwipeX = useMotionValue(0);
+  const callSwipeBg = useTransform(callSwipeX, [0, maxSwipe], ["rgba(5,140,66,0.08)", "rgba(5,140,66,0.28)"]);
+  const callSwipeTextOpacity = useTransform(callSwipeX, [0, maxSwipe * 0.5], [1, 0]);
+  const callSwipeCheckOpacity = useTransform(callSwipeX, [maxSwipe * 0.7, maxSwipe], [0, 1]);
+
+  const resetCallSwipe = () => animate(callSwipeX, 0, { duration: 0.3, type: "spring", stiffness: 400, damping: 30 });
+
+  const handleCallSwipeEnd = () => {
+    if (callSwipeX.get() >= maxSwipe * 0.8) {
+      animate(callSwipeX, maxSwipe, { duration: 0.2 });
+      window.location.href = "tel:+31201234567";
+    } else {
+      resetCallSwipe();
+    }
+  };
 
   const handleSwipeEnd = () => {
     if (!onSite) {
