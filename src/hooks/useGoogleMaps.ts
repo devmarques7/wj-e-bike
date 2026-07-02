@@ -1,9 +1,9 @@
 import { useEffect, useState } from "react";
 
 // Global promise so the script is loaded only once.
-let loadPromise: Promise<typeof google> | null = null;
+let loadPromise: Promise<any> | null = null;
 
-function loadGoogleMaps(apiKey: string, libraries: string[]): Promise<typeof google> {
+function loadGoogleMaps(apiKey: string, libraries: string[]): Promise<any> {
   if (typeof window === "undefined") return Promise.reject(new Error("no window"));
   if ((window as any).google?.maps) return Promise.resolve((window as any).google);
   if (loadPromise) return loadPromise;
