@@ -84,21 +84,20 @@ export default function WalletCard() {
       transition={{ delay: 0.2 }}
       className="h-full rounded-3xl overflow-hidden relative group"
     >
-      {/* Video Background */}
-      <video
-        ref={videoRef}
-        autoPlay
-        muted
-        loop
-        playsInline
-        className="absolute inset-0 w-full h-full object-cover transition-opacity duration-300"
-        style={{ opacity: 1 }}
-      >
-        <source src="/videos/wallet-background.mp4" type="video/mp4" />
-      </video>
+      {/* Mesh Gradient Background (same as login right panel) */}
+      <MeshGradient
+        colors={theme === "dark"
+          ? ["#0a0a0a", "#0d2818", "#058c42", "#10b981", "#022c1a"]
+          : ["#f5f7f5", "#dff5e8", "#058c42", "#86efac", "#ecfdf5"]}
+        speed={0.25}
+        distortion={1}
+        swirl={0.8}
+        className="absolute inset-0 w-full h-full"
+        style={{ opacity: theme === "dark" ? 0.85 : 0.7 }}
+      />
 
       {/* Overlay */}
-      <div className="absolute inset-0 bg-gradient-to-br from-black/60 via-black/40 to-black/70" />
+      <div className="absolute inset-0 bg-gradient-to-br from-wj-forest/60 via-secondary/40 to-wj-deep/70" />
 
       {/* Card Content */}
       <div className="relative z-10 h-full p-5 flex flex-col justify-between min-h-[180px]">
