@@ -182,42 +182,17 @@ export default function UrgentService() {
                 animate={{ opacity: 1, x: 0 }}
                 transition={{ delay: index * 0.1 }}
                 onClick={() => handleContactAction(option)}
-                className={`relative w-full p-4 rounded-2xl border transition-all duration-300 flex items-center gap-4 group overflow-hidden ${
-                  option.variant === "urgent"
-                    ? "border-red-500/40 bg-red-500/5 hover:bg-red-500/10 hover:border-red-500/60"
-                    : "border-wj-green/20 bg-wj-green/5 hover:bg-wj-green/10 hover:border-wj-green/40"
-                }`}
+                className="relative w-full p-4 rounded-2xl border transition-all duration-300 flex items-center gap-4 group overflow-hidden border-wj-green/20 bg-wj-green/5 hover:bg-wj-green/10 hover:border-wj-green/40"
               >
-                {option.variant === "urgent" && (
-                  <span className="absolute top-2 right-2 text-[9px] uppercase tracking-wider text-red-400 flex items-center gap-1">
-                    <AlertTriangle className="h-3 w-3" /> On-site only
-                  </span>
-                )}
-                <div
-                  className={`w-12 h-12 rounded-xl flex items-center justify-center transition-colors ${
-                    option.variant === "urgent"
-                      ? "bg-red-500/10 group-hover:bg-red-500/20"
-                      : "bg-wj-green/10 group-hover:bg-wj-green/20"
-                  }`}
-                >
-                  <option.icon
-                    className={`h-5 w-5 ${option.variant === "urgent" ? "text-red-400" : "text-wj-green"}`}
-                  />
+                <div className="w-12 h-12 rounded-xl flex items-center justify-center transition-colors bg-wj-green/10 group-hover:bg-wj-green/20">
+                  <option.icon className="h-5 w-5 text-wj-green" />
                 </div>
                 <div className="flex-1 text-left">
                   <p className="text-sm font-medium text-foreground">{option.label}</p>
                   <p className="text-xs text-muted-foreground">{option.description}</p>
                 </div>
-                <span
-                  className={`text-xs font-medium ${
-                    option.variant === "urgent" ? "text-red-400" : "text-wj-green"
-                  }`}
-                >
-                  {option.label === "Request Pickup" && pickupRequested
-                    ? "Requested ✓"
-                    : option.label === "Repair Now" && repairNowConfirmed
-                    ? "In queue ✓"
-                    : option.action}
+                <span className="text-xs font-medium text-wj-green">
+                  {option.label === "Request Pickup" && pickupRequested ? "Requested ✓" : option.action}
                 </span>
               </motion.button>
             ))}
