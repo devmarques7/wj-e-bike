@@ -307,74 +307,30 @@ export default function ServiceCountdown() {
       </Dialog>
 
       {/* Booking dialog */}
-      <Dialog open={!!bookingBike} onOpenChange={(open) => !open && setBookingBike(null)}>
-        <DialogContent className="max-w-md">
-          <DialogHeader>
-            <DialogTitle>Book service · {bookingBike?.model}</DialogTitle>
-            <DialogDescription>
-              Schedule the next maintenance for your bike. We'll confirm by email.
-            </DialogDescription>
-          </DialogHeader>
-
-          <div className="space-y-4 py-2">
-            <div className="space-y-1.5">
-              <Label>Service type</Label>
-              <Select value={bookServiceTypeId} onValueChange={setBookServiceTypeId}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Select a service" />
-                </SelectTrigger>
-                <SelectContent>
-                  {serviceTypes.map((s) => (
-                    <SelectItem key={s.id} value={s.id}>
-                      {s.name} · {s.duration_minutes}min
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-            <div className="grid grid-cols-2 gap-3">
-              <div className="space-y-1.5">
-                <Label htmlFor="bookDate">Date</Label>
-                <Input
-                  id="bookDate"
-                  type="date"
-                  min={toISODate(new Date())}
-                  value={bookDate}
-                  onChange={(e) => setBookDate(e.target.value)}
-                />
-              </div>
-              <div className="space-y-1.5">
-                <Label htmlFor="bookTime">Time</Label>
-                <Input
-                  id="bookTime"
-                  type="time"
-                  value={bookTime}
-                  onChange={(e) => setBookTime(e.target.value)}
-                />
-              </div>
-            </div>
-            <div className="space-y-1.5">
-              <Label htmlFor="bookNotes">Notes (optional)</Label>
-              <Textarea
-                id="bookNotes"
-                rows={3}
-                placeholder="Describe any issue or request…"
-                value={bookNotes}
-                onChange={(e) => setBookNotes(e.target.value)}
-              />
-            </div>
-          </div>
-
-          <DialogFooter>
-            <Button variant="ghost" onClick={() => setBookingBike(null)} disabled={booking}>
-              Cancel
-            </Button>
-            <Button onClick={handleConfirmBooking} disabled={booking} className="bg-wj-green hover:bg-wj-green/90">
-              {booking ? <Loader2 className="h-4 w-4 animate-spin" /> : "Confirm booking"}
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+      {/* Booking dialog — reuses the admin BookAppointmentDialog with the
+          current user + selected bike preset, so members go straight to
+          the service + real-time availability steps. */}
+      {user?.id && (
+        <BookAppointmentDialog
+          open={!!bookingBike}
+          onOpenChange={(v) => !v && setBookingBike(null)}
+          onCreated={() => {
+            setBookingBike(null);
+            loadBikes();
+          }}
+          presetCustomer={{
+            user_id: user.id,
+            full_name: (user as any).full_name ?? (user as any).name ?? null,
+            email: user.email ?? null,
+          }}
+          presetBike={
+            bookingBike
+              ? { model: bookingBike.model, serial: bookingBike.serial }
+              : undefined
+          }
+          initialNotes={bookingBike ? `[${bookingBike.model}]` : undefined}
+        />
+      )}
     </>
   );
 }
