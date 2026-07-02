@@ -2,7 +2,7 @@ import { useState } from "react";
 import { motion } from "framer-motion";
 import { useTranslation } from "react-i18next";
 import { Navigate, Link } from "react-router-dom";
-import { Plus, Users, Euro, ArrowRight } from "lucide-react";
+import { Plus, Users, Euro, ArrowRight, Upload } from "lucide-react";
 import AdminDashboardLayout from "@/components/dashboard/AdminDashboardLayout";
 import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
@@ -16,6 +16,7 @@ export default function AdminPlansManage() {
   const { plans, refetch, loading } = usePlans();
   const [open, setOpen] = useState(false);
   const [editing, setEditing] = useState<PlanWithActiveVersion | null>(null);
+  const [initialTab, setInitialTab] = useState<"single" | "bulk">("single");
 
   if (isLoading) return null;
   if (!isAuthenticated) return <Navigate to="/auth" replace />;
@@ -29,9 +30,29 @@ export default function AdminPlansManage() {
             <h1 className="text-xl sm:text-2xl font-light text-foreground">{t("plans.manage.title")}</h1>
             <p className="text-sm text-muted-foreground mt-1">{t("plans.manage.subtitle")}</p>
           </div>
-          <Button onClick={() => { setEditing(null); setOpen(true); }} className="bg-wj-green hover:bg-wj-green/90 gap-2">
-            <Plus className="h-4 w-4" /> {t("plans.manage.new_plan")}
-          </Button>
+          <div className="flex items-center gap-2">
+            <Button
+              variant="outline"
+              onClick={() => {
+                setEditing(null);
+                setInitialTab("bulk");
+                setOpen(true);
+              }}
+              className="gap-2"
+            >
+              <Upload className="h-4 w-4" /> {t("plans.manage.import", { defaultValue: "Import JSON / CSV" })}
+            </Button>
+            <Button
+              onClick={() => {
+                setEditing(null);
+                setInitialTab("single");
+                setOpen(true);
+              }}
+              className="bg-wj-green hover:bg-wj-green/90 gap-2"
+            >
+              <Plus className="h-4 w-4" /> {t("plans.manage.new_plan")}
+            </Button>
+          </div>
         </div>
 
         {loading ? (
@@ -68,7 +89,13 @@ export default function AdminPlansManage() {
           </div>
         )}
 
-        <PlanFormModal open={open} onOpenChange={setOpen} plan={editing} onSaved={refetch} />
+        <PlanFormModal
+          open={open}
+          onOpenChange={setOpen}
+          plan={editing}
+          onSaved={refetch}
+          initialTab={editing ? "single" : initialTab}
+        />
       </div>
     </AdminDashboardLayout>
   );
