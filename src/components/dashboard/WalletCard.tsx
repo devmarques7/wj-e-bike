@@ -107,7 +107,7 @@ export default function WalletCard() {
             <p className="text-[10px] uppercase tracking-[0.2em] text-white/50 font-medium">Member Card</p>
             <h3 className="text-sm font-semibold text-white tracking-tight">WJ Vision</h3>
           </div>
-          <div className={`px-2 py-0.5 rounded-full bg-gradient-to-r ${data.color} text-[9px] font-bold uppercase tracking-wider text-white`}>
+          <div className={`px-2 py-0.5 rounded-full border bg-transparent text-[9px] font-bold uppercase tracking-wider ${data.outline}`}>
             {data.tier}
           </div>
         </div>
