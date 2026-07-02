@@ -184,30 +184,22 @@ export default function UrgentService() {
   const analyzeLocation = () => runGeolocation(false);
 
   useEffect(() => {
-    let cached = false;
-    try {
-      cached = localStorage.getItem(PERMISSION_KEY) === "granted";
-    } catch {}
-    if (!cached || !("geolocation" in navigator)) return;
+    if (!("geolocation" in navigator)) return;
 
     if ("permissions" in navigator && (navigator as any).permissions?.query) {
       (navigator as any).permissions
         .query({ name: "geolocation" })
         .then((status: PermissionStatus) => {
-          if (status.state === "granted") {
-            setPermissionGranted(true);
-            runGeolocation(true);
-          } else if (status.state === "denied") {
+          if (status.state === "denied") {
             try { localStorage.removeItem(PERMISSION_KEY); } catch {}
             setPermissionGranted(false);
+          } else {
+            if (status.state === "granted") setPermissionGranted(true);
+            runGeolocation(true);
           }
         })
-        .catch(() => {
-          setPermissionGranted(true);
-          runGeolocation(true);
-        });
+        .catch(() => runGeolocation(true));
     } else {
-      setPermissionGranted(true);
       runGeolocation(true);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
