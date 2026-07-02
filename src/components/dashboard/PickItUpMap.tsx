@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import { MapPin, Navigation, Loader2, AlertTriangle, Phone, ExternalLink, Bike, Car } from "lucide-react";
+import { MapPin, Navigation, Loader2, AlertTriangle, Phone, Bike, Car } from "lucide-react";
 import { useGoogleMaps } from "@/hooks/useGoogleMaps";
 import { supabase } from "@/integrations/supabase/client";
 
@@ -335,12 +335,6 @@ export default function PickItUpMap() {
         </div>
       )}
 
-      <button
-        onClick={openInMaps}
-        className="w-full py-2.5 rounded-xl bg-wj-green/10 border border-wj-green/30 text-xs text-wj-green font-medium hover:bg-wj-green/20 transition-colors flex items-center justify-center gap-2"
-      >
-        <ExternalLink className="h-3.5 w-3.5" /> Open route in Google Maps
-      </button>
     </div>
   );
 }
