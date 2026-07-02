@@ -432,14 +432,14 @@ export default function MyWallet() {
                 </div>
               </div>
               {/* Next maintenance */}
-              <div className="rounded-3xl border border-border/40 bg-card/30 backdrop-blur-md p-4 flex flex-col min-w-0">
-                <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-xl bg-wj-green/10 flex items-center justify-center shrink-0">
-                    <Clock className="h-5 w-5 text-wj-green" />
-                  </div>
-                  <p className="text-[10px] uppercase tracking-widest text-muted-foreground">{t("e_pass.next_maintenance")}</p>
+              <div className="rounded-3xl border border-border/40 bg-card/30 backdrop-blur-md p-4 flex items-center gap-3 min-w-0">
+                <div className="w-10 h-10 rounded-xl bg-wj-green/10 flex items-center justify-center shrink-0">
+                  <Clock className="h-5 w-5 text-wj-green" />
                 </div>
-                <p className="text-sm font-semibold text-foreground truncate mt-1">{nextMaintenanceLabel}</p>
+                <div className="min-w-0">
+                  <p className="text-[10px] uppercase tracking-widest text-muted-foreground">{t("e_pass.next_maintenance")}</p>
+                  <p className="text-sm font-semibold text-foreground truncate">{nextMaintenanceLabel}</p>
+                </div>
               </div>
             </div>
           </div>
