@@ -116,7 +116,7 @@ const App = () => (
               <Route path="/dashboard/staff/schedule" element={<StaffSchedule />} />
 
               
-              <Route path="/urgent-service" element={<UrgentService />} />
+              <Route path="/dashboard/urgent-service" element={<UrgentService />} />
               {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
               <Route path="*" element={<NotFound />} />
             </Routes>
