@@ -126,6 +126,13 @@ export default function UrgentService() {
   };
 
   const handleContactAction = (option: typeof contactOptions[0]) => {
+    if (option.label === "Find Us") {
+      const mapSection = document.getElementById("map-section");
+      if (mapSection) {
+        mapSection.scrollIntoView({ behavior: "smooth", block: "start" });
+      }
+      return;
+    }
     if (option.href) {
       if (option.href.startsWith("tel:")) {
         window.location.href = option.href;
@@ -409,6 +416,7 @@ export default function UrgentService() {
 
           {/* Pick-It-Up Places Map */}
           <motion.div
+            id="map-section"
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.2 }}
