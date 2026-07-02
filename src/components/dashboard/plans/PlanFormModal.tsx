@@ -511,9 +511,15 @@ export default function PlanFormModal({
 
             <div className="rounded-md border border-border/30 bg-muted/20 p-3">
               <p className="text-[11px] uppercase tracking-wider text-muted-foreground mb-1">{t("plans.form.bulk.expected_fields")}</p>
-              <p className="text-xs text-muted-foreground">
-                <code className="text-foreground">name</code>, <code className="text-foreground">slug</code>, <code className="text-foreground">tier_level</code>, <code className="text-foreground">description</code>, <code className="text-foreground">color_hex</code>, <code className="text-foreground">price</code>, <code className="text-foreground">interval</code> (monthly/quarterly/yearly/lifetime), <code className="text-foreground">trial_days</code>, <code className="text-foreground">features</code>{" "}
-                {bulkFormat === "csv" ? <>(pipe-separated <code className="text-foreground">|</code>)</> : <>(array)</>}.
+              <p className="text-xs text-muted-foreground leading-relaxed">
+                <strong className="text-foreground">Plano:</strong>{" "}
+                <code className="text-foreground">name</code>, <code className="text-foreground">slug</code>, <code className="text-foreground">tier_level</code>, <code className="text-foreground">description</code>, <code className="text-foreground">color_hex</code>, <code className="text-foreground">icon</code>, <code className="text-foreground">display_order</code>, <code className="text-foreground">is_active</code>, <code className="text-foreground">is_default</code>.
+                <br />
+                <strong className="text-foreground">Versão / preço:</strong>{" "}
+                <code className="text-foreground">price</code>, <code className="text-foreground">currency</code> (EUR), <code className="text-foreground">interval</code> (monthly/quarterly/yearly/lifetime), <code className="text-foreground">trial_days</code> (-1 = ilimitado), <code className="text-foreground">features</code>{" "}
+                {bulkFormat === "csv" ? <>(separado por <code className="text-foreground">|</code>)</> : <>(array de strings)</>}, <code className="text-foreground">urgent_service_included</code>, <code className="text-foreground">urgent_service_fee</code>.
+                <br />
+                <span className="text-[11px]">Apenas <code className="text-foreground">name</code> e <code className="text-foreground">slug</code> são obrigatórios — os restantes usam os defaults quando omitidos.</span>
               </p>
             </div>
 
