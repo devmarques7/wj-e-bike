@@ -27,6 +27,7 @@ import {
 } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { toast } from "sonner";
+import BookAppointmentDialog from "./scheduling/BookAppointmentDialog";
 
 const SERVICE_CYCLE_DAYS = 90; // 3 months
 
