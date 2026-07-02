@@ -1,8 +1,8 @@
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { ChevronDown, Phone, MapPin, Truck, ArrowLeft } from "lucide-react";
+import { ChevronDown, Phone, MapPin, Truck, AlertTriangle } from "lucide-react";
 import { useNavigate } from "react-router-dom";
-import { Button } from "@/components/ui/button";
+import RoleDashboardLayout from "@/components/dashboard/RoleDashboardLayout";
 
 const faqs = [
   {
@@ -70,25 +70,22 @@ export default function UrgentService() {
   };
 
   return (
-    <div className="min-h-screen bg-background">
-      {/* Header */}
-      <div className="fixed top-0 left-0 right-0 z-50 bg-background/80 backdrop-blur-xl border-b border-border/50">
-        <div className="flex items-center gap-4 px-4 py-4">
-          <button
-            onClick={() => navigate(-1)}
-            className="p-2 rounded-xl bg-muted/20 hover:bg-muted/40 transition-colors"
-          >
-            <ArrowLeft className="h-5 w-5 text-foreground" />
-          </button>
-          <div>
-            <h1 className="text-lg font-semibold text-foreground">Urgent Service</h1>
-            <p className="text-xs text-muted-foreground">Get immediate assistance</p>
+    <RoleDashboardLayout>
+      <div className="p-4 lg:p-6">
+        <div className="max-w-3xl mx-auto space-y-6">
+          {/* Page header — matches the rest of the dashboard sub-pages */}
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-xl bg-wj-green/15 border border-wj-green/30 flex items-center justify-center">
+              <AlertTriangle className="h-5 w-5 text-wj-green" />
+            </div>
+            <div>
+              <h1 className="text-lg font-semibold text-foreground leading-tight">
+                Urgent Service
+              </h1>
+              <p className="text-xs text-muted-foreground">Get immediate assistance</p>
+            </div>
           </div>
-        </div>
-      </div>
 
-      <main className="pt-24 pb-8 px-4">
-        <div className="max-w-lg mx-auto space-y-6">
           {/* Contact Options */}
           <motion.div
             initial={{ opacity: 0, y: 20 }}
@@ -173,7 +170,7 @@ export default function UrgentService() {
             </div>
           </motion.div>
         </div>
-      </main>
-    </div>
+      </div>
+    </RoleDashboardLayout>
   );
 }
