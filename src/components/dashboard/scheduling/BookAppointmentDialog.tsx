@@ -854,9 +854,9 @@ export default function BookAppointmentDialog({
               </Badge>
             </div>
 
-            <div className="grid grid-cols-1 sm:grid-cols-[auto_1fr] gap-4 rounded-xl border border-border/30 bg-muted/10 p-3">
+            <div className="flex flex-col md:flex-row gap-4 rounded-xl border border-border/30 bg-muted/10 p-3">
               {/* Calendar */}
-              <div className="flex justify-center sm:justify-start">
+              <div className="flex justify-center md:justify-start md:shrink-0">
                 <Calendar
                   mode="single"
                   selected={date ? new Date(date + "T00:00:00") : undefined}
@@ -878,21 +878,22 @@ export default function BookAppointmentDialog({
                 />
               </div>
 
-              <Separator orientation="vertical" className="hidden sm:block" />
+              <Separator orientation="vertical" className="hidden md:block h-auto" />
+              <Separator orientation="horizontal" className="md:hidden" />
 
               {/* Time slots */}
-              <div className="flex flex-col min-w-0">
+              <div className="flex flex-col min-w-0 flex-1">
                 <div className="flex items-center justify-between gap-2 mb-2 px-1">
-                  <Label className="text-[11px] uppercase tracking-wide text-muted-foreground flex items-center gap-1.5 truncate">
+                  <Label className="text-[11px] uppercase tracking-wide text-muted-foreground flex items-center gap-1.5 truncate min-w-0">
                     <Clock className="h-3 w-3" />
-                    {new Date(date + "T00:00:00").toLocaleDateString("pt-PT", {
+                    <span className="truncate">{new Date(date + "T00:00:00").toLocaleDateString("pt-PT", {
                       weekday: "long",
                       day: "numeric",
                       month: "long",
-                    })}
+                    })}</span>
                   </Label>
                   <Select value={mechanicFilter} onValueChange={(v) => { setMechanicFilter(v); setSlot(null); }}>
-                    <SelectTrigger className="h-7 w-[180px] text-[11px]">
+                    <SelectTrigger className="h-7 w-[140px] sm:w-[180px] text-[11px] shrink-0">
                       <SelectValue placeholder="Qualquer mecânico" />
                     </SelectTrigger>
                     <SelectContent>
