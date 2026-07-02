@@ -281,7 +281,8 @@ export default function UrgentService() {
                 <button
                   onClick={() => handleContactAction(option)}
                   className={`relative w-full p-4 rounded-2xl border transition-all duration-300 flex items-center gap-4 group overflow-hidden ${
-                    option.label === "Request Pickup" && pickupOpen
+                    (option.label === "Request Pickup" && pickupOpen) ||
+                    (option.label === "Call Us" && callOpen)
                       ? "border-wj-green/60 bg-wj-green/15"
                       : "border-wj-green/20 bg-wj-green/5 hover:bg-wj-green/10 hover:border-wj-green/40"
                   }`}
@@ -300,7 +301,9 @@ export default function UrgentService() {
                         : pickupOpen
                           ? "Close"
                           : option.action
-                      : option.action}
+                      : option.label === "Call Us" && callOpen
+                        ? "Close"
+                        : option.action}
                   </span>
                 </button>
                 <AnimatePresence initial={false}>
