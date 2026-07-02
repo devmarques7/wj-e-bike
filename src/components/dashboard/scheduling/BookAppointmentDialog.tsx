@@ -72,8 +72,13 @@ type Slot = {
 interface Props {
   open: boolean;
   onOpenChange: (v: boolean) => void;
-  serviceTypes: ServiceType[];
+  serviceTypes?: ServiceType[];
   onCreated?: () => void;
+  /** When provided, skips the customer/bike search step and locks selection. */
+  presetCustomer?: { user_id: string; full_name?: string | null; email?: string | null };
+  presetBike?: { model?: string | null; serial?: string | null };
+  /** Optional initial notes prefix (e.g. context from caller). */
+  initialNotes?: string;
 }
 
 const todayISO = () => new Date().toISOString().slice(0, 10);
@@ -89,10 +94,16 @@ const fromMinutes = (m: number) => `${pad(Math.floor(m / 60))}:${pad(m % 60)}`;
 export default function BookAppointmentDialog({
   open,
   onOpenChange,
-  serviceTypes,
+  serviceTypes: serviceTypesProp,
   onCreated,
+  presetCustomer,
+  presetBike,
+  initialNotes,
 }: Props) {
-  const [step, setStep] = useState<1 | 2 | 3>(1);
+  const hasPreset = !!presetCustomer;
+  const [step, setStep] = useState<1 | 2 | 3>(hasPreset ? 2 : 1);
+  const [fetchedServiceTypes, setFetchedServiceTypes] = useState<ServiceType[]>([]);
+  const serviceTypes: ServiceType[] = serviceTypesProp ?? fetchedServiceTypes;
 
   // Customer
   const [search, setSearch] = useState("");
@@ -134,7 +145,7 @@ export default function BookAppointmentDialog({
   /* ---------- reset on close ---------- */
   useEffect(() => {
     if (!open) {
-      setStep(1);
+      setStep(hasPreset ? 2 : 1);
       setSearch("");
       setCustomers([]);
       setCustomer(null);
@@ -146,8 +157,37 @@ export default function BookAppointmentDialog({
       setDate(todayISO());
       setSlot(null);
       setSlots([]);
+    } else if (hasPreset) {
+      // Seed preset selections when opening
+      setCustomer({
+        user_id: presetCustomer!.user_id,
+        full_name: presetCustomer!.full_name ?? null,
+        email: presetCustomer!.email ?? null,
+      });
+      if (presetBike?.model) setBikeModel(presetBike.model);
+      if (presetBike?.serial) setBikeSerial(presetBike.serial);
+      if (initialNotes) setNotes(initialNotes);
+      setStep(2);
     }
-  }, [open]);
+  }, [open, hasPreset, presetCustomer, presetBike, initialNotes]);
+
+  /* ---------- fetch service types if not provided ---------- */
+  useEffect(() => {
+    if (!open || serviceTypesProp) return;
+    let cancelled = false;
+    (async () => {
+      const { data } = await supabase
+        .from("service_types")
+        .select("*")
+        .eq("is_active", true)
+        .order("display_order", { ascending: true });
+      if (cancelled) return;
+      setFetchedServiceTypes((data ?? []) as any as ServiceType[]);
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [open, serviceTypesProp]);
 
   /* ---------- bike models (catalog) ---------- */
   useEffect(() => {
