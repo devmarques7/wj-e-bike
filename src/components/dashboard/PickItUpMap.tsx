@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import { MapPin, Navigation, Loader2, AlertTriangle, Phone, Bike, Car } from "lucide-react";
+import { MapPin, Loader2, AlertTriangle, Bike, Car } from "lucide-react";
 import { useGoogleMaps } from "@/hooks/useGoogleMaps";
 import { supabase } from "@/integrations/supabase/client";
 
