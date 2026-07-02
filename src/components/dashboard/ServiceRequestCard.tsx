@@ -292,13 +292,19 @@ export default function ServiceRequestCard() {
         <div className="relative z-10 h-full p-6 flex flex-col justify-between">
           <div>
             <div className="w-10 h-10 rounded-xl bg-wj-green/20 flex items-center justify-center mb-4 border border-wj-green/30">
-              <Bike className="h-5 w-5 text-wj-green" />
+              {faqMode ? (
+                <HelpCircle className="h-5 w-5 text-wj-green" />
+              ) : (
+                <Bike className="h-5 w-5 text-wj-green" />
+              )}
             </div>
             <h3 className="text-base font-semibold text-foreground mb-1">
-              Urgent Service
+              {faqMode ? "Urgent Help" : "Urgent Service"}
             </h3>
             <p className="text-xs text-muted-foreground leading-relaxed">
-              Need immediate assistance?
+              {faqMode
+                ? "Link a bike or browse the urgent service FAQ."
+                : "Need immediate assistance?"}
             </p>
           </div>
 
@@ -315,7 +321,7 @@ export default function ServiceRequestCard() {
                 className="absolute inset-0 flex items-center justify-center pointer-events-none"
               >
                 <span className="text-xs text-wj-green/70 font-medium tracking-wide">
-                  Slide to request →
+                  {faqMode ? "Slide for FAQ →" : "Slide to request →"}
                 </span>
               </motion.div>
               
