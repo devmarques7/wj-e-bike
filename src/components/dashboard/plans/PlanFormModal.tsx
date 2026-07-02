@@ -193,7 +193,33 @@ export default function PlanFormModal({
     }
     setImporting(true);
     let ok = 0, fail = 0;
-    for (const r of rows) {
+    // Normalise alternate field names (level/color_accent/monthly_price/annual_price/benefits)
+    const normalize = (raw: any) => {
+      const r = { ...raw };
+      if (r.tier_level === undefined && r.level !== undefined) r.tier_level = r.level;
+      if (r.color_hex === undefined && r.color_accent !== undefined) r.color_hex = r.color_accent;
+      if (r.price === undefined) {
+        if (r.monthly_price !== undefined && r.monthly_price !== null) {
+          r.price = r.monthly_price;
+          if (r.interval === undefined) r.interval = "monthly";
+        } else if (r.annual_price !== undefined && r.annual_price !== null) {
+          r.price = r.annual_price;
+          if (r.interval === undefined) r.interval = "yearly";
+        }
+      }
+      if (!Array.isArray(r.features)) {
+        if (Array.isArray(r.benefits)) {
+          r.features = r.benefits
+            .map((b: any) => b?.name_en || b?.name || b?.label || b?.value?.text_en)
+            .filter(Boolean);
+        } else {
+          r.features = [];
+        }
+      }
+      return r;
+    };
+    for (const raw of rows) {
+      const r = normalize(raw);
       try {
         if (!r.name || !r.slug) throw new Error("name and slug required");
         const { data, error } = await createPlan({
