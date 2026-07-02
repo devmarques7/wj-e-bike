@@ -184,30 +184,22 @@ export default function UrgentService() {
   const analyzeLocation = () => runGeolocation(false);
 
   useEffect(() => {
-    let cached = false;
-    try {
-      cached = localStorage.getItem(PERMISSION_KEY) === "granted";
-    } catch {}
-    if (!cached || !("geolocation" in navigator)) return;
+    if (!("geolocation" in navigator)) return;
 
     if ("permissions" in navigator && (navigator as any).permissions?.query) {
       (navigator as any).permissions
         .query({ name: "geolocation" })
         .then((status: PermissionStatus) => {
-          if (status.state === "granted") {
-            setPermissionGranted(true);
-            runGeolocation(true);
-          } else if (status.state === "denied") {
+          if (status.state === "denied") {
             try { localStorage.removeItem(PERMISSION_KEY); } catch {}
             setPermissionGranted(false);
+          } else {
+            if (status.state === "granted") setPermissionGranted(true);
+            runGeolocation(true);
           }
         })
-        .catch(() => {
-          setPermissionGranted(true);
-          runGeolocation(true);
-        });
+        .catch(() => runGeolocation(true));
     } else {
-      setPermissionGranted(true);
       runGeolocation(true);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -304,18 +296,14 @@ export default function UrgentService() {
                         €{REPAIR_NOW_FEE} fee
                       </span>
                     </>
+                  ) : locating ? (
+                    <span className="text-[11px] text-muted-foreground inline-flex items-center gap-1">
+                      <Loader2 className="h-3 w-3 animate-spin" /> Locating…
+                    </span>
                   ) : (
-                    <button
-                      onClick={analyzeLocation}
-                      disabled={locating}
-                      className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg border border-wj-green/30 bg-wj-green/10 hover:bg-wj-green/20 text-[11px] text-wj-green transition-colors disabled:opacity-60"
-                    >
-                      {locating ? (
-                        <><Loader2 className="h-3 w-3 animate-spin" /> Analyzing…</>
-                      ) : (
-                        <><LocateFixed className="h-3 w-3" /> Analyze location</>
-                      )}
-                    </button>
+                    <span className="text-[11px] text-red-400 inline-flex items-center gap-1">
+                      <AlertTriangle className="h-3 w-3" /> Off-site
+                    </span>
                   )}
                 </div>
               </div>
