@@ -257,46 +257,6 @@ export default function PickItUpMap() {
             </button>
           </div>
         )}
-        {selectedPlace && (
-          <div className="absolute bottom-3 left-3 right-3 rounded-xl border border-wj-green/20 bg-background/90 backdrop-blur p-3 flex items-start gap-3 shadow-lg">
-            <div className="w-9 h-9 rounded-lg bg-wj-green/10 flex items-center justify-center shrink-0">
-              <MapPin className="h-4 w-4 text-wj-green" />
-            </div>
-            <div className="flex-1 min-w-0">
-              <div className="flex items-center gap-2 flex-wrap">
-                <p className="text-sm font-medium text-foreground">{selectedPlace.name}</p>
-                {selectedPlace.is_headquarters && (
-                  <span className="text-[9px] uppercase tracking-wider px-1.5 py-0.5 rounded border border-wj-green/40 text-wj-green">
-                    HQ
-                  </span>
-                )}
-              </div>
-              <p className="text-xs text-muted-foreground truncate">{selectedPlace.address}</p>
-              {distanceInfo && (
-                <p className="text-[11px] text-wj-green mt-1">
-                  {distanceInfo.distance} · ~{distanceInfo.duration} by {travelMode === "DRIVING" ? "car" : "bike"}
-                </p>
-              )}
-            </div>
-            <div className="flex flex-row gap-2 shrink-0">
-              {selectedPlace.phone && (
-                <a
-                  href={`tel:${selectedPlace.phone}`}
-                  className="w-8 h-8 rounded-lg border border-wj-green/30 flex items-center justify-center hover:bg-wj-green/10"
-                >
-                  <Phone className="h-3.5 w-3.5 text-wj-green" />
-                </a>
-              )}
-              <button
-                onClick={openInMaps}
-                className="w-8 h-8 rounded-lg border border-wj-green/30 flex items-center justify-center hover:bg-wj-green/10"
-                title="Open route in Google Maps"
-              >
-                <Navigation className="h-3.5 w-3.5 text-wj-green" />
-              </button>
-            </div>
-          </div>
-        )}
       </div>
 
       {locError && (
