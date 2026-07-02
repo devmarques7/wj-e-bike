@@ -22,11 +22,13 @@ export default function PlanFormModal({
   onOpenChange,
   plan,
   onSaved,
+  initialTab,
 }: {
   open: boolean;
   onOpenChange: (v: boolean) => void;
   plan?: PlanWithActiveVersion | null;
   onSaved: () => void;
+  initialTab?: "single" | "bulk";
 }) {
   const { t } = useTranslation();
   const isEdit = Boolean(plan);
@@ -45,10 +47,15 @@ export default function PlanFormModal({
   const [urgentIncluded, setUrgentIncluded] = useState(true);
   const [urgentFee, setUrgentFee] = useState(0);
   const [saving, setSaving] = useState(false);
-  const [tab, setTab] = useState<"single" | "bulk">("single");
+  const [tab, setTab] = useState<"single" | "bulk">(initialTab ?? "single");
   const [bulkText, setBulkText] = useState("");
   const [bulkFormat, setBulkFormat] = useState<"json" | "csv">("json");
   const [importing, setImporting] = useState(false);
+
+  // Sync tab when the modal is re-opened with a different requested tab
+  useEffect(() => {
+    if (open) setTab(initialTab ?? "single");
+  }, [open, initialTab]);
 
   const JSON_TEMPLATE = JSON.stringify(
     [
@@ -58,10 +65,17 @@ export default function PlanFormModal({
         tier_level: 0,
         description: "View-only access.",
         color_hex: "#6b7280",
+        icon: null,
+        display_order: 0,
+        is_active: true,
+        is_default: true,
         price: 0,
+        currency: "EUR",
         interval: "monthly",
         trial_days: 0,
         features: ["View dashboard", "View bike details"],
+        urgent_service_included: true,
+        urgent_service_fee: 100,
       },
       {
         name: "Plus",
@@ -69,10 +83,39 @@ export default function PlanFormModal({
         tier_level: 2,
         description: "Includes priority service.",
         color_hex: "#058c42",
+        icon: null,
+        display_order: 2,
+        is_active: true,
+        is_default: false,
         price: 19.9,
+        currency: "EUR",
         interval: "monthly",
         trial_days: 7,
         features: ["All Light features", "Priority booking"],
+        urgent_service_included: true,
+        urgent_service_fee: 0,
+      },
+      {
+        name: "Black",
+        slug: "black",
+        tier_level: 3,
+        description: "Full concierge experience with valet pick-up.",
+        color_hex: "#111111",
+        icon: null,
+        display_order: 3,
+        is_active: true,
+        is_default: false,
+        price: 199,
+        currency: "EUR",
+        interval: "yearly",
+        trial_days: -1,
+        features: [
+          "All Plus features",
+          "Valet pick-up & drop-off",
+          "Unlimited urgent service",
+        ],
+        urgent_service_included: true,
+        urgent_service_fee: 0,
       },
     ],
     null,
@@ -80,9 +123,10 @@ export default function PlanFormModal({
   );
 
   const CSV_TEMPLATE =
-    "name,slug,tier_level,description,color_hex,price,interval,trial_days,features\n" +
-    'Free,free,0,View-only access.,#6b7280,0,monthly,0,"View dashboard|View bike details"\n' +
-    'Plus,plus,2,Includes priority service.,#058c42,19.90,monthly,7,"All Light features|Priority booking"\n';
+    "name,slug,tier_level,description,color_hex,icon,display_order,is_active,is_default,price,currency,interval,trial_days,features,urgent_service_included,urgent_service_fee\n" +
+    'Free,free,0,View-only access.,#6b7280,,0,true,true,0,EUR,monthly,0,"View dashboard|View bike details",true,100\n' +
+    'Plus,plus,2,Includes priority service.,#058c42,,2,true,false,19.90,EUR,monthly,7,"All Light features|Priority booking",true,0\n' +
+    'Black,black,3,Full concierge experience.,#111111,,3,true,false,199,EUR,yearly,-1,"All Plus features|Valet pick-up|Unlimited urgent service",true,0\n';
 
   const downloadFile = (content: string, filename: string, mime: string) => {
     const blob = new Blob([content], { type: mime });
@@ -109,15 +153,30 @@ export default function PlanFormModal({
       out.push(cur);
       return out.map((s) => s.trim());
     };
+    const toBool = (v: any) => {
+      if (typeof v === "boolean") return v;
+      const s = String(v ?? "").trim().toLowerCase();
+      return s === "true" || s === "1" || s === "yes" || s === "y";
+    };
     const headers = split(lines[0]);
     return lines.slice(1).filter(Boolean).map((l) => {
       const cells = split(l);
       const o: any = {};
       headers.forEach((h, i) => (o[h] = cells[i]));
       o.tier_level = Number(o.tier_level ?? 0);
+      o.display_order = o.display_order === undefined || o.display_order === ""
+        ? Number(o.tier_level ?? 0)
+        : Number(o.display_order);
       o.price = Number(o.price ?? 0);
       o.trial_days = Number(o.trial_days ?? 0);
       o.features = (o.features ?? "").split("|").map((s: string) => s.trim()).filter(Boolean);
+      if (o.is_active !== undefined) o.is_active = toBool(o.is_active);
+      if (o.is_default !== undefined) o.is_default = toBool(o.is_default);
+      if (o.urgent_service_included !== undefined)
+        o.urgent_service_included = toBool(o.urgent_service_included);
+      if (o.urgent_service_fee !== undefined && o.urgent_service_fee !== "")
+        o.urgent_service_fee = Number(o.urgent_service_fee);
+      if (o.icon === "") o.icon = null;
       return o;
     });
   };
@@ -143,16 +202,30 @@ export default function PlanFormModal({
           tier_level: Number(r.tier_level ?? 0),
           description: r.description ?? "",
           color_hex: r.color_hex ?? "#058c42",
-          display_order: Number(r.tier_level ?? 0),
-        });
+          display_order: Number(
+            r.display_order ?? r.tier_level ?? 0,
+          ),
+          is_default: r.is_default === true,
+          ...(r.icon !== undefined ? { icon: r.icon } : {}),
+          ...(r.is_active === false ? { is_active: false } : {}),
+        } as any);
         if (error) throw error;
         const { error: e2 } = await createPlanVersion({
           p_plan_id: data!.id,
           p_price: Number(r.price ?? 0),
+          p_currency: r.currency ?? "EUR",
           p_interval: (r.interval ?? "monthly") as any,
           p_trial_days: Number(r.trial_days ?? 0),
           p_features: Array.isArray(r.features) ? r.features : [],
           p_activate: true,
+          p_urgent_service_included:
+            r.urgent_service_included === undefined
+              ? true
+              : Boolean(r.urgent_service_included),
+          p_urgent_service_fee:
+            r.urgent_service_fee === undefined
+              ? 0
+              : Number(r.urgent_service_fee),
         });
         if (e2) throw e2;
         ok++;
