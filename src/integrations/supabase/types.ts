@@ -2459,6 +2459,15 @@ export type Database = {
           isSetofReturn: false
         }
       }
+      get_available_slots: {
+        Args: { _date: string; _mechanic_id?: string; _service_type_id: string }
+        Returns: {
+          end_time: string
+          mechanic_id: string
+          mechanic_name: string
+          start_time: string
+        }[]
+      }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]

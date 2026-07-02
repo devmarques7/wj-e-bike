@@ -324,125 +324,36 @@ export default function BookAppointmentDialog({
     setLoadingSlots(true);
     setSlot(null);
     try {
-      const dow = new Date(date + "T00:00:00").getDay();
-
-      // Fetch business hours, exceptions, staff schedules and appointments in parallel
-      const [bhRes, bheRes, ssRes, apptsRes] = await Promise.all([
-        supabase
-          .from("business_hours")
-          .select("*")
-          .eq("day_of_week", dow)
-          .lte("valid_from", date),
-        supabase
-          .from("business_hour_exceptions")
-          .select("*")
-          .eq("exception_date", date)
-          .maybeSingle(),
-        supabase
-          .from("staff_schedules")
-          .select("*")
-          .eq("day_of_week", dow)
-          .eq("is_working", true)
-          .lte("valid_from", date),
-        supabase
-          .from("appointments")
-          .select("assigned_mechanic_id, scheduled_start_time, duration_minutes")
-          .eq("scheduled_date", date)
-          .in("status", ["pending", "confirmed", "in_progress"]),
-      ]);
-
-      // Pick the latest valid business hours row that actually has open/close times.
-      // Falls back through older versions if the newest one was saved incomplete.
-      const validBh = (bhRes.data ?? [])
-        .filter((r: any) => !r.valid_until || r.valid_until >= date)
-        .sort((a: any, b: any) => (a.valid_from < b.valid_from ? 1 : -1))
-        .find((r: any) => r.is_open && r.open_time && r.close_time)
-        ?? (bhRes.data ?? [])
-          .filter((r: any) => !r.valid_until || r.valid_until >= date)
-          .sort((a: any, b: any) => (a.valid_from < b.valid_from ? 1 : -1))[0];
-      const bheData = bheRes.data;
-
-      let openTime: string | null = validBh?.open_time ?? null;
-      let closeTime: string | null = validBh?.close_time ?? null;
-      let workshopOpen = !!validBh?.is_open;
-      const buffer = validBh?.buffer_minutes ?? 15;
-
-      if (bheData) {
-        workshopOpen = !!bheData.is_open;
-        openTime = bheData.open_time ?? openTime;
-        closeTime = bheData.close_time ?? closeTime;
-      }
-
-      if (!workshopOpen || !openTime || !closeTime) {
-        setSlots([]);
-        return;
-      }
-
-      const validSs = (ssRes.data ?? []).filter(
-        (r: any) => !r.valid_until || r.valid_until >= date,
-      );
-      // Keep latest version per staff
-      const ssByStaff = new Map<string, any>();
-      for (const r of validSs) {
-        const prev = ssByStaff.get(r.staff_id);
-        if (!prev || prev.valid_from < r.valid_from) ssByStaff.set(r.staff_id, r);
-      }
-      const staffIds = Array.from(ssByStaff.keys());
-      if (staffIds.length === 0) {
-        setSlots([]);
-        return;
-      }
-
-      // Staff names (only call once we know there are working mechanics)
-      const { data: profs } = await supabase
-        .from("profiles")
-        .select("user_id, full_name")
-        .in("user_id", staffIds);
-      const nameMap = new Map<string, string>(
-        (profs ?? []).map((p: any) => [p.user_id, p.full_name ?? "Mecânico"]),
-      );
-
-      const busyByMech = new Map<string, Array<[number, number]>>();
-      (apptsRes.data ?? []).forEach((a: any) => {
-        if (!a.assigned_mechanic_id) return;
-        const s = toMinutes(a.scheduled_start_time);
-        const e = s + (a.duration_minutes ?? selectedService.duration_minutes);
-        const arr = busyByMech.get(a.assigned_mechanic_id) ?? [];
-        arr.push([s, e]);
-        busyByMech.set(a.assigned_mechanic_id, arr);
+      // Use SECURITY DEFINER RPC so customers (not just admin/staff) get
+      // real availability without hitting privacy-restricted tables directly.
+      const { data, error } = await supabase.rpc("get_available_slots", {
+        _date: date,
+        _service_type_id: selectedService.id,
+        _mechanic_id: null,
       });
-
+      if (error) throw error;
+      const rows = (data ?? []) as Array<{
+        start_time: string;
+        end_time: string;
+        mechanic_id: string;
+        mechanic_name: string | null;
+      }>;
+      const mechMap = new Map<string, string>();
+      rows.forEach((r) => {
+        if (!mechMap.has(r.mechanic_id))
+          mechMap.set(r.mechanic_id, r.mechanic_name ?? "Mecânico");
+      });
       setMechanicsList(
-        staffIds.map((id) => ({ id, name: nameMap.get(id) ?? "Mecânico" })),
+        Array.from(mechMap.entries()).map(([id, name]) => ({ id, name })),
       );
-
-      // 6. Generate slots: step = service duration + buffer, snapped to 15min
-      const dur = selectedService.duration_minutes;
-      const stepMin = 30;
-      const openM = toMinutes(openTime);
-      const closeM = toMinutes(closeTime);
-      const out: Slot[] = [];
-      for (let t = openM; t + dur <= closeM; t += stepMin) {
-        // collect every available mechanic for this time
-        for (const staffId of staffIds) {
-          const sched = ssByStaff.get(staffId);
-          const sStart = toMinutes(sched.start_time);
-          const sEnd = toMinutes(sched.end_time);
-          if (t < sStart || t + dur > sEnd) continue;
-          const busy = busyByMech.get(staffId) ?? [];
-          const overlaps = busy.some(
-            ([bs, be]) => Math.max(bs, t) < Math.min(be, t + dur + buffer),
-          );
-          if (overlaps) continue;
-          out.push({
-            start: fromMinutes(t),
-            end: fromMinutes(t + dur),
-            mechanicId: staffId,
-            mechanicName: nameMap.get(staffId) ?? "Mecânico",
-          });
-        }
-      }
-      setSlots(out);
+      setSlots(
+        rows.map((r) => ({
+          start: r.start_time,
+          end: r.end_time,
+          mechanicId: r.mechanic_id,
+          mechanicName: r.mechanic_name ?? "Mecânico",
+        })),
+      );
     } catch (e: any) {
       console.error("[book] slots error", e);
       toast.error("Falha ao calcular disponibilidade");
