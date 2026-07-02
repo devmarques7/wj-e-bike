@@ -126,6 +126,13 @@ export default function UrgentService() {
   };
 
   const handleContactAction = (option: typeof contactOptions[0]) => {
+    if (option.label === "Find Us") {
+      const mapSection = document.getElementById("map-section");
+      if (mapSection) {
+        mapSection.scrollIntoView({ behavior: "smooth", block: "start" });
+      }
+      return;
+    }
     if (option.href) {
       if (option.href.startsWith("tel:")) {
         window.location.href = option.href;
