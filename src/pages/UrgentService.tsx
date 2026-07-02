@@ -6,6 +6,7 @@ import { useNavigate } from "react-router-dom";
 import RoleDashboardLayout from "@/components/dashboard/RoleDashboardLayout";
 import PickItUpMap from "@/components/dashboard/PickItUpMap";
 import ServiceBooking from "@/components/dashboard/ServiceBooking";
+import PickupRequestForm from "@/components/dashboard/PickupRequestForm";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import {
   AlertDialog,
@@ -89,6 +90,7 @@ export default function UrgentService() {
   const navigate = useNavigate();
   const [expandedFaq, setExpandedFaq] = useState<number | null>(null);
   const [pickupRequested, setPickupRequested] = useState(false);
+  const [pickupOpen, setPickupOpen] = useState(false);
   const [repairNowOpen, setRepairNowOpen] = useState(false);
   const [repairNowConfirmed, setRepairNowConfirmed] = useState(false);
   const [locating, setLocating] = useState(false);
@@ -131,8 +133,7 @@ export default function UrgentService() {
         navigate(option.href);
       }
     } else {
-      setPickupRequested(true);
-      setTimeout(() => setPickupRequested(false), 3000);
+      setPickupOpen((v) => !v);
     }
   };
 
@@ -242,25 +243,49 @@ export default function UrgentService() {
             </h2>
             
             {contactOptions.map((option, index) => (
-              <motion.button
+              <motion.div
                 key={option.label}
                 initial={{ opacity: 0, x: -20 }}
                 animate={{ opacity: 1, x: 0 }}
                 transition={{ delay: index * 0.1 }}
-                onClick={() => handleContactAction(option)}
-                className="relative w-full p-4 rounded-2xl border transition-all duration-300 flex items-center gap-4 group overflow-hidden border-wj-green/20 bg-wj-green/5 hover:bg-wj-green/10 hover:border-wj-green/40"
               >
-                <div className="w-12 h-12 rounded-xl flex items-center justify-center transition-colors bg-wj-green/10 group-hover:bg-wj-green/20">
-                  <option.icon className="h-5 w-5 text-wj-green" />
-                </div>
-                <div className="flex-1 text-left">
-                  <p className="text-sm font-medium text-foreground">{option.label}</p>
-                  <p className="text-xs text-muted-foreground">{option.description}</p>
-                </div>
-                <span className="text-xs font-medium text-wj-green">
-                  {option.label === "Request Pickup" && pickupRequested ? "Requested ✓" : option.action}
-                </span>
-              </motion.button>
+                <button
+                  onClick={() => handleContactAction(option)}
+                  className={`relative w-full p-4 rounded-2xl border transition-all duration-300 flex items-center gap-4 group overflow-hidden ${
+                    option.label === "Request Pickup" && pickupOpen
+                      ? "border-wj-green/60 bg-wj-green/15"
+                      : "border-wj-green/20 bg-wj-green/5 hover:bg-wj-green/10 hover:border-wj-green/40"
+                  }`}
+                >
+                  <div className="w-12 h-12 rounded-xl flex items-center justify-center transition-colors bg-wj-green/10 group-hover:bg-wj-green/20">
+                    <option.icon className="h-5 w-5 text-wj-green" />
+                  </div>
+                  <div className="flex-1 text-left">
+                    <p className="text-sm font-medium text-foreground">{option.label}</p>
+                    <p className="text-xs text-muted-foreground">{option.description}</p>
+                  </div>
+                  <span className="text-xs font-medium text-wj-green">
+                    {option.label === "Request Pickup"
+                      ? pickupRequested
+                        ? "Requested ✓"
+                        : pickupOpen
+                          ? "Close"
+                          : option.action
+                      : option.action}
+                  </span>
+                </button>
+                <AnimatePresence initial={false}>
+                  {option.label === "Request Pickup" && pickupOpen && (
+                    <PickupRequestForm
+                      onSubmitted={() => {
+                        setPickupOpen(false);
+                        setPickupRequested(true);
+                        setTimeout(() => setPickupRequested(false), 4000);
+                      }}
+                    />
+                  )}
+                </AnimatePresence>
+              </motion.div>
             ))}
           </motion.div>
 
