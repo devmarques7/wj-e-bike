@@ -7,6 +7,7 @@ import { MeshGradient } from "@paper-design/shaders-react";
 
 export default function WalletCard() {
   const { user } = useAuth();
+  const { theme } = useTheme();
   const videoRef = useRef<HTMLVideoElement>(null);
 
   // Card visuals per plan slug (free is the default fallback for every member)
