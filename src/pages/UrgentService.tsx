@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { motion, AnimatePresence, useMotionValue, useTransform, animate } from "framer-motion";
 import { ChevronDown, Phone, MapPin, Truck, AlertTriangle, Zap, Loader2, ShieldCheck, LocateFixed } from "lucide-react";
 import { ArrowRight, CheckCircle } from "lucide-react";
@@ -96,6 +96,7 @@ export default function UrgentService() {
   const [distanceM, setDistanceM] = useState<number | null>(null);
   const [locError, setLocError] = useState<string | null>(null);
   const [bookingOpen, setBookingOpen] = useState(false);
+  const [permissionGranted, setPermissionGranted] = useState(false);
 
   // Swipe slider (only active once on-site)
   const swipeX = useMotionValue(0);
@@ -107,6 +108,10 @@ export default function UrgentService() {
   const resetSwipe = () => animate(swipeX, 0, { duration: 0.3, type: "spring", stiffness: 400, damping: 30 });
 
   const handleSwipeEnd = () => {
+    if (!onSite) {
+      resetSwipe();
+      return;
+    }
     if (swipeX.get() >= maxSwipe * 0.8) {
       animate(swipeX, maxSwipe, { duration: 0.2 });
       setBookingOpen(true);
@@ -131,10 +136,12 @@ export default function UrgentService() {
     }
   };
 
-  const analyzeLocation = () => {
+  const PERMISSION_KEY = "wj:location-permission";
+
+  const runGeolocation = (silent = false) => {
     setLocError(null);
     if (!("geolocation" in navigator)) {
-      setLocError("Geolocation is not supported on this device.");
+      if (!silent) setLocError("Geolocation is not supported on this device.");
       return;
     }
     setLocating(true);
@@ -148,21 +155,63 @@ export default function UrgentService() {
         const here = d <= ON_SITE_RADIUS_M;
         setOnSite(here);
         setLocating(false);
-        if (here) {
-          toast.success("On-site verified — Repair Now unlocked.");
-        } else {
-          toast.error("You're not at the workshop.", {
-            description: `You are ~${Math.round(d)}m from WJ HQ. Get within ${ON_SITE_RADIUS_M}m to unlock.`,
-          });
+        setPermissionGranted(true);
+        try {
+          localStorage.setItem(PERMISSION_KEY, "granted");
+        } catch {}
+        if (!silent) {
+          if (here) {
+            toast.success("On-site verified — Repair Now unlocked.");
+          } else {
+            toast.error("You're not at the workshop.", {
+              description: `You are ~${Math.round(d)}m from WJ HQ. Get within ${ON_SITE_RADIUS_M}m to unlock.`,
+            });
+          }
         }
       },
       (err) => {
         setLocating(false);
-        setLocError(err.message || "Unable to read your location.");
+        if (err.code === err.PERMISSION_DENIED) {
+          try { localStorage.removeItem(PERMISSION_KEY); } catch {}
+          setPermissionGranted(false);
+        }
+        if (!silent) setLocError(err.message || "Unable to read your location.");
       },
-      { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 },
+      { enableHighAccuracy: true, timeout: 10000, maximumAge: 60000 },
     );
   };
+
+  const analyzeLocation = () => runGeolocation(false);
+
+  useEffect(() => {
+    let cached = false;
+    try {
+      cached = localStorage.getItem(PERMISSION_KEY) === "granted";
+    } catch {}
+    if (!cached || !("geolocation" in navigator)) return;
+
+    if ("permissions" in navigator && (navigator as any).permissions?.query) {
+      (navigator as any).permissions
+        .query({ name: "geolocation" })
+        .then((status: PermissionStatus) => {
+          if (status.state === "granted") {
+            setPermissionGranted(true);
+            runGeolocation(true);
+          } else if (status.state === "denied") {
+            try { localStorage.removeItem(PERMISSION_KEY); } catch {}
+            setPermissionGranted(false);
+          }
+        })
+        .catch(() => {
+          setPermissionGranted(true);
+          runGeolocation(true);
+        });
+    } else {
+      setPermissionGranted(true);
+      runGeolocation(true);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const confirmRepairNow = () => {
     setRepairNowOpen(false);
@@ -245,11 +294,30 @@ export default function UrgentService() {
                     You must be physically present at the workshop to access this tool.
                   </p>
                 </div>
-                {onSite && (
-                  <span className="text-xs font-medium text-red-400 shrink-0">
-                    €{REPAIR_NOW_FEE} fee
-                  </span>
-                )}
+                <div className="shrink-0 flex flex-col items-end gap-1.5">
+                  {onSite ? (
+                    <>
+                      <span className="text-[11px] font-medium text-wj-green inline-flex items-center gap-1">
+                        <ShieldCheck className="h-3 w-3" /> Verified
+                      </span>
+                      <span className="text-[11px] font-medium text-red-400">
+                        €{REPAIR_NOW_FEE} fee
+                      </span>
+                    </>
+                  ) : (
+                    <button
+                      onClick={analyzeLocation}
+                      disabled={locating}
+                      className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg border border-wj-green/30 bg-wj-green/10 hover:bg-wj-green/20 text-[11px] text-wj-green transition-colors disabled:opacity-60"
+                    >
+                      {locating ? (
+                        <><Loader2 className="h-3 w-3 animate-spin" /> Analyzing…</>
+                      ) : (
+                        <><LocateFixed className="h-3 w-3" /> Analyze location</>
+                      )}
+                    </button>
+                  )}
+                </div>
               </div>
 
               <ul className="text-[11px] text-muted-foreground space-y-1.5 pl-1">
@@ -267,54 +335,53 @@ export default function UrgentService() {
                 </li>
               </ul>
 
-              {!onSite ? (
-                <button
-                  onClick={analyzeLocation}
-                  disabled={locating}
-                  className="w-full flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl border border-wj-green/30 bg-wj-green/10 hover:bg-wj-green/20 text-sm text-wj-green transition-colors disabled:opacity-60"
+              <motion.div
+                style={onSite ? { backgroundColor: swipeBg } : undefined}
+                className={`relative h-14 rounded-full border overflow-hidden transition-opacity ${
+                  onSite ? "border-red-500/40" : "border-border/30 bg-muted/10 opacity-60"
+                }`}
+              >
+                <motion.div
+                  style={onSite ? { opacity: swipeTextOpacity } : undefined}
+                  className="absolute inset-0 flex items-center justify-center pointer-events-none px-4"
                 >
-                  {locating ? (
-                    <><Loader2 className="h-4 w-4 animate-spin" /> Analyzing location…</>
-                  ) : (
-                    <><LocateFixed className="h-4 w-4" /> Analyze location</>
-                  )}
-                </button>
-              ) : (
-                <div className="space-y-2">
-                  <div className="flex items-center gap-2 text-[11px] text-wj-green">
-                    <ShieldCheck className="h-3.5 w-3.5" /> On-site verified · Repair Now unlocked
-                  </div>
-                  <motion.div
-                    style={{ backgroundColor: swipeBg }}
-                    className="relative h-14 rounded-full border border-red-500/40 overflow-hidden"
+                  <span
+                    className={`text-xs font-medium tracking-wide text-center ${
+                      onSite ? "text-red-400" : "text-muted-foreground"
+                    }`}
                   >
-                    <motion.div
-                      style={{ opacity: swipeTextOpacity }}
-                      className="absolute inset-0 flex items-center justify-center pointer-events-none"
-                    >
-                      <span className="text-xs text-red-400 font-medium tracking-wide">
-                        Slide to join the on-site queue · €{REPAIR_NOW_FEE}
-                      </span>
-                    </motion.div>
-                    <motion.div
-                      style={{ opacity: swipeCheckOpacity }}
-                      className="absolute inset-0 flex items-center justify-center pointer-events-none"
-                    >
-                      <CheckCircle className="h-5 w-5 text-red-400" />
-                    </motion.div>
-                    <motion.div
-                      drag="x"
-                      dragConstraints={{ left: 0, right: maxSwipe }}
-                      dragElastic={0}
-                      onDragEnd={handleSwipeEnd}
-                      style={{ x: swipeX }}
-                      className="absolute left-1 top-1 bottom-1 w-12 rounded-full bg-red-500 flex items-center justify-center cursor-grab active:cursor-grabbing shadow-lg shadow-red-500/30"
-                    >
-                      <ArrowRight className="h-5 w-5 text-background" />
-                    </motion.div>
+                    {onSite
+                      ? `Slide to join the on-site queue · €${REPAIR_NOW_FEE}`
+                      : permissionGranted
+                      ? "Get within range of the workshop to unlock"
+                      : "Verify your location to unlock this slider"}
+                  </span>
+                </motion.div>
+                {onSite && (
+                  <motion.div
+                    style={{ opacity: swipeCheckOpacity }}
+                    className="absolute inset-0 flex items-center justify-center pointer-events-none"
+                  >
+                    <CheckCircle className="h-5 w-5 text-red-400" />
                   </motion.div>
-                </div>
-              )}
+                )}
+                <motion.div
+                  drag={onSite ? "x" : false}
+                  dragConstraints={{ left: 0, right: maxSwipe }}
+                  dragElastic={0}
+                  onDragEnd={handleSwipeEnd}
+                  style={{ x: swipeX }}
+                  className={`absolute left-1 top-1 bottom-1 w-12 rounded-full flex items-center justify-center shadow-lg ${
+                    onSite
+                      ? "bg-red-500 cursor-grab active:cursor-grabbing shadow-red-500/30"
+                      : "bg-muted cursor-not-allowed shadow-none"
+                  }`}
+                >
+                  <ArrowRight
+                    className={`h-5 w-5 ${onSite ? "text-background" : "text-muted-foreground"}`}
+                  />
+                </motion.div>
+              </motion.div>
 
               {locError && (
                 <p className="text-[11px] text-red-400">{locError}</p>
