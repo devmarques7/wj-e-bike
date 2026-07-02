@@ -321,7 +321,7 @@ export default function ServiceRequestCard() {
                 className="absolute inset-0 flex items-center justify-center pointer-events-none"
               >
                 <span className="text-xs text-wj-green/70 font-medium tracking-wide">
-                  {faqMode ? "Slide for FAQ →" : "Slide to request →"}
+                  {faqMode ? "Slide for Urgency →" : "Slide to request →"}
                 </span>
               </motion.div>
               
