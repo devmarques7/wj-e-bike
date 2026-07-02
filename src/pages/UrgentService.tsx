@@ -95,6 +95,28 @@ export default function UrgentService() {
   const [onSite, setOnSite] = useState(false);
   const [distanceM, setDistanceM] = useState<number | null>(null);
   const [locError, setLocError] = useState<string | null>(null);
+  const [bookingOpen, setBookingOpen] = useState(false);
+
+  // Swipe slider (only active once on-site)
+  const swipeX = useMotionValue(0);
+  const maxSwipe = 240;
+  const swipeBg = useTransform(swipeX, [0, maxSwipe], ["rgba(239,68,68,0.08)", "rgba(239,68,68,0.28)"]);
+  const swipeTextOpacity = useTransform(swipeX, [0, maxSwipe * 0.5], [1, 0]);
+  const swipeCheckOpacity = useTransform(swipeX, [maxSwipe * 0.7, maxSwipe], [0, 1]);
+
+  const resetSwipe = () => animate(swipeX, 0, { duration: 0.3, type: "spring", stiffness: 400, damping: 30 });
+
+  const handleSwipeEnd = () => {
+    if (swipeX.get() >= maxSwipe * 0.8) {
+      animate(swipeX, maxSwipe, { duration: 0.2 });
+      setBookingOpen(true);
+      toast.success("You're in the on-site repair queue.", {
+        description: `€${REPAIR_NOW_FEE} fee will be added — pick your repair below.`,
+      });
+    } else {
+      resetSwipe();
+    }
+  };
 
   const handleContactAction = (option: typeof contactOptions[0]) => {
     if (option.href) {
@@ -245,29 +267,54 @@ export default function UrgentService() {
                 </li>
               </ul>
 
-              <div className="flex flex-col sm:flex-row gap-2">
+              {!onSite ? (
                 <button
                   onClick={analyzeLocation}
                   disabled={locating}
-                  className="flex-1 flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl border border-wj-green/30 bg-wj-green/10 hover:bg-wj-green/20 text-sm text-wj-green transition-colors disabled:opacity-60"
+                  className="w-full flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl border border-wj-green/30 bg-wj-green/10 hover:bg-wj-green/20 text-sm text-wj-green transition-colors disabled:opacity-60"
                 >
                   {locating ? (
                     <><Loader2 className="h-4 w-4 animate-spin" /> Analyzing location…</>
-                  ) : onSite ? (
-                    <><ShieldCheck className="h-4 w-4" /> On-site verified</>
                   ) : (
                     <><LocateFixed className="h-4 w-4" /> Analyze location</>
                   )}
                 </button>
-                <button
-                  onClick={() => setRepairNowOpen(true)}
-                  disabled={!onSite}
-                  className="flex-1 flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl border text-sm transition-colors disabled:cursor-not-allowed disabled:opacity-50 border-red-500/40 bg-red-500/10 hover:bg-red-500/20 text-red-400"
-                >
-                  <Zap className="h-4 w-4" />
-                  {repairNowConfirmed ? "In queue ✓" : `Repair Now · €${REPAIR_NOW_FEE}`}
-                </button>
-              </div>
+              ) : (
+                <div className="space-y-2">
+                  <div className="flex items-center gap-2 text-[11px] text-wj-green">
+                    <ShieldCheck className="h-3.5 w-3.5" /> On-site verified · Repair Now unlocked
+                  </div>
+                  <motion.div
+                    style={{ backgroundColor: swipeBg }}
+                    className="relative h-14 rounded-full border border-red-500/40 overflow-hidden"
+                  >
+                    <motion.div
+                      style={{ opacity: swipeTextOpacity }}
+                      className="absolute inset-0 flex items-center justify-center pointer-events-none"
+                    >
+                      <span className="text-xs text-red-400 font-medium tracking-wide">
+                        Slide to join the on-site queue · €{REPAIR_NOW_FEE}
+                      </span>
+                    </motion.div>
+                    <motion.div
+                      style={{ opacity: swipeCheckOpacity }}
+                      className="absolute inset-0 flex items-center justify-center pointer-events-none"
+                    >
+                      <CheckCircle className="h-5 w-5 text-red-400" />
+                    </motion.div>
+                    <motion.div
+                      drag="x"
+                      dragConstraints={{ left: 0, right: maxSwipe }}
+                      dragElastic={0}
+                      onDragEnd={handleSwipeEnd}
+                      style={{ x: swipeX }}
+                      className="absolute left-1 top-1 bottom-1 w-12 rounded-full bg-red-500 flex items-center justify-center cursor-grab active:cursor-grabbing shadow-lg shadow-red-500/30"
+                    >
+                      <ArrowRight className="h-5 w-5 text-background" />
+                    </motion.div>
+                  </motion.div>
+                </div>
+              )}
 
               {locError && (
                 <p className="text-[11px] text-red-400">{locError}</p>
