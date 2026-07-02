@@ -192,7 +192,7 @@ export default function MyWallet() {
         {/* Main grid: featured card + plan/actions */}
         <div className="grid grid-cols-1 lg:grid-cols-[1fr_1fr] gap-6 lg:items-stretch">
           {/* Left column — Featured member card */}
-          <div className="w-full pt-10" style={{ paddingTop: `${40 + Math.max(0, linkedBikes.length - 1) * 28}px` }}>
+          <div className="w-full overflow-visible" style={{ paddingTop: `${88 + Math.max(0, linkedBikes.length - 1) * 25}px` }}>
             <div className="relative w-full group">
             {/* Stacked back cards (one per non-active bike) — peek above the main card */}
             {linkedBikes.map((bike, i) => {
@@ -202,18 +202,18 @@ export default function MyWallet() {
                 .map((_, idx) => idx)
                 .filter((idx) => idx !== activeBikeIdx);
               const depth = stackOrder.indexOf(i); // 0 = closest to main
-              const peek = 24 + depth * 22; // px peeking above main card
+              const peek = 40 + depth * 25; // px peeking above main card
               const tierStyle = cardStyles[slug] ?? cardStyles.free;
               return (
                 <button
                   key={bike.id}
                   type="button"
                   onClick={(e) => { e.stopPropagation(); setActiveBikeIdx(i); setIsFlipped(false); }}
-                  className={`absolute left-0 right-0 aspect-[1.6/1] rounded-3xl overflow-hidden bg-gradient-to-br from-background to-secondary border border-border/60 shadow-xl transition-all duration-300 origin-top text-left hover:-translate-y-2 hover:shadow-[0_25px_60px_-12px_rgba(5,140,66,0.45)] hover:border-wj-green/60`}
+                  className={`absolute left-0 right-0 bottom-0 rounded-3xl overflow-hidden bg-gradient-to-br from-background to-secondary border border-border/60 shadow-xl transition-all duration-300 origin-top text-left hover:-translate-y-2 hover:shadow-[0_25px_60px_-12px_rgba(5,140,66,0.45)] hover:border-wj-green/60`}
                   style={{ top: `-${peek}px`, zIndex: 10 + depth }}
                   title={bike.model || bike.serial}
                 >
-                  <div className="h-full px-5 pt-3 pb-2 flex items-center justify-between">
+                  <div className="h-full px-5 pt-3 pb-2 flex items-start justify-between">
                     <div className="min-w-0">
                       <p className="text-[9px] uppercase tracking-[0.2em] text-muted-foreground font-medium">{t("e_pass.bike", { defaultValue: "Bike" })}</p>
                       <p className="text-foreground text-sm font-semibold truncate">{bike.model || t("e_pass.no_bike")}</p>
@@ -229,20 +229,20 @@ export default function MyWallet() {
             {/* Ghost stacked card (add new) — sits at the very top of the stack */}
             {(() => {
               const otherCount = Math.max(0, linkedBikes.length - 1);
-              const ghostTop = 40 + otherCount * 22;
+              const ghostTop = 80 + otherCount * 25;
               return (
                 <button
                   type="button"
                   onClick={() => setPickerOpen(true)}
                   disabled={!canLinkAnother}
                   title={canLinkAnother ? t("e_pass.add_bike_hint") : t("e_pass.no_other_bike")}
-                  className="absolute left-0 right-0 aspect-[1.6/1] rounded-3xl border-2 border-dashed border-border/50 bg-card/60 backdrop-blur-md flex flex-col items-center justify-center gap-2 text-muted-foreground transition-all duration-300 origin-top hover:-translate-y-2 hover:border-wj-green/60 hover:shadow-[0_25px_60px_-12px_rgba(5,140,66,0.45)] active:translate-y-[-2px] disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:translate-y-0 disabled:hover:border-border/50 disabled:hover:shadow-none disabled:hover:bg-card/60"
+                  className="absolute left-0 right-0 bottom-0 rounded-3xl border-2 border-dashed border-border/50 bg-card/60 backdrop-blur-md flex flex-col items-center justify-start gap-1.5 text-muted-foreground transition-all duration-300 origin-top pt-3 hover:-translate-y-2 hover:border-wj-green/60 hover:shadow-[0_25px_60px_-12px_rgba(5,140,66,0.45)] active:translate-y-[-2px] disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:translate-y-0 disabled:hover:border-border/50 disabled:hover:shadow-none disabled:hover:bg-card/60"
                   style={{ top: `-${ghostTop}px`, zIndex: 5 }}
                 >
-                  <div className="p-2.5 rounded-full bg-wj-green/10 border border-wj-green/30 transition-colors">
-                    <Plus className="h-6 w-6" />
+                  <div className="p-2 rounded-full bg-wj-green/10 border border-wj-green/30 transition-colors">
+                    <Plus className="h-5 w-5" />
                   </div>
-                  <span className="text-[11px] uppercase tracking-widest">{t("e_pass.add_bike_hint")}</span>
+                  <span className="text-[10px] uppercase tracking-widest">{t("e_pass.add_bike_hint")}</span>
                 </button>
               );
             })()}
