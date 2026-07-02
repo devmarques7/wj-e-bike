@@ -1,6 +1,6 @@
 import { motion } from "framer-motion";
 import { useAuth } from "@/contexts/AuthContext";
-import { useRef, useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useTheme } from "@/contexts/ThemeContext";
 import { MeshGradient } from "@paper-design/shaders-react";
