@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect } from "react";
 import { motion, useMotionValue, useTransform, animate } from "framer-motion";
-import { ArrowRight, Bike, CheckCircle, Lock, AlertTriangle, Loader2 } from "lucide-react";
+import { ArrowRight, Bike, CheckCircle, Lock, AlertTriangle, Loader2, HelpCircle } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
@@ -32,6 +32,11 @@ export default function ServiceRequestCard() {
   const [submitting, setSubmitting] = useState(false);
   const videoRef = useRef<HTMLVideoElement>(null);
   const constraintsRef = useRef(null);
+
+  // When the user has no linked bike, the card becomes a "FAQ shortcut":
+  // same visual as the urgent slider, but the swipe just routes to the
+  // urgent-service FAQ page (no appointment is created).
+  const faqMode = !user?.bikeId;
   
   const x = useMotionValue(0);
   const sliderWidth = 240;
@@ -150,7 +155,12 @@ export default function ServiceRequestCard() {
     const currentX = x.get();
     if (currentX >= maxDrag * 0.8) {
       animate(x, maxDrag, { duration: 0.2 });
-      setConfirmOpen(true);
+      if (faqMode) {
+        setIsCompleted(true);
+        setTimeout(() => navigate("/urgent-service"), 300);
+      } else {
+        setConfirmOpen(true);
+      }
     } else {
       animate(x, 0, { duration: 0.3, type: "spring", stiffness: 400, damping: 30 });
     }
@@ -210,20 +220,8 @@ export default function ServiceRequestCard() {
     }
   };
 
-  if (!user?.bikeId) {
-    return (
-      <div className="h-full rounded-3xl overflow-hidden border border-border/40 bg-card/30 backdrop-blur-md flex items-center justify-center min-h-[180px]">
-        <EmptyState
-          icon={Bike}
-          title="No urgent requests"
-          description="Link a bike to enable urgent service requests."
-        />
-      </div>
-    );
-  }
-
   // Plan does not include urgent service → show locked state with upgrade CTA.
-  if (!planLoading && !hasUrgentService) {
+  if (!faqMode && !planLoading && !hasUrgentService) {
     return (
       <div className="h-full relative">
         <div className="h-full rounded-3xl overflow-hidden border border-border/40 bg-card/30 backdrop-blur-md p-6 flex flex-col justify-between min-h-[180px]">
