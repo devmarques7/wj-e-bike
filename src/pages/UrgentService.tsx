@@ -1,9 +1,12 @@
 import { useState } from "react";
-import { motion, AnimatePresence } from "framer-motion";
+import { motion, AnimatePresence, useMotionValue, useTransform, animate } from "framer-motion";
 import { ChevronDown, Phone, MapPin, Truck, AlertTriangle, Zap, Loader2, ShieldCheck, LocateFixed } from "lucide-react";
+import { ArrowRight, CheckCircle } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import RoleDashboardLayout from "@/components/dashboard/RoleDashboardLayout";
 import PickItUpMap from "@/components/dashboard/PickItUpMap";
+import ServiceBooking from "@/components/dashboard/ServiceBooking";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import {
   AlertDialog,
   AlertDialogAction,
