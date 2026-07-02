@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import { MapPin, Navigation, Loader2, AlertTriangle, Phone, ExternalLink } from "lucide-react";
+import { MapPin, Navigation, Loader2, AlertTriangle, Phone, ExternalLink, Bike, Car } from "lucide-react";
 import { useGoogleMaps } from "@/hooks/useGoogleMaps";
 import { supabase } from "@/integrations/supabase/client";
 
@@ -36,6 +36,7 @@ export default function PickItUpMap() {
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [distanceInfo, setDistanceInfo] = useState<{ distance: string; duration: string } | null>(null);
+  const [travelMode, setTravelMode] = useState<"BICYCLING" | "DRIVING">("BICYCLING");
 
   // Load places
   useEffect(() => {
@@ -155,7 +156,7 @@ export default function PickItUpMap() {
       {
         origin: userLoc,
         destination: { lat: place.latitude, lng: place.longitude },
-        travelMode: google.maps.TravelMode.BICYCLING,
+        travelMode: google.maps.TravelMode[travelMode],
       },
       (res: any, status: string) => {
         if (status === "OK" && res) {
@@ -165,14 +166,15 @@ export default function PickItUpMap() {
         }
       }
     );
-  }, [ready, userLoc, selectedId, places]);
+  }, [ready, userLoc, selectedId, places, travelMode]);
 
   const openInMaps = () => {
     const place = places.find((p) => p.id === selectedId) ?? targetPlace;
     if (!place) return;
     const origin = userLoc ? `${userLoc.lat},${userLoc.lng}` : "";
     const dest = `${place.latitude},${place.longitude}`;
-    const url = `https://www.google.com/maps/dir/?api=1&origin=${origin}&destination=${dest}&travelmode=bicycling`;
+    const mode = travelMode === "DRIVING" ? "driving" : "bicycling";
+    const url = `https://www.google.com/maps/dir/?api=1&origin=${origin}&destination=${dest}&travelmode=${mode}`;
     window.open(url, "_blank");
   };
 
@@ -229,6 +231,42 @@ export default function PickItUpMap() {
             {error ? "Failed to load map" : <Loader2 className="h-5 w-5 animate-spin text-wj-green" />}
           </div>
         )}
+        {userLoc && selectedId && (
+          <div className="absolute top-3 left-3 flex items-center gap-1 p-1 rounded-full bg-background/80 backdrop-blur border border-wj-green/20 shadow-lg">
+            <button
+              onClick={() => setTravelMode("BICYCLING")}
+              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[11px] font-medium transition-colors ${
+                travelMode === "BICYCLING"
+                  ? "bg-wj-green/20 text-wj-green"
+                  : "text-muted-foreground hover:text-foreground"
+              }`}
+              title="Route by bike"
+            >
+              <Bike className="h-3.5 w-3.5" /> Bike
+            </button>
+            <button
+              onClick={() => setTravelMode("DRIVING")}
+              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[11px] font-medium transition-colors ${
+                travelMode === "DRIVING"
+                  ? "bg-wj-green/20 text-wj-green"
+                  : "text-muted-foreground hover:text-foreground"
+              }`}
+              title="Route by car"
+            >
+              <Car className="h-3.5 w-3.5" /> Car
+            </button>
+          </div>
+        )}
+        {userLoc && selectedId && distanceInfo && (
+          <div className="absolute bottom-3 left-3 px-3 py-2 rounded-xl bg-background/85 backdrop-blur border border-wj-green/20 shadow-lg">
+            <p className="text-[10px] uppercase tracking-wider text-muted-foreground">
+              {travelMode === "DRIVING" ? "By car" : "By bike"}
+            </p>
+            <p className="text-xs font-medium text-wj-green">
+              {distanceInfo.distance} · {distanceInfo.duration}
+            </p>
+          </div>
+        )}
       </div>
 
       {locError && (
@@ -254,7 +292,7 @@ export default function PickItUpMap() {
             <p className="text-xs text-muted-foreground truncate">{selectedPlace.address}</p>
             {distanceInfo && (
               <p className="text-[11px] text-wj-green mt-1">
-                {distanceInfo.distance} · ~{distanceInfo.duration} by bike
+                {distanceInfo.distance} · ~{distanceInfo.duration} by {travelMode === "DRIVING" ? "car" : "bike"}
               </p>
             )}
           </div>
