@@ -545,13 +545,15 @@ export default function BookAppointmentDialog({
             Novo Agendamento
           </DialogTitle>
           <DialogDescription className="text-xs">
-            Passo {step} de 3 — {step === 1 ? "Cliente & bicicleta" : step === 2 ? "Serviço" : "Data & horário"}
+            {hasPreset
+              ? `Passo ${step - 1} de 2 — ${step === 2 ? "Serviço" : "Data & horário"}`
+              : `Passo ${step} de 3 — ${step === 1 ? "Cliente & bicicleta" : step === 2 ? "Serviço" : "Data & horário"}`}
           </DialogDescription>
         </DialogHeader>
 
         {/* Stepper */}
         <div className="flex items-center gap-2 px-1">
-          {[1, 2, 3].map((s) => (
+          {(hasPreset ? [2, 3] : [1, 2, 3]).map((s) => (
             <div
               key={s}
               className={cn(
@@ -970,7 +972,7 @@ export default function BookAppointmentDialog({
         )}
 
         <DialogFooter className="gap-2 sm:gap-2">
-          {step > 1 && (
+          {step > 1 && !(hasPreset && step === 2) && (
             <Button
               variant="ghost"
               size="sm"
