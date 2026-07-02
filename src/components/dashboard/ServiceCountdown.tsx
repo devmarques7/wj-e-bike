@@ -162,58 +162,8 @@ export default function ServiceCountdown() {
     loadBikes();
   };
 
-  const openBooking = async (bike: Bike) => {
+  const openBooking = (bike: Bike) => {
     setBookingBike(bike);
-    setBookDate(toISODate(addDays(new Date(), 1)));
-    setBookTime("10:00");
-    setBookNotes("");
-    setBookServiceTypeId("");
-    const { data } = await supabase
-      .from("service_types")
-      .select("id, name, name_en, duration_minutes, display_order")
-      .eq("is_active", true)
-      .eq("is_emergency", false)
-      .order("display_order", { ascending: true });
-    const list = (data ?? []).map((s: any) => ({
-      id: s.id,
-      name: s.name_en || s.name,
-      duration_minutes: s.duration_minutes,
-    }));
-    setServiceTypes(list);
-    if (list[0]) setBookServiceTypeId(list[0].id);
-  };
-
-  const handleConfirmBooking = async () => {
-    if (!bookingBike || !user?.id) return;
-    if (!bookServiceTypeId || !bookDate || !bookTime) {
-      toast.error("Please fill service, date and time.");
-      return;
-    }
-    setBooking(true);
-    const st = serviceTypes.find((s) => s.id === bookServiceTypeId);
-    const duration = st?.duration_minutes ?? 60;
-    const [hh, mm] = bookTime.split(":").map((n) => parseInt(n, 10));
-    const endMinutes = hh * 60 + mm + duration;
-    const endHH = String(Math.floor(endMinutes / 60) % 24).padStart(2, "0");
-    const endMM = String(endMinutes % 60).padStart(2, "0");
-
-    const { error } = await supabase.from("appointments").insert({
-      user_id: user.id,
-      service_type_id: bookServiceTypeId,
-      scheduled_date: bookDate,
-      scheduled_start_time: `${bookTime}:00`,
-      scheduled_end_time: `${endHH}:${endMM}:00`,
-      duration_minutes: duration,
-      notes: bookNotes ? `[${bookingBike.model}] ${bookNotes}` : `[${bookingBike.model}]`,
-      booked_via: "service_countdown_slider",
-    });
-    setBooking(false);
-    if (error) {
-      toast.error(error.message);
-      return;
-    }
-    toast.success("Service booked");
-    setBookingBike(null);
   };
 
   // ---------- Empty state (no bikes registered) ----------
