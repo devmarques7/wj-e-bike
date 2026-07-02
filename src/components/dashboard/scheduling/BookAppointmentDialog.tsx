@@ -854,9 +854,9 @@ export default function BookAppointmentDialog({
               </Badge>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-[auto_1fr] gap-4 rounded-xl border border-border/30 bg-muted/10 p-3">
+            <div className="grid grid-cols-1 sm:grid-cols-[auto_1fr] gap-4 rounded-xl border border-border/30 bg-muted/10 p-3">
               {/* Calendar */}
-              <div className="flex justify-center md:justify-start">
+              <div className="flex justify-center sm:justify-start">
                 <Calendar
                   mode="single"
                   selected={date ? new Date(date + "T00:00:00") : undefined}
@@ -878,7 +878,7 @@ export default function BookAppointmentDialog({
                 />
               </div>
 
-              <Separator orientation="vertical" className="hidden md:block" />
+              <Separator orientation="vertical" className="hidden sm:block" />
 
               {/* Time slots */}
               <div className="flex flex-col min-w-0">
