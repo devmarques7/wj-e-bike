@@ -78,25 +78,6 @@ export default function WalletCard() {
   const slug = (resolvedSlug || "free").toLowerCase();
   const data = cardData[slug] ?? cardData.free;
 
-  useEffect(() => {
-    const video = videoRef.current;
-    if (!video) return;
-
-    const handleTimeUpdate = () => {
-      if (video.duration - video.currentTime < 0.5) {
-        video.style.opacity = "0";
-        setTimeout(() => {
-          video.currentTime = 0;
-          video.play();
-          video.style.opacity = "1";
-        }, 300);
-      }
-    };
-
-    video.addEventListener("timeupdate", handleTimeUpdate);
-    return () => video.removeEventListener("timeupdate", handleTimeUpdate);
-  }, []);
-
   return (
     <motion.div
       initial={{ opacity: 0, y: 20 }}
