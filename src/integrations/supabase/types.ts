@@ -1170,6 +1170,48 @@ export type Database = {
         }
         Relationships: []
       }
+      pickup_places: {
+        Row: {
+          address: string
+          created_at: string
+          id: string
+          is_active: boolean
+          is_headquarters: boolean
+          latitude: number
+          longitude: number
+          name: string
+          notes: string | null
+          phone: string | null
+          updated_at: string
+        }
+        Insert: {
+          address: string
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          is_headquarters?: boolean
+          latitude: number
+          longitude: number
+          name: string
+          notes?: string | null
+          phone?: string | null
+          updated_at?: string
+        }
+        Update: {
+          address?: string
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          is_headquarters?: boolean
+          latitude?: number
+          longitude?: number
+          name?: string
+          notes?: string | null
+          phone?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
       plan_versions: {
         Row: {
           created_at: string
