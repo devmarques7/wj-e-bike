@@ -389,34 +389,40 @@ export default function UrgentService() {
         </div>
       </div>
 
-      <AlertDialog open={repairNowOpen} onOpenChange={setRepairNowOpen}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle className="flex items-center gap-2">
-              <AlertTriangle className="h-5 w-5 text-red-400" />
-              Confirm on-site repair
-            </AlertDialogTitle>
-            <AlertDialogDescription className="space-y-2">
-              <span className="block">
-                <strong className="text-foreground">You must already be at one of our workshops</strong> to
-                use Repair Now. A mechanic will jump on your bike as soon as one is free.
-              </span>
-              <span className="block text-red-400">
-                This action has an extra-maintenance fee of <strong>€100</strong>.
-              </span>
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel>Cancel</AlertDialogCancel>
-            <AlertDialogAction
-              onClick={confirmRepairNow}
-              className="bg-red-500 hover:bg-red-600 text-white"
-            >
-              I'm on-site — start now
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
+      <Dialog
+        open={bookingOpen}
+        onOpenChange={(o) => {
+          setBookingOpen(o);
+          if (!o) resetSwipe();
+        }}
+      >
+        <DialogContent className="sm:max-w-lg p-0 overflow-hidden max-h-[90vh] overflow-y-auto">
+          <DialogHeader className="p-6 pb-2">
+            <DialogTitle className="flex items-center gap-2">
+              <Zap className="h-5 w-5 text-red-400" />
+              On-site repair — schedule your slot
+            </DialogTitle>
+            <DialogDescription>
+              You're in the queue. Pick the repair you need and a time — a €{REPAIR_NOW_FEE} on-site
+              fee will be added to your account.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="px-4 pb-4">
+            <ServiceBooking
+              preselectedServiceId="on-site-repair"
+              extraServiceTypes={[
+                {
+                  id: "on-site-repair",
+                  name: "On-site Repair Now",
+                  duration: "ASAP",
+                  price: `€${REPAIR_NOW_FEE}`,
+                },
+              ]}
+              lockServiceType
+            />
+          </div>
+        </DialogContent>
+      </Dialog>
     </RoleDashboardLayout>
   );
 }
