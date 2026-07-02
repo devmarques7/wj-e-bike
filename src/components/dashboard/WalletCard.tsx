@@ -10,11 +10,11 @@ export default function WalletCard() {
   const { theme } = useTheme();
 
   // Card visuals per plan slug (free is the default fallback for every member)
-  const cardData: Record<string, { tier: string; number: string; color: string }> = {
-    free:  { tier: "FREE",  number: "4532 •••• •••• 0000", color: "from-emerald-400 to-emerald-600" },
-    light: { tier: "LIGHT", number: "4532 •••• •••• 8901", color: "from-zinc-400 to-zinc-600" },
-    plus:  { tier: "PLUS",  number: "4532 •••• •••• 2847", color: "from-blue-400 to-blue-600" },
-    black: { tier: "BLACK", number: "4532 •••• •••• 1562", color: "from-amber-400 to-amber-600" },
+  const cardData: Record<string, { tier: string; number: string; color: string; outline: string }> = {
+    free:  { tier: "FREE",  number: "4532 •••• •••• 0000", color: "from-emerald-400 to-emerald-600", outline: "border-emerald-400 text-emerald-400" },
+    light: { tier: "LIGHT", number: "4532 •••• •••• 8901", color: "from-zinc-400 to-zinc-600", outline: "border-zinc-400 text-zinc-400" },
+    plus:  { tier: "PLUS",  number: "4532 •••• •••• 2847", color: "from-blue-400 to-blue-600", outline: "border-blue-400 text-blue-400" },
+    black: { tier: "BLACK", number: "4532 •••• •••• 1562", color: "from-amber-400 to-amber-600", outline: "border-amber-400 text-amber-400" },
   };
 
   // For demo users (light/plus/black mocks) use the tier directly.
@@ -107,7 +107,7 @@ export default function WalletCard() {
             <p className="text-[10px] uppercase tracking-[0.2em] text-white/50 font-medium">Member Card</p>
             <h3 className="text-sm font-semibold text-white tracking-tight">WJ Vision</h3>
           </div>
-          <div className={`px-2 py-0.5 rounded-full bg-gradient-to-r ${data.color} text-[9px] font-bold uppercase tracking-wider text-white`}>
+          <div className={`px-2 py-0.5 rounded-full border bg-transparent text-[9px] font-bold uppercase tracking-wider ${data.outline}`}>
             {data.tier}
           </div>
         </div>
