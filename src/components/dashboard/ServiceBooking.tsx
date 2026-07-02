@@ -9,16 +9,27 @@ const timeSlots = [
   "09:00", "10:00", "11:00", "13:00", "14:00", "15:00", "16:00"
 ];
 
-const serviceTypes = [
+const defaultServiceTypes = [
   { id: "spring-clean", name: "Spring Deep Clean", duration: "2-3 hours", price: "€49" },
   { id: "safety-audit", name: "Safety Audit", duration: "1-2 hours", price: "€29" },
   { id: "battery-check", name: "Battery Diagnostic", duration: "1 hour", price: "€19" },
   { id: "full-service", name: "Full Service", duration: "4-5 hours", price: "€89" },
 ];
 
-export default function ServiceBooking() {
+type ServiceBookingProps = {
+  preselectedServiceId?: string;
+  extraServiceTypes?: { id: string; name: string; duration: string; price: string }[];
+  lockServiceType?: boolean;
+};
+
+export default function ServiceBooking({
+  preselectedServiceId,
+  extraServiceTypes = [],
+  lockServiceType = false,
+}: ServiceBookingProps = {}) {
   const { user } = useAuth();
-  const [selectedService, setSelectedService] = useState<string | null>(null);
+  const serviceTypes = [...extraServiceTypes, ...defaultServiceTypes];
+  const [selectedService, setSelectedService] = useState<string | null>(preselectedServiceId ?? null);
   const [selectedDate, setSelectedDate] = useState<string | null>(null);
   const [selectedTime, setSelectedTime] = useState<string | null>(null);
   const [deliveryType, setDeliveryType] = useState<"dropoff" | "valet">("dropoff");
