@@ -151,6 +151,10 @@ export default function UrgentService() {
       }
       return;
     }
+    if (option.label === "Call Us") {
+      setCallOpen((v) => !v);
+      return;
+    }
     if (option.href) {
       if (option.href.startsWith("tel:")) {
         window.location.href = option.href;
