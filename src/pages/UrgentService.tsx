@@ -316,6 +316,45 @@ export default function UrgentService() {
                       }}
                     />
                   )}
+                  {option.label === "Call Us" && callOpen && (
+                    <motion.div
+                      initial={{ height: 0, opacity: 0 }}
+                      animate={{ height: "auto", opacity: 1 }}
+                      exit={{ height: 0, opacity: 0 }}
+                      transition={{ duration: 0.25 }}
+                      className="overflow-hidden pt-3"
+                    >
+                      <motion.div
+                        style={{ backgroundColor: callSwipeBg }}
+                        className="relative h-14 rounded-full border border-wj-green/40 overflow-hidden"
+                      >
+                        <motion.div
+                          style={{ opacity: callSwipeTextOpacity }}
+                          className="absolute inset-0 flex items-center justify-center pointer-events-none px-4"
+                        >
+                          <span className="text-xs font-medium tracking-wide text-center text-wj-green">
+                            Slide to call +31 20 123 4567
+                          </span>
+                        </motion.div>
+                        <motion.div
+                          style={{ opacity: callSwipeCheckOpacity }}
+                          className="absolute inset-0 flex items-center justify-center pointer-events-none"
+                        >
+                          <CheckCircle className="h-5 w-5 text-wj-green" />
+                        </motion.div>
+                        <motion.div
+                          drag="x"
+                          dragConstraints={{ left: 0, right: maxSwipe }}
+                          dragElastic={0}
+                          onDragEnd={handleCallSwipeEnd}
+                          style={{ x: callSwipeX }}
+                          className="absolute left-1 top-1 bottom-1 w-12 rounded-full bg-wj-green flex items-center justify-center shadow-lg cursor-grab active:cursor-grabbing shadow-wj-green/30"
+                        >
+                          <ArrowRight className="h-5 w-5 text-background" />
+                        </motion.div>
+                      </motion.div>
+                    </motion.div>
+                  )}
                 </AnimatePresence>
               </motion.div>
             ))}
