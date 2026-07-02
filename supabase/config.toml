@@ -26,3 +26,6 @@ verify_jwt = false
 
 [functions.admin-create-customer]
 verify_jwt = false
+
+[functions.compute-route]
+verify_jwt = false
