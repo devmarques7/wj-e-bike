@@ -209,16 +209,16 @@ export default function MyWallet() {
                   key={bike.id}
                   type="button"
                   onClick={(e) => { e.stopPropagation(); setActiveBikeIdx(i); setIsFlipped(false); }}
-                  className={`absolute left-0 right-0 bottom-0 rounded-3xl overflow-hidden bg-gradient-to-br from-background to-secondary border border-border/60 shadow-xl transition-all duration-300 origin-top text-left hover:-translate-y-2 hover:shadow-[0_25px_60px_-12px_rgba(5,140,66,0.45)] hover:border-wj-green/60`}
+                  className={`absolute left-0 right-0 bottom-0 rounded-3xl overflow-hidden bg-slate-100 border ${tierStyle.border} shadow-xl transition-all duration-300 origin-top text-left hover:-translate-y-2 hover:shadow-[0_25px_60px_-12px_rgba(5,140,66,0.45)] hover:border-wj-green/60`}
                   style={{ top: `-${peek}px`, zIndex: 10 + depth }}
                   title={bike.model || bike.serial}
                 >
-                  <div className="h-full px-5 pt-3 pb-2 flex items-start justify-between">
+                  <div className="h-full px-5 pt-3 pb-2 flex items-start justify-between text-slate-900">
                     <div className="min-w-0">
-                      <p className="text-[9px] uppercase tracking-[0.2em] text-muted-foreground font-medium">{t("e_pass.bike", { defaultValue: "Bike" })}</p>
-                      <p className="text-foreground text-sm font-semibold truncate">{bike.model || t("e_pass.no_bike")}</p>
+                      <p className="text-[9px] uppercase tracking-[0.2em] text-slate-500 font-medium">{t("e_pass.bike", { defaultValue: "Bike" })}</p>
+                      <p className="text-slate-900 text-sm font-semibold truncate">{bike.model || t("e_pass.no_bike")}</p>
                     </div>
-                    <div className={`px-2.5 py-0.5 rounded-full border ${tierStyle.border} ${tierStyle.text} text-[9px] font-bold uppercase tracking-wider bg-transparent`}>
+                    <div className={`px-2.5 py-0.5 rounded-full border ${tierStyle.border} text-slate-700 text-[9px] font-bold uppercase tracking-wider bg-transparent`}>
                       {currentPlan?.name ?? "Free"}
                     </div>
                   </div>
@@ -236,7 +236,7 @@ export default function MyWallet() {
                   onClick={() => setPickerOpen(true)}
                   disabled={!canLinkAnother}
                   title={canLinkAnother ? t("e_pass.add_bike_hint") : t("e_pass.no_other_bike")}
-                  className="absolute left-0 right-0 bottom-0 rounded-3xl border-2 border-dashed border-border/50 bg-card/60 backdrop-blur-md flex flex-col items-center justify-start gap-1.5 text-muted-foreground transition-all duration-300 origin-top pt-3 hover:-translate-y-2 hover:border-wj-green/60 hover:shadow-[0_25px_60px_-12px_rgba(5,140,66,0.45)] active:translate-y-[-2px] disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:translate-y-0 disabled:hover:border-border/50 disabled:hover:shadow-none disabled:hover:bg-card/60"
+                  className="absolute left-0 right-0 bottom-0 rounded-3xl border-2 border-dashed border-slate-300 bg-slate-100 flex flex-col items-center justify-start gap-1.5 text-slate-600 transition-all duration-300 origin-top pt-3 hover:-translate-y-2 hover:border-wj-green/60 hover:shadow-[0_25px_60px_-12px_rgba(5,140,66,0.45)] active:translate-y-[-2px] disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:translate-y-0 disabled:hover:border-slate-300 disabled:hover:shadow-none disabled:hover:bg-slate-100"
                   style={{ top: `-${ghostTop}px`, zIndex: 5 }}
                 >
                   <div className="p-2 rounded-full bg-wj-green/10 border border-wj-green/30 transition-colors">
