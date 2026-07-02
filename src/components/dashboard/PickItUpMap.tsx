@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import { MapPin, Loader2, AlertTriangle, Bike, Car } from "lucide-react";
+import { MapPin, Loader2, AlertTriangle, Bike, Car, Navigation2 } from "lucide-react";
 import { useGoogleMaps } from "@/hooks/useGoogleMaps";
 import { supabase } from "@/integrations/supabase/client";
 
@@ -37,6 +37,7 @@ export default function PickItUpMap() {
   const [loading, setLoading] = useState(true);
   const [distanceInfo, setDistanceInfo] = useState<{ distance: string; duration: string } | null>(null);
   const [travelMode, setTravelMode] = useState<"BICYCLING" | "DRIVING">("BICYCLING");
+  const [routeRequested, setRouteRequested] = useState(false);
 
   // Load places
   useEffect(() => {
@@ -62,6 +63,25 @@ export default function PickItUpMap() {
       { enableHighAccuracy: true, timeout: 8000 }
     );
   }, []);
+
+  const startRoute = () => {
+    setLocError(null);
+    // Force select HQ if available
+    const hq = places.find((p) => p.is_headquarters) ?? targetPlace;
+    if (hq) setSelectedId(hq.id);
+    if (!navigator.geolocation) {
+      setLocError("Geolocation is not available in this browser.");
+      return;
+    }
+    navigator.geolocation.getCurrentPosition(
+      (pos) => {
+        setUserLoc({ lat: pos.coords.latitude, lng: pos.coords.longitude });
+        setRouteRequested(true);
+      },
+      () => setLocError("We couldn't get your location to draw the route."),
+      { enableHighAccuracy: true, timeout: 8000 }
+    );
+  };
 
   // Nearest / only place logic
   const targetPlace = useMemo(() => {
@@ -255,6 +275,20 @@ export default function PickItUpMap() {
             >
               <Car className="h-3.5 w-3.5" /> Car
             </button>
+          </div>
+        )}
+        <button
+          onClick={startRoute}
+          className="absolute top-3 right-3 h-10 w-10 rounded-full bg-background/80 backdrop-blur border border-wj-green/30 hover:border-wj-green/60 hover:bg-wj-green/10 shadow-lg flex items-center justify-center text-wj-green transition-all"
+          title="Route to WJ HQ"
+          aria-label="Start route to WJ HQ"
+        >
+          <Navigation2 className="h-4 w-4" />
+        </button>
+        {distanceInfo && userLoc && selectedId && (
+          <div className="absolute bottom-3 left-3 px-3 py-1.5 rounded-full bg-background/80 backdrop-blur border border-wj-green/20 shadow-lg text-[11px] text-foreground">
+            <span className="text-wj-green font-medium">{distanceInfo.distance}</span>
+            <span className="text-muted-foreground"> • {distanceInfo.duration}</span>
           </div>
         )}
       </div>
