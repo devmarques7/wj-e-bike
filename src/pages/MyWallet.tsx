@@ -1,5 +1,5 @@
 import { motion } from "framer-motion";
-import { Wrench, Clock, Calendar, Plus, Check } from "lucide-react";
+import { Wrench, Clock, Calendar, Plus, Check, Star } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useEffect, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
@@ -420,9 +420,18 @@ export default function MyWallet() {
             </div>
 
             {/* Quick actions */}
-            <div className="flex-1 flex flex-col gap-3 min-h-0">
-              <div className="flex-1 min-h-0 rounded-2xl border border-border/50 bg-card/60 p-4 flex items-center gap-3">
-                <div className="w-10 h-10 rounded-xl bg-wj-green/10 flex items-center justify-center">
+            <div className="flex-1 grid grid-cols-2 gap-3 min-h-0">
+              <div className="rounded-2xl border border-border/50 bg-card/60 p-4 flex items-center gap-3 min-w-0">
+                <div className="w-10 h-10 rounded-xl bg-wj-green/10 flex items-center justify-center shrink-0">
+                  <Star className="h-5 w-5 text-wj-green" />
+                </div>
+                <div className="min-w-0">
+                  <p className="text-[10px] uppercase tracking-widest text-muted-foreground">{t("e_pass.total_points")}</p>
+                  <p className="text-sm font-semibold text-foreground truncate">{totalPoints}</p>
+                </div>
+              </div>
+              <div className="rounded-2xl border border-border/50 bg-card/60 p-4 flex items-center gap-3 min-w-0">
+                <div className="w-10 h-10 rounded-xl bg-wj-green/10 flex items-center justify-center shrink-0">
                   <Clock className="h-5 w-5 text-wj-green" />
                 </div>
                 <div className="min-w-0">
