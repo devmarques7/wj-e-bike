@@ -308,6 +308,15 @@ export default function PickItUpMap() {
             <span className="text-muted-foreground"> • {distanceInfo.duration}</span>
           </div>
         )}
+        {selectedPlace && (
+          <div className="absolute bottom-12 left-3 right-16 flex items-center gap-2 px-3 py-1.5 rounded-full bg-background/80 backdrop-blur border border-wj-green/20 shadow-lg text-[11px] text-foreground max-w-fit">
+            <MapPin className="h-3 w-3 text-wj-green shrink-0" />
+            <span className="text-wj-green font-medium uppercase tracking-wider text-[10px]">
+              {selectedPlace.is_headquarters ? "WJ HQ" : selectedPlace.name}
+            </span>
+            <span className="text-muted-foreground truncate">{selectedPlace.address}</span>
+          </div>
+        )}
       </div>
 
       {locError && (
