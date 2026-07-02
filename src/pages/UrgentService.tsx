@@ -1,8 +1,20 @@
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { ChevronDown, Phone, MapPin, Truck, AlertTriangle } from "lucide-react";
+import { ChevronDown, Phone, MapPin, Truck, AlertTriangle, Zap } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import RoleDashboardLayout from "@/components/dashboard/RoleDashboardLayout";
+import PickItUpMap from "@/components/dashboard/PickItUpMap";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import { toast } from "sonner";
 
 const faqs = [
   {
@@ -29,25 +41,36 @@ const faqs = [
 
 const contactOptions = [
   {
+    icon: Zap,
+    label: "Repair Now",
+    description: "Skip the line — you must be on-site",
+    action: "€100 fee",
+    href: null as string | null,
+    variant: "urgent" as const,
+  },
+  {
     icon: Phone,
     label: "Call Us",
     description: "Speak directly with our support team",
     action: "+31 20 123 4567",
-    href: "tel:+31201234567"
+    href: "tel:+31201234567",
+    variant: "default" as const,
   },
   {
     icon: Truck,
     label: "Request Pickup",
     description: "We'll come to you and pick up your bike",
     action: "Schedule Now",
-    href: null
+    href: null as string | null,
+    variant: "default" as const,
   },
   {
     icon: MapPin,
     label: "Find Us",
     description: "Visit your nearest service center",
     action: "View Locations",
-    href: "/find-store"
+    href: "/find-store",
+    variant: "default" as const,
   }
 ];
 
@@ -55,8 +78,14 @@ export default function UrgentService() {
   const navigate = useNavigate();
   const [expandedFaq, setExpandedFaq] = useState<number | null>(null);
   const [pickupRequested, setPickupRequested] = useState(false);
+  const [repairNowOpen, setRepairNowOpen] = useState(false);
+  const [repairNowConfirmed, setRepairNowConfirmed] = useState(false);
 
   const handleContactAction = (option: typeof contactOptions[0]) => {
+    if (option.label === "Repair Now") {
+      setRepairNowOpen(true);
+      return;
+    }
     if (option.href) {
       if (option.href.startsWith("tel:")) {
         window.location.href = option.href;
@@ -67,6 +96,15 @@ export default function UrgentService() {
       setPickupRequested(true);
       setTimeout(() => setPickupRequested(false), 3000);
     }
+  };
+
+  const confirmRepairNow = () => {
+    setRepairNowOpen(false);
+    setRepairNowConfirmed(true);
+    toast.success("You're in the on-site repair queue. A mechanic will call you shortly.", {
+      description: "€100 extra-maintenance fee will be added to your account.",
+    });
+    setTimeout(() => setRepairNowConfirmed(false), 5000);
   };
 
   return (
@@ -103,20 +141,54 @@ export default function UrgentService() {
                 animate={{ opacity: 1, x: 0 }}
                 transition={{ delay: index * 0.1 }}
                 onClick={() => handleContactAction(option)}
-                className="w-full p-4 rounded-2xl border border-wj-green/20 bg-wj-green/5 hover:bg-wj-green/10 hover:border-wj-green/40 transition-all duration-300 flex items-center gap-4 group"
+                className={`relative w-full p-4 rounded-2xl border transition-all duration-300 flex items-center gap-4 group overflow-hidden ${
+                  option.variant === "urgent"
+                    ? "border-red-500/40 bg-red-500/5 hover:bg-red-500/10 hover:border-red-500/60"
+                    : "border-wj-green/20 bg-wj-green/5 hover:bg-wj-green/10 hover:border-wj-green/40"
+                }`}
               >
-                <div className="w-12 h-12 rounded-xl bg-wj-green/10 flex items-center justify-center group-hover:bg-wj-green/20 transition-colors">
-                  <option.icon className="h-5 w-5 text-wj-green" />
+                {option.variant === "urgent" && (
+                  <span className="absolute top-2 right-2 text-[9px] uppercase tracking-wider text-red-400 flex items-center gap-1">
+                    <AlertTriangle className="h-3 w-3" /> On-site only
+                  </span>
+                )}
+                <div
+                  className={`w-12 h-12 rounded-xl flex items-center justify-center transition-colors ${
+                    option.variant === "urgent"
+                      ? "bg-red-500/10 group-hover:bg-red-500/20"
+                      : "bg-wj-green/10 group-hover:bg-wj-green/20"
+                  }`}
+                >
+                  <option.icon
+                    className={`h-5 w-5 ${option.variant === "urgent" ? "text-red-400" : "text-wj-green"}`}
+                  />
                 </div>
                 <div className="flex-1 text-left">
                   <p className="text-sm font-medium text-foreground">{option.label}</p>
                   <p className="text-xs text-muted-foreground">{option.description}</p>
                 </div>
-                <span className="text-xs text-wj-green font-medium">
-                  {option.label === "Request Pickup" && pickupRequested ? "Requested ✓" : option.action}
+                <span
+                  className={`text-xs font-medium ${
+                    option.variant === "urgent" ? "text-red-400" : "text-wj-green"
+                  }`}
+                >
+                  {option.label === "Request Pickup" && pickupRequested
+                    ? "Requested ✓"
+                    : option.label === "Repair Now" && repairNowConfirmed
+                    ? "In queue ✓"
+                    : option.action}
                 </span>
               </motion.button>
             ))}
+          </motion.div>
+
+          {/* Pick-It-Up Places Map */}
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.2 }}
+          >
+            <PickItUpMap />
           </motion.div>
 
           {/* FAQ Section */}
@@ -171,6 +243,35 @@ export default function UrgentService() {
           </motion.div>
         </div>
       </div>
+
+      <AlertDialog open={repairNowOpen} onOpenChange={setRepairNowOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle className="flex items-center gap-2">
+              <AlertTriangle className="h-5 w-5 text-red-400" />
+              Confirm on-site repair
+            </AlertDialogTitle>
+            <AlertDialogDescription className="space-y-2">
+              <span className="block">
+                <strong className="text-foreground">You must already be at one of our workshops</strong> to
+                use Repair Now. A mechanic will jump on your bike as soon as one is free.
+              </span>
+              <span className="block text-red-400">
+                This action has an extra-maintenance fee of <strong>€100</strong>.
+              </span>
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={confirmRepairNow}
+              className="bg-red-500 hover:bg-red-600 text-white"
+            >
+              I'm on-site — start now
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </RoleDashboardLayout>
   );
 }
