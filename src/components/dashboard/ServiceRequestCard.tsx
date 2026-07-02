@@ -157,7 +157,7 @@ export default function ServiceRequestCard() {
       animate(x, maxDrag, { duration: 0.2 });
       if (faqMode) {
         setIsCompleted(true);
-        setTimeout(() => navigate("/urgent-service"), 300);
+        setTimeout(() => navigate("/dashboard/urgent-service"), 300);
       } else {
         setConfirmOpen(true);
       }
@@ -207,7 +207,7 @@ export default function ServiceRequestCard() {
           : "Our team will contact you shortly.",
       });
       setConfirmOpen(false);
-      setTimeout(() => navigate("/urgent-service"), 600);
+      setTimeout(() => navigate("/dashboard/urgent-service"), 600);
     } catch (e: any) {
       toast({
         title: "Could not send request",
