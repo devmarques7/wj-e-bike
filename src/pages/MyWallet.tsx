@@ -420,9 +420,9 @@ export default function MyWallet() {
             </div>
 
             {/* Quick actions */}
-            <div className="flex-1 flex flex-col gap-3 min-h-0">
+            <div className="flex flex-col md:flex-row gap-3 min-h-0">
               {/* Total points */}
-              <div className="rounded-3xl border border-border/40 bg-card/30 backdrop-blur-md p-4 flex items-center gap-3 min-w-0">
+              <div className="flex-1 rounded-3xl border border-border/40 bg-card/30 backdrop-blur-md p-4 flex items-center gap-3 min-w-0">
                 <div className="w-10 h-10 rounded-xl bg-wj-green/10 flex items-center justify-center shrink-0">
                   <Bike className="h-5 w-5 text-wj-green" />
                 </div>
@@ -432,7 +432,7 @@ export default function MyWallet() {
                 </div>
               </div>
               {/* Next maintenance */}
-              <div className="rounded-3xl border border-border/40 bg-card/30 backdrop-blur-md p-4 flex items-center gap-3 min-w-0">
+              <div className="flex-1 rounded-3xl border border-border/40 bg-card/30 backdrop-blur-md p-4 flex items-center gap-3 min-w-0">
                 <div className="w-10 h-10 rounded-xl bg-wj-green/10 flex items-center justify-center shrink-0">
                   <Clock className="h-5 w-5 text-wj-green" />
                 </div>
