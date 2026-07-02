@@ -26,10 +26,10 @@ function haversineKm(a: { lat: number; lng: number }, b: { lat: number; lng: num
 }
 
 export default function PickItUpMap() {
-  const { ready, error, hasKey } = useGoogleMaps(["places"]);
+  const { ready, error, hasKey } = useGoogleMaps(["places", "geometry"]);
   const mapRef = useRef<HTMLDivElement | null>(null);
   const mapInstance = useRef<any>(null);
-  const directionsRenderer = useRef<any>(null);
+  const routePolyline = useRef<any>(null);
   const [places, setPlaces] = useState<PickupPlace[]>([]);
   const [userLoc, setUserLoc] = useState<{ lat: number; lng: number } | null>(null);
   const [locError, setLocError] = useState<string | null>(null);
@@ -164,28 +164,45 @@ export default function PickItUpMap() {
     const place = places.find((p) => p.id === selectedId);
     if (!place) return;
     const google = (window as any).google;
-    if (!directionsRenderer.current) {
-      directionsRenderer.current = new google.maps.DirectionsRenderer({
-        suppressMarkers: true,
-        polylineOptions: { strokeColor: "#058c42", strokeWeight: 4, strokeOpacity: 0.9 },
-      });
-      directionsRenderer.current.setMap(mapInstance.current);
-    }
-    const svc = new google.maps.DirectionsService();
-    svc.route(
-      {
-        origin: userLoc,
-        destination: { lat: place.latitude, lng: place.longitude },
-        travelMode: google.maps.TravelMode[travelMode],
-      },
-      (res: any, status: string) => {
-        if (status === "OK" && res) {
-          directionsRenderer.current.setDirections(res);
-          const leg = res.routes[0]?.legs[0];
-          if (leg) setDistanceInfo({ distance: leg.distance.text, duration: leg.duration.text });
+    let cancelled = false;
+    (async () => {
+      try {
+        const { data, error: fnError } = await supabase.functions.invoke("compute-route", {
+          body: {
+            origin: userLoc,
+            destination: { lat: place.latitude, lng: place.longitude },
+            travelMode,
+          },
+        });
+        if (cancelled) return;
+        if (fnError || !data?.polyline) {
+          console.error("compute-route failed", fnError, data);
+          return;
         }
+        const path = google.maps.geometry.encoding.decodePath(data.polyline);
+        if (routePolyline.current) routePolyline.current.setMap(null);
+        routePolyline.current = new google.maps.Polyline({
+          path,
+          strokeColor: "#058c42",
+          strokeWeight: 5,
+          strokeOpacity: 0.95,
+          map: mapInstance.current,
+        });
+        // Fit bounds to route
+        const bounds = new google.maps.LatLngBounds();
+        path.forEach((pt: any) => bounds.extend(pt));
+        mapInstance.current.fitBounds(bounds, 60);
+        const distKm = (data.distanceMeters / 1000).toFixed(1);
+        const durSec = parseInt(String(data.duration).replace("s", ""), 10);
+        const durMin = Math.round(durSec / 60);
+        setDistanceInfo({ distance: `${distKm} km`, duration: `${durMin} min` });
+      } catch (e) {
+        console.error("compute-route error", e);
       }
-    );
+    })();
+    return () => {
+      cancelled = true;
+    };
   }, [ready, userLoc, selectedId, places, travelMode]);
 
   const openInMaps = () => {
