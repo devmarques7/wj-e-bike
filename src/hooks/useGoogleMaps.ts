@@ -47,9 +47,11 @@ function loadGoogleMaps(apiKey: string, libraries: string[]): Promise<any> {
 }
 
 export function useGoogleMaps(libraries: string[] = ["places", "marker"]) {
-  const [ready, setReady] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const [hasKey, setHasKey] = useState(true);
+  const [state, setState] = useState<{ ready: boolean; error: string | null; hasKey: boolean }>({
+    ready: false,
+    error: null,
+    hasKey: true,
+  });
 
   useEffect(() => {
     let cancelled = false;
@@ -57,16 +59,16 @@ export function useGoogleMaps(libraries: string[] = ["places", "marker"]) {
       .then((key) => {
         if (cancelled) return;
         if (!key) {
-          setHasKey(false);
-          setError("missing_api_key");
+          setState((s) => ({ ...s, hasKey: false, error: "missing_api_key" }));
           return;
         }
         return loadGoogleMaps(key, libraries).then(() => {
-          if (!cancelled) setReady(true);
+          if (!cancelled) setState((s) => ({ ...s, ready: true }));
         });
       })
       .catch((e) => {
-        if (!cancelled) setError(e.message ?? "load_failed");
+        if (!cancelled)
+          setState((s) => ({ ...s, error: e?.message ?? "load_failed" }));
       });
     return () => {
       cancelled = true;
@@ -74,5 +76,5 @@ export function useGoogleMaps(libraries: string[] = ["places", "marker"]) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  return { ready, error, hasKey };
+  return state;
 }
