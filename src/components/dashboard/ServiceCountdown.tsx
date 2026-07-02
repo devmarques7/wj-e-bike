@@ -420,7 +420,11 @@ function BikeServiceCard({
     const currentX = x.get();
     if (currentX >= maxDrag * 0.8) {
       animate(x, maxDrag, { duration: 0.2 });
-      setTimeout(() => onBook(), 400);
+      setTimeout(() => {
+        onBook();
+        // Reset slider back to the initial position after opening the modal
+        animate(x, 0, { duration: 0.4, type: "spring", stiffness: 300, damping: 30 });
+      }, 400);
     } else {
       animate(x, 0, { duration: 0.3, type: "spring", stiffness: 400, damping: 30 });
     }
