@@ -145,7 +145,7 @@ export default function RevisionHistoryTable() {
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.2 }}
-        className="rounded-3xl border border-border/50 bg-card/50 backdrop-blur-md overflow-hidden"
+        className="rounded-3xl border border-border/50 bg-card/50 backdrop-blur-md overflow-hidden h-full flex flex-col"
       >
         {/* Header */}
         <div className="p-4 lg:p-6 border-b border-border/50">
@@ -160,22 +160,25 @@ export default function RevisionHistoryTable() {
           </div>
         </div>
 
-        {/* Desktop Table - Hidden on mobile */}
+        {/* Content area - fills remaining height */}
+        <div className="flex-1 min-h-0 flex flex-col">
         {loading ? (
-          <div className="flex items-center justify-center gap-2 py-12 text-sm text-muted-foreground">
+          <div className="flex-1 flex items-center justify-center gap-2 text-sm text-muted-foreground">
             <Loader2 className="h-4 w-4 animate-spin" /> Loading appointments…
           </div>
         ) : records.length === 0 ? (
-          <EmptyState
-            icon={Wrench}
-            title="No appointments yet"
-            description="Book a service and it will appear here in real time."
-            className="min-h-[220px]"
-          />
+          <div className="flex-1 flex items-center justify-center">
+            <EmptyState
+              icon={Wrench}
+              title="No appointments yet"
+              description="Book a service and it will appear here in real time."
+              className="min-h-[220px]"
+            />
+          </div>
         ) : (
         <>
-        <div className="hidden md:block overflow-auto max-h-[420px] xl:max-h-[480px]">
-          <Table>
+        <div className="hidden md:block overflow-auto h-full">
+          <Table className="h-full">
             <TableHeader className="sticky top-0 z-10 bg-card/95 backdrop-blur-md">
               <TableRow className="border-border/50 hover:bg-transparent">
                 <TableHead className="text-muted-foreground text-xs uppercase tracking-wider">Bike</TableHead>
@@ -262,7 +265,7 @@ export default function RevisionHistoryTable() {
         </div>
 
         {/* Mobile/Tablet Cards - Expandable rows */}
-        <div className="md:hidden divide-y divide-border/30 overflow-y-auto max-h-[60vh]">
+        <div className="md:hidden divide-y divide-border/30 overflow-y-auto h-full">
           {records.map((item, index) => {
             const status = statusConfig[item.status as keyof typeof statusConfig];
             const healthTag = getHealthTag(item.health);
@@ -365,6 +368,7 @@ export default function RevisionHistoryTable() {
         </div>
         </>
         )}
+        </div>
 
         {/* Details Modal */}
         <Dialog open={!!selectedRevision} onOpenChange={() => setSelectedRevision(null)}>
