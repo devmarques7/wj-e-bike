@@ -2,9 +2,11 @@
 
 import { useState, useEffect, useRef } from "react";
 import { createPortal } from "react-dom";
-import { MapPin, ArrowUpRight, GripVertical } from "lucide-react";
+import { MapPin, ArrowUpRight, GripVertical, X } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { cn } from "@/lib/utils";
+import { useSystemStatus, formatCountdown } from "@/hooks/useSystemStatus";
+import { useNavigate } from "react-router-dom";
 
 interface LocationTagProps {
   city?: string;
@@ -25,6 +27,10 @@ export function LocationTag({
   const [isHovered, setIsHovered] = useState(false);
   const [showTime, setShowTime] = useState(false);
   const [currentTime, setCurrentTime] = useState("");
+  const [now, setNow] = useState(Date.now());
+  const [rotationIdx, setRotationIdx] = useState(0);
+  const { statuses, dismissStatus } = useSystemStatus();
+  const navigate = useNavigate();
   const elRef = useRef<HTMLDivElement>(null);
   const [bounds, setBounds] = useState({ left: 0, top: 0, right: 0, bottom: 0 });
   const [pos, setPos] = useState<{ x: number; y: number } | null>(null);
@@ -98,7 +104,47 @@ export function LocationTag({
     return () => clearInterval(swap);
   }, []);
 
-  const displayTime = isHovered || showTime;
+  // Rotate through statuses + base slot every 6s
+  useEffect(() => {
+    if (statuses.length === 0) return;
+    const t = setInterval(() => {
+      setRotationIdx((i) => (i + 1) % (statuses.length + 1));
+    }, 6000);
+    return () => clearInterval(t);
+  }, [statuses.length]);
+
+  // Live tick for countdowns
+  useEffect(() => {
+    if (!statuses.some((s) => s.countdownTo)) return;
+    const t = setInterval(() => setNow(Date.now()), 1000);
+    return () => clearInterval(t);
+  }, [statuses]);
+
+  const activeStatus =
+    statuses.length > 0 && rotationIdx < statuses.length
+      ? statuses[rotationIdx]
+      : null;
+  const displayTime = !activeStatus && (isHovered || showTime);
+
+  const toneClasses: Record<string, string> = {
+    info: "border-wj-green/40 text-foreground",
+    success: "border-wj-green/60 text-wj-green",
+    warning: "border-amber-400/50 text-amber-300",
+    urgent: "border-red-500/60 text-red-300",
+  };
+  const toneDot: Record<string, string> = {
+    info: "bg-wj-green",
+    success: "bg-wj-green",
+    warning: "bg-amber-400",
+    urgent: "bg-red-500",
+  };
+  const StatusIcon = activeStatus?.icon;
+
+  const handleActivate = () => {
+    if (!activeStatus) return;
+    if (activeStatus.onClick) activeStatus.onClick();
+    else if (activeStatus.href) navigate(activeStatus.href);
+  };
 
   if (typeof document === "undefined") return null;
 
@@ -125,19 +171,61 @@ export function LocationTag({
       onMouseLeave={() => setIsHovered(false)}
       style={{ position: "fixed", left: 0, top: 0, touchAction: "none" }}
       className={cn(
-        "group z-[9999] hidden sm:flex items-center gap-2 rounded-full border border-border/40 bg-background/60 backdrop-blur px-3 py-1.5 shadow-lg shadow-black/10 transition-colors duration-500 hover:border-wj-green/40",
+        "group z-[9999] hidden sm:flex items-center gap-2 rounded-full border bg-background/60 backdrop-blur px-3 py-1.5 shadow-lg shadow-black/10 transition-colors duration-500",
+        activeStatus
+          ? toneClasses[activeStatus.tone ?? "info"]
+          : "border-border/40 hover:border-wj-green/40",
         dragging ? "cursor-grabbing" : "cursor-grab",
       )}
     >
       <GripVertical className="h-3 w-3 text-muted-foreground/60 -ml-1" />
       <span className="relative flex h-2 w-2">
-        <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-wj-green opacity-60" />
-        <span className="relative inline-flex h-2 w-2 rounded-full bg-wj-green" />
+        <span
+          className={cn(
+            "absolute inline-flex h-full w-full animate-ping rounded-full opacity-60",
+            activeStatus ? toneDot[activeStatus.tone ?? "info"] : "bg-wj-green",
+          )}
+        />
+        <span
+          className={cn(
+            "relative inline-flex h-2 w-2 rounded-full",
+            activeStatus ? toneDot[activeStatus.tone ?? "info"] : "bg-wj-green",
+          )}
+        />
       </span>
-      <MapPin className="h-3.5 w-3.5 text-muted-foreground" />
-      <div className="relative h-4 overflow-hidden min-w-[90px]">
+      {activeStatus && StatusIcon ? (
+        <StatusIcon className="h-3.5 w-3.5" />
+      ) : (
+        <MapPin className="h-3.5 w-3.5 text-muted-foreground" />
+      )}
+      <button
+        type="button"
+        onClick={(e) => {
+          if (dragging) return;
+          e.stopPropagation();
+          handleActivate();
+        }}
+        className="relative h-4 overflow-hidden min-w-[90px] max-w-[260px] text-left"
+        title={activeStatus?.detail}
+      >
         <AnimatePresence mode="wait" initial={false}>
-          {displayTime ? (
+          {activeStatus ? (
+            <motion.span
+              key={`status-${activeStatus.id}-${now - (now % 1000)}`}
+              initial={{ y: 12, opacity: 0 }}
+              animate={{ y: 0, opacity: 1 }}
+              exit={{ y: -12, opacity: 0 }}
+              transition={{ duration: 0.35 }}
+              className="absolute inset-0 text-xs font-medium truncate"
+            >
+              {activeStatus.label}
+              {activeStatus.countdownTo && (
+                <span className="ml-1.5 opacity-70 tabular-nums">
+                  · {formatCountdown(activeStatus.countdownTo, now)}
+                </span>
+              )}
+            </motion.span>
+          ) : displayTime ? (
             <motion.span
               key="time"
               initial={{ y: 12, opacity: 0 }}
@@ -161,8 +249,22 @@ export function LocationTag({
             </motion.span>
           )}
         </AnimatePresence>
-      </div>
-      <ArrowUpRight className="h-3 w-3 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity" />
+      </button>
+      {activeStatus ? (
+        <button
+          type="button"
+          onClick={(e) => {
+            e.stopPropagation();
+            dismissStatus(activeStatus.id);
+          }}
+          className="text-muted-foreground/70 hover:text-foreground transition-colors"
+          aria-label="Dismiss"
+        >
+          <X className="h-3 w-3" />
+        </button>
+      ) : (
+        <ArrowUpRight className="h-3 w-3 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity" />
+      )}
     </motion.div>,
     document.body,
   );
