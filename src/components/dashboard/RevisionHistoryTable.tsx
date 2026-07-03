@@ -265,7 +265,7 @@ export default function RevisionHistoryTable() {
         </div>
 
         {/* Mobile/Tablet Cards - Expandable rows */}
-        <div className="md:hidden divide-y divide-border/30 overflow-y-auto max-h-[60vh]">
+        <div className="md:hidden divide-y divide-border/30 overflow-y-auto h-full">
           {records.map((item, index) => {
             const status = statusConfig[item.status as keyof typeof statusConfig];
             const healthTag = getHealthTag(item.health);
