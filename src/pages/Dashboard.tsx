@@ -52,9 +52,9 @@ export default function Dashboard() {
         </div>
 
         {/* Revision History + Accessory Carousel */}
-        <div className="grid grid-cols-12 gap-4 lg:gap-6">
+        <div className="grid grid-cols-12 gap-4 lg:gap-6 lg:h-[420px] xl:h-[480px]">
           {/* Table - 8 columns */}
-          <div className="col-span-12 lg:col-span-8">
+          <div className="col-span-12 lg:col-span-8 h-full">
             <RevisionHistoryTable />
           </div>
           
