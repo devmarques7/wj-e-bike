@@ -95,6 +95,8 @@ interface AppointmentsTableCardProps {
   title?: string;
   /** Restrict the table to appointments assigned to this mechanic id. */
   mineOnlyMechanicId?: string;
+  /** Customer view: scope to this user's appointments and force read-only. */
+  customerUserId?: string;
 }
 
 /**
@@ -106,8 +108,11 @@ export default function AppointmentsTableCard({
   readOnly = false,
   title,
   mineOnlyMechanicId,
+  customerUserId,
 }: AppointmentsTableCardProps) {
   const { t, i18n } = useTranslation();
+  const isCustomer = !!customerUserId;
+  const effectiveReadOnly = readOnly || isCustomer;
   const [activeTab, setActiveTab] = useState("day");
   const [statusFilter, setStatusFilter] = useState<
     "all" | "pending" | "ongoing" | "completed"
@@ -131,7 +136,7 @@ export default function AppointmentsTableCard({
     cancelAppointment,
     deleteAppointment,
     refetch,
-  } = useSchedulingData();
+  } = useSchedulingData({ customerUserId });
 
   const activeAppointment =
     appointments.find((a) => a.status === "in_progress" && a.work_started_at) ?? null;
@@ -281,7 +286,7 @@ export default function AppointmentsTableCard({
                   <TableHead className="text-muted-foreground text-[10px] uppercase tracking-wider font-medium">{t("workshop.cols.service")}</TableHead>
                   <TableHead className="text-muted-foreground text-[10px] uppercase tracking-wider font-medium">{t("workshop.cols.mechanic")}</TableHead>
                   <TableHead className="text-muted-foreground text-[10px] uppercase tracking-wider font-medium">{t("workshop.cols.status")}</TableHead>
-                  {!readOnly && (
+                  {!effectiveReadOnly && (
                     <TableHead className="text-muted-foreground text-[10px] uppercase tracking-wider font-medium text-right w-[80px]">
                       {t("workshop.cols.actions")}
                     </TableHead>
@@ -296,7 +301,7 @@ export default function AppointmentsTableCard({
                         className="border-border/30 bg-muted/20 hover:bg-muted/30 cursor-pointer"
                         onClick={() => toggleGroup(group.key)}
                       >
-                        <TableCell colSpan={readOnly ? 6 : 7} className="py-2">
+                        <TableCell colSpan={effectiveReadOnly ? 6 : 7} className="py-2">
                           <div className="flex items-center gap-2 text-xs">
                             {collapsedGroups[group.key] ? (
                               <ChevronRight className="h-3.5 w-3.5 text-muted-foreground" />
@@ -318,7 +323,8 @@ export default function AppointmentsTableCard({
                       group.items.map((apt) => (
                         <TableRow
                           key={apt.id}
-                          className="border-border/20 hover:bg-muted/30 transition-colors"
+                          className={`border-border/20 hover:bg-muted/30 transition-colors ${isCustomer ? "cursor-pointer" : ""}`}
+                          onClick={isCustomer ? () => setReviewTarget(apt) : undefined}
                         >
                           <TableCell className="text-xs font-medium align-middle">
                             <div className="flex items-center gap-1.5">
@@ -330,6 +336,14 @@ export default function AppointmentsTableCard({
                                 <Badge className="text-[9px] h-4 px-1.5 bg-red-500/15 text-red-400 border-red-500/30">SOS</Badge>
                               )}
                             </div>
+                            {isCustomer && (
+                              <span className="block text-[10px] text-muted-foreground/70 tabular-nums">
+                                {new Date(apt.scheduled_date).toLocaleDateString(
+                                  i18n.language === "pt" ? "pt-PT" : "en-GB",
+                                  { day: "2-digit", month: "short" },
+                                )}
+                              </span>
+                            )}
                             {apt.duration_minutes ? (
                               <span className="text-[10px] text-muted-foreground/60 tabular-nums">
                                 {apt.duration_minutes}
@@ -434,7 +448,7 @@ export default function AppointmentsTableCard({
                               </Tooltip>
                             </TooltipProvider>
                           </TableCell>
-                          {!readOnly && (
+                          {!effectiveReadOnly && (
                             <TableCell className="text-right align-middle">
                               <AppointmentActionsMenu
                                 appointment={apt}
@@ -487,10 +501,12 @@ export default function AppointmentsTableCard({
         }}
       />
 
-      <FloatingActiveAppointment
-        appointment={activeAppointment}
-        onOpen={() => activeAppointment && setCompletionTarget(activeAppointment)}
-      />
+      {!isCustomer && (
+        <FloatingActiveAppointment
+          appointment={activeAppointment}
+          onOpen={() => activeAppointment && setCompletionTarget(activeAppointment)}
+        />
+      )}
     </>
   );
 }

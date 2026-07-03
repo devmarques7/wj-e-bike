@@ -4,7 +4,7 @@ import BikeShowcase from "@/components/dashboard/BikeShowcase";
 import ServiceRequestCard from "@/components/dashboard/ServiceRequestCard";
 import WalletCard from "@/components/dashboard/WalletCard";
 import ServiceCountdown from "@/components/dashboard/ServiceCountdown";
-import RevisionHistoryTable from "@/components/dashboard/RevisionHistoryTable";
+import AppointmentsTableCard from "@/components/dashboard/scheduling/AppointmentsTableCard";
 import AccessoryCarousel from "@/components/dashboard/AccessoryCarousel";
 import { useAuth } from "@/contexts/AuthContext";
 import { Navigate } from "react-router-dom";
@@ -55,7 +55,9 @@ export default function Dashboard() {
         <div className="grid grid-cols-12 gap-4 lg:gap-6 lg:h-[420px] xl:h-[480px]">
           {/* Table - 8 columns */}
           <div className="col-span-12 lg:col-span-8 h-full">
-            <RevisionHistoryTable />
+            {user?.id ? (
+              <AppointmentsTableCard customerUserId={user.id} />
+            ) : null}
           </div>
           
           {/* Accessory Carousel - 4 columns */}

@@ -108,8 +108,9 @@ function pickLatestPerDay(rows: BusinessHour[]): BusinessHour[] {
 /* Hook                                                               */
 /* ------------------------------------------------------------------ */
 
-export function useSchedulingData(opts?: { date?: string }) {
+export function useSchedulingData(opts?: { date?: string; customerUserId?: string }) {
   const date = opts?.date ?? todayISO();
+  const customerUserId = opts?.customerUserId ?? null;
 
   const [businessHours, setBusinessHours] = useState<BusinessHour[]>([]);
   const [exceptions, setExceptions] = useState<BusinessHourException[]>([]);
@@ -133,19 +134,21 @@ export function useSchedulingData(opts?: { date?: string }) {
           .select("*")
           .eq("is_active", true)
           .order("display_order", { ascending: true }),
-        supabase.from("user_roles").select("user_id").eq("role", "staff"),
+        customerUserId
+          ? Promise.resolve({ data: [] as any[], error: null })
+          : supabase.from("user_roles").select("user_id").eq("role", "staff"),
       ]);
 
       if (bhRes.error) throw bhRes.error;
       if (exRes.error) throw exRes.error;
       if (stRes.error) throw stRes.error;
-      if (rolesRes.error) throw rolesRes.error;
+      if ((rolesRes as any).error) throw (rolesRes as any).error;
 
       setBusinessHours(pickLatestPerDay((bhRes.data ?? []) as BusinessHour[]));
       setExceptions((exRes.data ?? []) as BusinessHourException[]);
       setServiceTypes((stRes.data ?? []) as ServiceType[]);
 
-      const staffIds = (rolesRes.data ?? []).map((r) => r.user_id);
+      const staffIds = ((rolesRes as any).data ?? []).map((r: any) => r.user_id);
       let mechs: Mechanic[] = [];
       if (staffIds.length) {
         const { data: profs } = await supabase
@@ -183,12 +186,18 @@ export function useSchedulingData(opts?: { date?: string }) {
       }
       setMechanics(mechs);
 
-      // appointments for selected date + denormalised joins
-      const { data: appts, error: aerr } = await supabase
+      // Appointments: for admin/staff -> current date; for customer -> all their appointments
+      let apptQuery = supabase
         .from("appointments")
         .select("*")
-        .eq("scheduled_date", date)
+        .order("scheduled_date", { ascending: false })
         .order("scheduled_start_time", { ascending: true });
+      if (customerUserId) {
+        apptQuery = apptQuery.eq("user_id", customerUserId);
+      } else {
+        apptQuery = apptQuery.eq("scheduled_date", date);
+      }
+      const { data: appts, error: aerr } = await apptQuery;
       if (aerr) throw aerr;
 
       const userIds = Array.from(new Set((appts ?? []).map((a) => a.user_id)));
@@ -277,11 +286,31 @@ export function useSchedulingData(opts?: { date?: string }) {
     } finally {
       setLoading(false);
     }
-  }, [date]);
+  }, [date, customerUserId]);
 
   useEffect(() => {
     fetchAll();
   }, [fetchAll]);
+
+  // Realtime: refresh whenever this scope's appointments change
+  useEffect(() => {
+    const channel = supabase
+      .channel(`sched-${customerUserId ?? "all"}-${date}`)
+      .on(
+        "postgres_changes",
+        {
+          event: "*",
+          schema: "public",
+          table: "appointments",
+          ...(customerUserId ? { filter: `user_id=eq.${customerUserId}` } : {}),
+        },
+        () => fetchAll(),
+      )
+      .subscribe();
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [customerUserId, date, fetchAll]);
 
   /* ------------------- mutations ------------------- */
 
