@@ -177,8 +177,8 @@ export default function RevisionHistoryTable() {
           </div>
         ) : (
         <>
-        <div className="hidden md:block overflow-auto max-h-[420px] xl:max-h-[480px]">
-          <Table>
+        <div className="hidden md:block overflow-auto h-full">
+          <Table className="h-full">
             <TableHeader className="sticky top-0 z-10 bg-card/95 backdrop-blur-md">
               <TableRow className="border-border/50 hover:bg-transparent">
                 <TableHead className="text-muted-foreground text-xs uppercase tracking-wider">Bike</TableHead>
