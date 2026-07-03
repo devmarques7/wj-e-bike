@@ -501,10 +501,12 @@ export default function AppointmentsTableCard({
         }}
       />
 
-      <FloatingActiveAppointment
-        appointment={activeAppointment}
-        onOpen={() => activeAppointment && setCompletionTarget(activeAppointment)}
-      />
+      {!isCustomer && (
+        <FloatingActiveAppointment
+          appointment={activeAppointment}
+          onOpen={() => activeAppointment && setCompletionTarget(activeAppointment)}
+        />
+      )}
     </>
   );
 }
