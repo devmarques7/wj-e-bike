@@ -323,7 +323,8 @@ export default function AppointmentsTableCard({
                       group.items.map((apt) => (
                         <TableRow
                           key={apt.id}
-                          className="border-border/20 hover:bg-muted/30 transition-colors"
+                          className={`border-border/20 hover:bg-muted/30 transition-colors ${isCustomer ? "cursor-pointer" : ""}`}
+                          onClick={isCustomer ? () => setReviewTarget(apt) : undefined}
                         >
                           <TableCell className="text-xs font-medium align-middle">
                             <div className="flex items-center gap-1.5">
