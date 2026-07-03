@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { motion } from "framer-motion";
-import { MapPin, Clock, Zap, Loader2, AlertTriangle, Info } from "lucide-react";
+import { MapPin, Clock, Zap, Loader2, AlertTriangle, Info, Bike } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -11,6 +11,7 @@ import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
 import { useGoogleMaps } from "@/hooks/useGoogleMaps";
 import { format } from "date-fns";
+import { useSystemStatus } from "@/hooks/useSystemStatus";
 
 const TRANSPORT_BASE = 25;
 const URGENT_SURCHARGE = 45;
@@ -24,6 +25,7 @@ type Suggestion = { placeId: string; text: string };
 
 export default function PickupRequestForm({ onSubmitted }: { onSubmitted?: () => void }) {
   const { ready } = useGoogleMaps(["places"]);
+  const { pushStatus } = useSystemStatus();
   const [address, setAddress] = useState("");
   const [suggestions, setSuggestions] = useState<Suggestion[]>([]);
   const [showSuggestions, setShowSuggestions] = useState(false);
@@ -97,6 +99,18 @@ export default function PickupRequestForm({ onSubmitted }: { onSubmitted?: () =>
       setSubmitting(false);
       toast.success("Pickup requested", {
         description: `${format(date, "PP")} at ${time} · €${totalFee} transport fee`,
+      });
+      // Push a live status pill so the user sees pickup progress across the app
+      const etaMinutes = urgent ? 45 : 120;
+      pushStatus({
+        id: "pickup-request",
+        icon: Bike,
+        label: urgent ? "Rider on the way" : "Pickup scheduled",
+        detail: `${format(date, "PP")} at ${time} · ${address}`,
+        tone: urgent ? "urgent" : "success",
+        href: "/dashboard/urgent-service",
+        countdownTo: Date.now() + etaMinutes * 60_000,
+        expiresAt: Date.now() + (etaMinutes + 15) * 60_000,
       });
       onSubmitted?.();
     }, 700);
