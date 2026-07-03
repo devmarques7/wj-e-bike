@@ -95,6 +95,8 @@ interface AppointmentsTableCardProps {
   title?: string;
   /** Restrict the table to appointments assigned to this mechanic id. */
   mineOnlyMechanicId?: string;
+  /** Customer view: scope to this user's appointments and force read-only. */
+  customerUserId?: string;
 }
 
 /**
@@ -106,8 +108,11 @@ export default function AppointmentsTableCard({
   readOnly = false,
   title,
   mineOnlyMechanicId,
+  customerUserId,
 }: AppointmentsTableCardProps) {
   const { t, i18n } = useTranslation();
+  const isCustomer = !!customerUserId;
+  const effectiveReadOnly = readOnly || isCustomer;
   const [activeTab, setActiveTab] = useState("day");
   const [statusFilter, setStatusFilter] = useState<
     "all" | "pending" | "ongoing" | "completed"
@@ -131,7 +136,7 @@ export default function AppointmentsTableCard({
     cancelAppointment,
     deleteAppointment,
     refetch,
-  } = useSchedulingData();
+  } = useSchedulingData({ customerUserId });
 
   const activeAppointment =
     appointments.find((a) => a.status === "in_progress" && a.work_started_at) ?? null;
