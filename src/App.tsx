@@ -6,6 +6,7 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { CartProvider } from "@/contexts/CartContext";
 import { AuthProvider } from "@/contexts/AuthContext";
 import { ThemeProvider } from "@/contexts/ThemeContext";
+import { SystemStatusProvider } from "@/hooks/useSystemStatus";
 import Index from "./pages/Index";
 import Gallery from "./pages/Gallery";
 import ProductDetail from "./pages/ProductDetail";
@@ -62,6 +63,7 @@ const App = () => (
     <ThemeProvider>
     <AuthProvider>
       <CartProvider>
+        <SystemStatusProvider>
         <TooltipProvider>
           <Toaster />
           <Sonner />
@@ -124,6 +126,7 @@ const App = () => (
             </Routes>
           </BrowserRouter>
         </TooltipProvider>
+        </SystemStatusProvider>
       </CartProvider>
     </AuthProvider>
     </ThemeProvider>
