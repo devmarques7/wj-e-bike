@@ -368,6 +368,7 @@ export default function RevisionHistoryTable() {
         </div>
         </>
         )}
+        </div>
 
         {/* Details Modal */}
         <Dialog open={!!selectedRevision} onOpenChange={() => setSelectedRevision(null)}>
