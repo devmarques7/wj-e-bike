@@ -49,10 +49,28 @@ Deno.serve(async (req) => {
     );
     const data = await res.json();
     if (!res.ok) {
-      return new Response(JSON.stringify({ error: "routes_api_error", details: data }), {
-        status: res.status,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
+      // Fallback to legacy Directions API (commonly enabled by default)
+      const legacyMode = travelMode === "DRIVING" ? "driving" : "bicycling";
+      const url = `https://maps.googleapis.com/maps/api/directions/json?origin=${origin.lat},${origin.lng}&destination=${destination.lat},${destination.lng}&mode=${legacyMode}&key=${apiKey}`;
+      const legacyRes = await fetch(url);
+      const legacyData = await legacyRes.json();
+      if (legacyData.status !== "OK" || !legacyData.routes?.[0]) {
+        return new Response(
+          JSON.stringify({ error: "routes_api_error", details: data, legacy: legacyData }),
+          { status: 502, headers: { ...corsHeaders, "Content-Type": "application/json" } },
+        );
+      }
+      const r = legacyData.routes[0];
+      const leg = r.legs?.[0];
+      return new Response(
+        JSON.stringify({
+          polyline: r.overview_polyline?.points ?? null,
+          distanceMeters: leg?.distance?.value ?? null,
+          duration: `${leg?.duration?.value ?? 0}s`,
+          source: "directions_api",
+        }),
+        { headers: { ...corsHeaders, "Content-Type": "application/json" } },
+      );
     }
     const route = data.routes?.[0];
     return new Response(
