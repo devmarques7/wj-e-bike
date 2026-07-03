@@ -336,6 +336,14 @@ export default function AppointmentsTableCard({
                                 <Badge className="text-[9px] h-4 px-1.5 bg-red-500/15 text-red-400 border-red-500/30">SOS</Badge>
                               )}
                             </div>
+                            {isCustomer && (
+                              <span className="block text-[10px] text-muted-foreground/70 tabular-nums">
+                                {new Date(apt.scheduled_date).toLocaleDateString(
+                                  i18n.language === "pt" ? "pt-PT" : "en-GB",
+                                  { day: "2-digit", month: "short" },
+                                )}
+                              </span>
+                            )}
                             {apt.duration_minutes ? (
                               <span className="text-[10px] text-muted-foreground/60 tabular-nums">
                                 {apt.duration_minutes}
