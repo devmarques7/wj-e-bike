@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Wrench, Bike, Wallet, Eye, Send, ImageIcon, MessageCircle, CheckCircle2, ChevronRight, ChevronDown, Star, PanelLeftClose, PanelLeft, Circle, Clock } from "lucide-react";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
@@ -11,7 +11,8 @@ import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { cn } from "@/lib/utils";
-import { useAuth } from "@/contexts/AuthContext";
+import { useCustomerAppointments } from "@/hooks/useCustomerAppointments";
+import { Loader2 } from "lucide-react";
 import EmptyState from "./EmptyState";
 
 // Timeline status steps
@@ -25,107 +26,44 @@ const timelineSteps = [
 ];
 
 const getActiveStep = (status: string) => {
-  if (status === "completed") return 5;
-  if (status === "in_progress") return 2;
-  return 1;
+  switch (status) {
+    case "completed":
+      return 5;
+    case "in_progress":
+      return 2;
+    case "confirmed":
+    case "rescheduled":
+      return 1;
+    case "pending":
+      return 0;
+    default:
+      return 0;
+  }
 };
 
-// Mock revision history data
-const revisionHistory = [
-  { 
-    id: 1, 
-    bikeName: "WJ Vision V8", 
-    date: "2024-01-15", 
-    mechanic: "Jan de Vries",
-    health: 95,
-    status: "completed",
-    points: 150,
-    notes: "Full inspection completed. Brakes adjusted, chain lubricated. Battery at 98% capacity.",
-    photos: ["/placeholder.svg", "/placeholder.svg"],
-    progress: [
-      { date: "2024-01-15 09:00", action: "Check-in received", by: "System" },
-      { date: "2024-01-15 10:30", action: "Inspection started", by: "Jan de Vries" },
-      { date: "2024-01-15 14:00", action: "Parts replaced", by: "Jan de Vries" },
-      { date: "2024-01-15 16:00", action: "Completed", by: "Jan de Vries" }
-    ],
-    chat: [
-      { from: "mechanic", message: "Started working on your bike. Will update soon!", time: "10:30" },
-      { from: "user", message: "Thanks! Any issues found?", time: "11:00" },
-      { from: "mechanic", message: "Minor brake adjustment needed. All good now!", time: "14:30" }
-    ]
-  },
-  { 
-    id: 2, 
-    bikeName: "WJ Vision V8", 
-    date: "2024-02-20", 
-    mechanic: "Pieter Bakker",
-    health: 88,
-    status: "completed",
-    points: 75,
-    notes: "Routine maintenance. Tire pressure adjusted.",
-    photos: ["/placeholder.svg"],
-    progress: [
-      { date: "2024-02-20 09:00", action: "Check-in received", by: "System" },
-      { date: "2024-02-20 11:00", action: "Completed", by: "Pieter Bakker" }
-    ],
-    chat: [
-      { from: "mechanic", message: "Quick service today, all done!", time: "11:00" }
-    ]
-  },
-  { 
-    id: 3, 
-    bikeName: "WJ Vision V8", 
-    date: "2024-03-10", 
-    mechanic: "Lars Jansen",
-    health: 72,
-    status: "in_progress",
-    points: 100,
-    notes: "Battery showing wear. Recommend replacement soon.",
-    photos: [],
-    progress: [
-      { date: "2024-03-10 09:00", action: "Check-in received", by: "System" },
-      { date: "2024-03-10 10:00", action: "Inspection started", by: "Lars Jansen" }
-    ],
-    chat: [
-      { from: "mechanic", message: "Found some battery issues. Will send update.", time: "10:30" }
-    ]
-  },
-  { 
-    id: 4, 
-    bikeName: "WJ Vision V8", 
-    date: "2024-04-05", 
-    mechanic: "Emma Visser",
-    health: 85,
-    status: "in_progress",
-    points: 80,
-    notes: "Chain needs replacement.",
-    photos: ["/placeholder.svg"],
-    progress: [
-      { date: "2024-04-05 09:00", action: "Check-in received", by: "System" }
-    ],
-    chat: []
-  },
-  { 
-    id: 5, 
-    bikeName: "WJ Vision V8", 
-    date: "2024-05-22", 
-    mechanic: "Tom Mulder",
-    health: 60,
-    status: "pending",
-    points: 120,
-    notes: "Awaiting parts for motor inspection.",
-    photos: [],
-    progress: [
-      { date: "2024-05-22 09:00", action: "Check-in received", by: "System" }
-    ],
-    chat: []
-  },
-];
-
-const statusConfig = {
-  pending: { label: "Pending", color: "bg-muted text-muted-foreground" },
+const statusConfig: Record<string, { label: string; color: string }> = {
+  pending: { label: "Pending", color: "bg-amber-500/20 text-amber-400" },
+  confirmed: { label: "Scheduled", color: "bg-wj-green/10 text-wj-green" },
+  rescheduled: { label: "Rescheduled", color: "bg-amber-500/20 text-amber-400" },
   in_progress: { label: "In Progress", color: "bg-blue-500/20 text-blue-400" },
   completed: { label: "Completed", color: "bg-wj-green/20 text-wj-green" },
+  canceled: { label: "Canceled", color: "bg-destructive/20 text-destructive" },
+  no_show: { label: "No-show", color: "bg-destructive/20 text-destructive" },
+};
+
+type RevisionRecord = {
+  id: string;
+  bikeName: string;
+  date: string;
+  time: string;
+  mechanic: string;
+  health: number;
+  status: string;
+  points: number;
+  notes: string;
+  photos: string[];
+  progress: { date: string; action: string; by: string }[];
+  chat: { from: string; message: string; time: string }[];
 };
 
 const getHealthTag = (health: number) => {
@@ -139,16 +77,67 @@ const getInitials = (name: string) => {
 };
 
 export default function RevisionHistoryTable() {
-  const { user } = useAuth();
-  // Only demo users see seed history. Real users start with no records.
-  const records = user?.isDemo ? revisionHistory : [];
-  const [selectedRevision, setSelectedRevision] = useState<typeof revisionHistory[0] | null>(null);
+  const { appointments, loading } = useCustomerAppointments();
+
+  const records: RevisionRecord[] = useMemo(
+    () =>
+      appointments.map((a) => {
+        const photos = (a.qc_progress || []).flatMap((q) => {
+          const tr: any = q.task_results;
+          if (Array.isArray(tr?.photos)) return tr.photos as string[];
+          if (Array.isArray(tr)) return tr.filter((x: any) => typeof x === "string");
+          return [];
+        });
+        const progress = (a.qc_progress || []).map((q) => ({
+          date: (q.completed_at ?? q.started_at ?? "").replace("T", " ").slice(0, 16),
+          action:
+            q.stage_name +
+            (q.completed_at ? " — completed" : q.started_at ? " — in progress" : " — pending"),
+          by: a.mechanic_name ?? "System",
+        }));
+        if (progress.length === 0) {
+          progress.push({
+            date: `${a.scheduled_date} ${a.scheduled_start_time?.slice(0, 5) ?? ""}`,
+            action:
+              a.status === "pending"
+                ? "Booking received"
+                : a.status === "confirmed"
+                  ? "Appointment confirmed"
+                  : a.status === "canceled"
+                    ? "Appointment canceled"
+                    : "Scheduled",
+            by: "System",
+          });
+        }
+        const health =
+          a.status === "completed" ? 92 : a.status === "in_progress" ? 78 : 70;
+        return {
+          id: a.id,
+          bikeName: a.bike_model ?? a.service_name ?? "My Bike",
+          date: a.scheduled_date,
+          time: a.scheduled_start_time?.slice(0, 5) ?? "",
+          mechanic: a.mechanic_name ?? "Unassigned",
+          health,
+          status: a.status,
+          points: a.service_reward_points ?? 0,
+          notes:
+            a.notes ??
+            (a.service_name ? `${a.service_name} — ${a.duration_minutes ?? 0} min` : "No additional notes."),
+          photos,
+          progress,
+          chat: [],
+        };
+      }),
+    [appointments],
+  );
+
+  const [selectedRevision, setSelectedRevision] = useState<RevisionRecord | null>(null);
   const [chatMessage, setChatMessage] = useState("");
   const [chatOpen, setChatOpen] = useState(true);
   const [photosOpen, setPhotosOpen] = useState(false);
   const [notesOpen, setNotesOpen] = useState(false);
   const [userRating, setUserRating] = useState(0);
-  const [expandedRowId, setExpandedRowId] = useState<number | null>(null);
+  const [expandedRowId, setExpandedRowId] = useState<string | null>(null);
 
   return (
     <TooltipProvider>
@@ -165,18 +154,22 @@ export default function RevisionHistoryTable() {
               <Wrench className="h-5 w-5 text-wj-green" />
             </div>
             <div>
-              <h3 className="text-lg font-semibold text-foreground">Revision History</h3>
-              <p className="text-xs text-muted-foreground">Track your bike maintenance records</p>
+              <h3 className="text-lg font-semibold text-foreground">Revision & Appointments</h3>
+              <p className="text-xs text-muted-foreground">Your bike bookings, live from the workshop</p>
             </div>
           </div>
         </div>
 
         {/* Desktop Table - Hidden on mobile */}
-        {records.length === 0 ? (
+        {loading ? (
+          <div className="flex items-center justify-center gap-2 py-12 text-sm text-muted-foreground">
+            <Loader2 className="h-4 w-4 animate-spin" /> Loading appointments…
+          </div>
+        ) : records.length === 0 ? (
           <EmptyState
             icon={Wrench}
-            title="No revision history yet"
-            description="Your service records will appear here after your first visit."
+            title="No appointments yet"
+            description="Book a service and it will appear here in real time."
             className="min-h-[220px]"
           />
         ) : (
