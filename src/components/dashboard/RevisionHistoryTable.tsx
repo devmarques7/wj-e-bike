@@ -183,7 +183,6 @@ export default function RevisionHistoryTable() {
               <TableRow className="border-border/50 hover:bg-transparent">
                 <TableHead className="text-muted-foreground text-xs uppercase tracking-wider">Bike</TableHead>
                 <TableHead className="text-muted-foreground text-xs uppercase tracking-wider">Date</TableHead>
-                <TableHead className="text-muted-foreground text-xs uppercase tracking-wider">Mechanic</TableHead>
                 <TableHead className="text-muted-foreground text-xs uppercase tracking-wider">Health</TableHead>
                 <TableHead className="text-muted-foreground text-xs uppercase tracking-wider">Status</TableHead>
                 <TableHead className="text-muted-foreground text-xs uppercase tracking-wider">Points</TableHead>
