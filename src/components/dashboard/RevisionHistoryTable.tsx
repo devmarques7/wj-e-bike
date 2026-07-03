@@ -183,7 +183,6 @@ export default function RevisionHistoryTable() {
               <TableRow className="border-border/50 hover:bg-transparent">
                 <TableHead className="text-muted-foreground text-xs uppercase tracking-wider">Bike</TableHead>
                 <TableHead className="text-muted-foreground text-xs uppercase tracking-wider">Date</TableHead>
-                <TableHead className="text-muted-foreground text-xs uppercase tracking-wider">Mechanic</TableHead>
                 <TableHead className="text-muted-foreground text-xs uppercase tracking-wider">Health</TableHead>
                 <TableHead className="text-muted-foreground text-xs uppercase tracking-wider">Status</TableHead>
                 <TableHead className="text-muted-foreground text-xs uppercase tracking-wider">Points</TableHead>
@@ -216,20 +215,6 @@ export default function RevisionHistoryTable() {
                         month: "short", 
                         year: "numeric" 
                       })}
-                    </TableCell>
-                    <TableCell>
-                      <Tooltip>
-                        <TooltipTrigger asChild>
-                          <Avatar className="h-8 w-8 cursor-pointer hover:ring-2 hover:ring-wj-green/50 transition-all">
-                            <AvatarFallback className="bg-muted text-xs font-medium">
-                              {getInitials(item.mechanic)}
-                            </AvatarFallback>
-                          </Avatar>
-                        </TooltipTrigger>
-                        <TooltipContent side="top" className="bg-card border-border">
-                          <p className="font-medium">{item.mechanic}</p>
-                        </TooltipContent>
-                      </Tooltip>
                     </TableCell>
                     <TableCell>
                       <Badge className={cn("text-xs font-medium border-0", healthTag.color)}>
@@ -319,17 +304,6 @@ export default function RevisionHistoryTable() {
                         {/* Details Grid */}
                         <div className="grid grid-cols-2 gap-3">
                           <div>
-                            <p className="text-[10px] text-muted-foreground uppercase tracking-wider mb-1">Mechanic</p>
-                            <div className="flex items-center gap-2">
-                              <Avatar className="h-6 w-6">
-                                <AvatarFallback className="bg-muted text-[9px] font-medium">
-                                  {getInitials(item.mechanic)}
-                                </AvatarFallback>
-                              </Avatar>
-                              <span className="text-xs text-foreground">{item.mechanic}</span>
-                            </div>
-                          </div>
-                          <div>
                             <p className="text-[10px] text-muted-foreground uppercase tracking-wider mb-1">Health</p>
                             <Badge className={cn("text-[10px] border-0", healthTag.color)}>
                               {healthTag.label}
@@ -342,7 +316,7 @@ export default function RevisionHistoryTable() {
                               <span className="text-wj-green font-semibold text-xs">+{item.points}</span>
                             </div>
                           </div>
-                          <div>
+                          <div className="col-span-2">
                             <p className="text-[10px] text-muted-foreground uppercase tracking-wider mb-1">Notes</p>
                             <p className="text-[10px] text-foreground line-clamp-2">{item.notes}</p>
                           </div>
