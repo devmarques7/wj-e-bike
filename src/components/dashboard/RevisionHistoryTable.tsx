@@ -145,7 +145,7 @@ export default function RevisionHistoryTable() {
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.2 }}
-        className="rounded-3xl border border-border/50 bg-card/50 backdrop-blur-md overflow-hidden"
+        className="rounded-3xl border border-border/50 bg-card/50 backdrop-blur-md overflow-hidden h-full flex flex-col"
       >
         {/* Header */}
         <div className="p-4 lg:p-6 border-b border-border/50">
