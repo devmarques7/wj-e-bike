@@ -286,7 +286,7 @@ export default function AppointmentsTableCard({
                   <TableHead className="text-muted-foreground text-[10px] uppercase tracking-wider font-medium">{t("workshop.cols.service")}</TableHead>
                   <TableHead className="text-muted-foreground text-[10px] uppercase tracking-wider font-medium">{t("workshop.cols.mechanic")}</TableHead>
                   <TableHead className="text-muted-foreground text-[10px] uppercase tracking-wider font-medium">{t("workshop.cols.status")}</TableHead>
-                  {!readOnly && (
+                  {!effectiveReadOnly && (
                     <TableHead className="text-muted-foreground text-[10px] uppercase tracking-wider font-medium text-right w-[80px]">
                       {t("workshop.cols.actions")}
                     </TableHead>
@@ -301,7 +301,7 @@ export default function AppointmentsTableCard({
                         className="border-border/30 bg-muted/20 hover:bg-muted/30 cursor-pointer"
                         onClick={() => toggleGroup(group.key)}
                       >
-                        <TableCell colSpan={readOnly ? 6 : 7} className="py-2">
+                        <TableCell colSpan={effectiveReadOnly ? 6 : 7} className="py-2">
                           <div className="flex items-center gap-2 text-xs">
                             {collapsedGroups[group.key] ? (
                               <ChevronRight className="h-3.5 w-3.5 text-muted-foreground" />
@@ -439,7 +439,7 @@ export default function AppointmentsTableCard({
                               </Tooltip>
                             </TooltipProvider>
                           </TableCell>
-                          {!readOnly && (
+                          {!effectiveReadOnly && (
                             <TableCell className="text-right align-middle">
                               <AppointmentActionsMenu
                                 appointment={apt}
