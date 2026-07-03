@@ -2,7 +2,7 @@ import { useState, useEffect, useMemo } from "react";
 import { useTranslation } from "react-i18next";
 import { useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
-import { ShoppingCart, Heart, ChevronLeft, ChevronRight, Calendar } from "lucide-react";
+import { ShoppingCart, Heart, ChevronLeft, ChevronRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { accessories, type Accessory } from "@/data/accessories";
 import { useCart } from "@/contexts/CartContext";
@@ -245,16 +245,6 @@ export default function AccessoryCarousel() {
             </div>
           </div>
 
-          {/* Schedule Maintenance CTA */}
-          <Button
-            onClick={() => navigate("/dashboard/service")}
-            size="sm"
-            className="w-full gradient-wj text-white hover:opacity-90 h-10"
-          >
-            <Calendar className="w-4 h-4 mr-2" />
-            <span className="hidden sm:inline">{t("accessory_carousel.schedule_maintenance")}</span>
-            <span className="sm:hidden">{t("accessory_carousel.schedule_maintenance_short")}</span>
-          </Button>
 
           {/* Progress Dots */}
           <div className="flex items-center gap-1.5">
