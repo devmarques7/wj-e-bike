@@ -304,17 +304,6 @@ export default function RevisionHistoryTable() {
                         {/* Details Grid */}
                         <div className="grid grid-cols-2 gap-3">
                           <div>
-                            <p className="text-[10px] text-muted-foreground uppercase tracking-wider mb-1">Mechanic</p>
-                            <div className="flex items-center gap-2">
-                              <Avatar className="h-6 w-6">
-                                <AvatarFallback className="bg-muted text-[9px] font-medium">
-                                  {getInitials(item.mechanic)}
-                                </AvatarFallback>
-                              </Avatar>
-                              <span className="text-xs text-foreground">{item.mechanic}</span>
-                            </div>
-                          </div>
-                          <div>
                             <p className="text-[10px] text-muted-foreground uppercase tracking-wider mb-1">Health</p>
                             <Badge className={cn("text-[10px] border-0", healthTag.color)}>
                               {healthTag.label}
@@ -327,7 +316,7 @@ export default function RevisionHistoryTable() {
                               <span className="text-wj-green font-semibold text-xs">+{item.points}</span>
                             </div>
                           </div>
-                          <div>
+                          <div className="col-span-2">
                             <p className="text-[10px] text-muted-foreground uppercase tracking-wider mb-1">Notes</p>
                             <p className="text-[10px] text-foreground line-clamp-2">{item.notes}</p>
                           </div>
