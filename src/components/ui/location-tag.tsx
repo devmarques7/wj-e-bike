@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef } from "react";
 import { createPortal } from "react-dom";
-import { MapPin, ArrowUpRight, GripVertical, X } from "lucide-react";
+import { MapPin, ArrowUpRight, GripVertical, X, ChevronDown } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { cn } from "@/lib/utils";
 import { useSystemStatus, formatCountdown } from "@/hooks/useSystemStatus";
@@ -35,6 +35,7 @@ export function LocationTag({
   const [bounds, setBounds] = useState({ left: 0, top: 0, right: 0, bottom: 0 });
   const [pos, setPos] = useState<{ x: number; y: number } | null>(null);
   const [dragging, setDragging] = useState(false);
+  const [expanded, setExpanded] = useState(false);
 
   // Restore saved position
   useEffect(() => {
@@ -141,9 +142,12 @@ export function LocationTag({
   const StatusIcon = activeStatus?.icon;
 
   const handleActivate = () => {
-    if (!activeStatus) return;
-    if (activeStatus.onClick) activeStatus.onClick();
-    else if (activeStatus.href) navigate(activeStatus.href);
+    // If there are active statuses, clicking the pill expands the panel
+    // to show all ongoing activities. Without statuses, this is a no-op.
+    if (statuses.length > 0) {
+      setExpanded((v) => !v);
+      return;
+    }
   };
 
   if (typeof document === "undefined") return null;
@@ -265,6 +269,102 @@ export function LocationTag({
       ) : (
         <ArrowUpRight className="h-3 w-3 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity" />
       )}
+      {statuses.length > 0 && (
+        <button
+          type="button"
+          onClick={(e) => {
+            e.stopPropagation();
+            if (dragging) return;
+            setExpanded((v) => !v);
+          }}
+          className="text-muted-foreground/70 hover:text-foreground transition-colors"
+          aria-label={expanded ? "Collapse" : "Expand"}
+        >
+          <ChevronDown
+            className={cn(
+              "h-3 w-3 transition-transform",
+              expanded && "rotate-180",
+            )}
+          />
+        </button>
+      )}
+      <AnimatePresence>
+        {expanded && statuses.length > 0 && (
+          <motion.div
+            initial={{ opacity: 0, y: -6, scale: 0.98 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            exit={{ opacity: 0, y: -6, scale: 0.98 }}
+            transition={{ duration: 0.2 }}
+            className="absolute top-full right-0 mt-2 w-[300px] rounded-2xl border border-border/40 bg-background/95 backdrop-blur-xl shadow-2xl shadow-black/40 p-2 z-[10000]"
+            onMouseDown={(e) => e.stopPropagation()}
+          >
+            <div className="px-2 py-1.5 flex items-center justify-between">
+              <span className="text-[10px] uppercase tracking-wider text-muted-foreground">
+                Ongoing ({statuses.length})
+              </span>
+            </div>
+            <div className="space-y-1 max-h-[320px] overflow-y-auto">
+              {statuses.map((s) => {
+                const Icon = s.icon ?? MapPin;
+                return (
+                  <div
+                    key={s.id}
+                    className={cn(
+                      "flex items-start gap-2.5 rounded-xl border p-2.5 transition-colors cursor-pointer hover:bg-muted/40",
+                      toneClasses[s.tone ?? "info"],
+                    )}
+                    onClick={() => {
+                      if (s.onClick) s.onClick();
+                      else if (s.href) {
+                        navigate(s.href);
+                        setExpanded(false);
+                      }
+                    }}
+                  >
+                    <span
+                      className={cn(
+                        "mt-0.5 inline-flex h-6 w-6 items-center justify-center rounded-full",
+                        toneDot[s.tone ?? "info"],
+                        "bg-opacity-20",
+                      )}
+                    >
+                      <Icon className="h-3.5 w-3.5" />
+                    </span>
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center justify-between gap-2">
+                        <p className="text-xs font-medium truncate">
+                          {s.label}
+                        </p>
+                        {s.countdownTo && (
+                          <span className="text-[10px] tabular-nums opacity-80 shrink-0">
+                            {formatCountdown(s.countdownTo, now)}
+                          </span>
+                        )}
+                      </div>
+                      {s.detail && (
+                        <p className="text-[10px] text-muted-foreground truncate mt-0.5">
+                          {s.detail}
+                        </p>
+                      )}
+                    </div>
+                    <button
+                      type="button"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        dismissStatus(s.id);
+                      }}
+                      className="text-muted-foreground/70 hover:text-foreground transition-colors shrink-0"
+                      aria-label="Dismiss"
+                    >
+                      <X className="h-3 w-3" />
+                    </button>
+                  </div>
+                );
+              })}
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </motion.div>,
     document.body,
   );
