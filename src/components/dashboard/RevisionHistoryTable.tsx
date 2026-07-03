@@ -174,9 +174,9 @@ export default function RevisionHistoryTable() {
           />
         ) : (
         <>
-        <div className="hidden md:block overflow-x-auto">
+        <div className="hidden md:block overflow-auto max-h-[420px] xl:max-h-[480px]">
           <Table>
-            <TableHeader>
+            <TableHeader className="sticky top-0 z-10 bg-card/95 backdrop-blur-md">
               <TableRow className="border-border/50 hover:bg-transparent">
                 <TableHead className="text-muted-foreground text-xs uppercase tracking-wider">Bike</TableHead>
                 <TableHead className="text-muted-foreground text-xs uppercase tracking-wider">Date</TableHead>
@@ -262,7 +262,7 @@ export default function RevisionHistoryTable() {
         </div>
 
         {/* Mobile/Tablet Cards - Expandable rows */}
-        <div className="md:hidden divide-y divide-border/30">
+        <div className="md:hidden divide-y divide-border/30 overflow-y-auto max-h-[60vh]">
           {records.map((item, index) => {
             const status = statusConfig[item.status as keyof typeof statusConfig];
             const healthTag = getHealthTag(item.health);
