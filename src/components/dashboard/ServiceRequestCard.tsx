@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect } from "react";
 import { motion, useMotionValue, useTransform, animate } from "framer-motion";
-import { ArrowRight, Bike, CheckCircle, Lock, AlertTriangle, Loader2, HelpCircle } from "lucide-react";
+import { ArrowRight, CheckCircle, Lock, AlertTriangle, Loader2 } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
@@ -291,13 +291,6 @@ export default function ServiceRequestCard() {
         {/* Content */}
         <div className="relative z-10 h-full p-6 flex flex-col justify-between">
           <div>
-            <div className="w-10 h-10 rounded-xl bg-wj-green/20 flex items-center justify-center mb-4 border border-wj-green/30">
-              {faqMode ? (
-                <HelpCircle className="h-5 w-5 text-wj-green" />
-              ) : (
-                <Bike className="h-5 w-5 text-wj-green" />
-              )}
-            </div>
             <h3 className="text-base font-semibold text-foreground mb-1">
               {faqMode ? "Urgent Help" : "Urgent Service"}
             </h3>
