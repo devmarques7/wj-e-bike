@@ -217,20 +217,6 @@ export default function RevisionHistoryTable() {
                       })}
                     </TableCell>
                     <TableCell>
-                      <Tooltip>
-                        <TooltipTrigger asChild>
-                          <Avatar className="h-8 w-8 cursor-pointer hover:ring-2 hover:ring-wj-green/50 transition-all">
-                            <AvatarFallback className="bg-muted text-xs font-medium">
-                              {getInitials(item.mechanic)}
-                            </AvatarFallback>
-                          </Avatar>
-                        </TooltipTrigger>
-                        <TooltipContent side="top" className="bg-card border-border">
-                          <p className="font-medium">{item.mechanic}</p>
-                        </TooltipContent>
-                      </Tooltip>
-                    </TableCell>
-                    <TableCell>
                       <Badge className={cn("text-xs font-medium border-0", healthTag.color)}>
                         {healthTag.label}
                       </Badge>
