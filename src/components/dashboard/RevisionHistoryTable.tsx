@@ -160,18 +160,21 @@ export default function RevisionHistoryTable() {
           </div>
         </div>
 
-        {/* Desktop Table - Hidden on mobile */}
+        {/* Content area - fills remaining height */}
+        <div className="flex-1 min-h-0 flex flex-col">
         {loading ? (
-          <div className="flex items-center justify-center gap-2 py-12 text-sm text-muted-foreground">
+          <div className="flex-1 flex items-center justify-center gap-2 text-sm text-muted-foreground">
             <Loader2 className="h-4 w-4 animate-spin" /> Loading appointments…
           </div>
         ) : records.length === 0 ? (
-          <EmptyState
-            icon={Wrench}
-            title="No appointments yet"
-            description="Book a service and it will appear here in real time."
-            className="min-h-[220px]"
-          />
+          <div className="flex-1 flex items-center justify-center">
+            <EmptyState
+              icon={Wrench}
+              title="No appointments yet"
+              description="Book a service and it will appear here in real time."
+              className="min-h-[220px]"
+            />
+          </div>
         ) : (
         <>
         <div className="hidden md:block overflow-auto max-h-[420px] xl:max-h-[480px]">
