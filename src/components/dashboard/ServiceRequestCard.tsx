@@ -286,7 +286,7 @@ export default function ServiceRequestCard() {
         </motion.video>
         
         {/* Overlay */}
-        <div className="absolute inset-0 bg-gradient-to-t from-background via-background/80 to-background/40" />
+        <div className="absolute inset-0 bg-gradient-to-br from-black/70 via-black/50 to-black/70" />
         
         {/* Content */}
         <div className="relative z-10 h-full p-6 flex flex-col justify-between">
