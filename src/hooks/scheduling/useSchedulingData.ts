@@ -84,6 +84,22 @@ export type AppointmentRow = {
   work_ended_at: string | null;
 };
 
+// Extra fields carried straight through from the appointments row via `select("*")`.
+export interface AppointmentRowFull extends AppointmentRow {
+  subscription_id: string | null;
+  subscription_plan_level: number | null;
+  is_covered_by_plan: boolean | null;
+  extra_charge_eur: number | null;
+  reschedule_of: string | null;
+  reschedule_count: number | null;
+  actual_duration_minutes: number | null;
+  confirmation_sent_at: string | null;
+  reminder_24h_sent_at: string | null;
+  booked_via: string | null;
+  notes: string | null;
+  created_at: string | null;
+}
+
 /* ------------------------------------------------------------------ */
 /* Helpers                                                             */
 /* ------------------------------------------------------------------ */
