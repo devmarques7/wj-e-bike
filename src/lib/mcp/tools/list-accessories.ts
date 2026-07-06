@@ -1,6 +1,6 @@
 import { defineTool } from "@lovable.dev/mcp-js";
 import { z } from "zod";
-import { accessories } from "@/data/accessories";
+import { accessories } from "../../data/accessories";
 
 export default defineTool({
   name: "list_accessories",
