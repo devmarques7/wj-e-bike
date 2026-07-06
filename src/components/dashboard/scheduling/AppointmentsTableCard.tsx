@@ -449,7 +449,10 @@ export default function AppointmentsTableCard({
                             </TooltipProvider>
                           </TableCell>
                           {!effectiveReadOnly && (
-                            <TableCell className="text-right align-middle">
+                            <TableCell
+                              className="text-right align-middle"
+                              onClick={(e) => e.stopPropagation()}
+                            >
                               <AppointmentActionsMenu
                                 appointment={apt}
                                 mechanics={mechanics}
