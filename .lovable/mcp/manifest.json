@@ -1,0 +1,100 @@
+{
+  "version": 1,
+  "sdk_version": "0.20.0",
+  "path": "/mcp",
+  "auth": {
+    "type": "none"
+  },
+  "mcp": {
+    "server": {
+      "name": "wj-vision-mcp",
+      "version": "0.1.0",
+      "title": "WJ Vision E-Bikes"
+    },
+    "tools": [
+      {
+        "name": "list_bikes",
+        "title": "List e-bikes",
+        "description": "List the WJ Vision e-bike catalog with prices, categories, and specs. Optionally filter by category.",
+        "annotations": {
+          "readOnlyHint": true,
+          "idempotentHint": true,
+          "openWorldHint": false
+        },
+        "inputSchema": {
+          "type": "object",
+          "properties": {
+            "category": {
+              "type": "string",
+              "enum": [
+                "city",
+                "commuter",
+                "sport",
+                "cargo"
+              ],
+              "description": "Optional bike category filter."
+            }
+          },
+          "additionalProperties": false,
+          "$schema": "http://json-schema.org/draft-07/schema#"
+        },
+        "outputSchema": null
+      },
+      {
+        "name": "get_bike",
+        "title": "Get bike details",
+        "description": "Get full details for a specific WJ Vision e-bike by its id (e.g. 'vision-x1').",
+        "annotations": {
+          "readOnlyHint": true,
+          "idempotentHint": true,
+          "openWorldHint": false
+        },
+        "inputSchema": {
+          "type": "object",
+          "properties": {
+            "id": {
+              "type": "string",
+              "minLength": 1,
+              "description": "The bike id."
+            }
+          },
+          "required": [
+            "id"
+          ],
+          "additionalProperties": false,
+          "$schema": "http://json-schema.org/draft-07/schema#"
+        },
+        "outputSchema": null
+      },
+      {
+        "name": "list_accessories",
+        "title": "List accessories",
+        "description": "List WJ Vision accessories (helmets, locks, bags, tech, etc.). Optionally filter by category.",
+        "annotations": {
+          "readOnlyHint": true,
+          "idempotentHint": true,
+          "openWorldHint": false
+        },
+        "inputSchema": {
+          "type": "object",
+          "properties": {
+            "category": {
+              "type": "string",
+              "enum": [
+                "safety",
+                "storage",
+                "tech",
+                "comfort",
+                "protection"
+              ],
+              "description": "Optional accessory category filter."
+            }
+          },
+          "additionalProperties": false,
+          "$schema": "http://json-schema.org/draft-07/schema#"
+        },
+        "outputSchema": null
+      }
+    ]
+  }
+}
