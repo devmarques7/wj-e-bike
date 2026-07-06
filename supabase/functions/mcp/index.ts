@@ -8,7 +8,136 @@ import { defineMcp } from "npm:@lovable.dev/mcp-js@0.20.0";
 // src/lib/mcp/tools/list-bikes.ts
 import { defineTool } from "npm:@lovable.dev/mcp-js@0.20.0";
 import { z } from "npm:zod@^3.25.76";
-import { bikeProducts } from "npm:@/data/products";
+
+// src/data/products.ts
+var bikeProducts = [
+  {
+    id: "vision-x1",
+    name: "Vision X1",
+    tagline: "The Urban Pioneer",
+    price: 2499,
+    category: "city",
+    colors: [
+      { name: "Midnight Black", hex: "#1a1a1a" },
+      { name: "Forest Green", hex: "#08150d" },
+      { name: "Pearl White", hex: "#f5f5f5" }
+    ],
+    specs: {
+      range: "120 km",
+      speed: "25 km/h",
+      weight: "19 kg",
+      battery: "504 Wh"
+    },
+    features: ["Integrated GPS", "Smart Lock", "LED Display", "USB Charging"],
+    image: "/placeholder.svg",
+    isBestseller: true
+  },
+  {
+    id: "vision-x2-pro",
+    name: "Vision X2 Pro",
+    tagline: "Performance Redefined",
+    price: 3299,
+    originalPrice: 3599,
+    category: "commuter",
+    colors: [
+      { name: "Storm Grey", hex: "#4a4a4a" },
+      { name: "WJ Green", hex: "#058c42" },
+      { name: "Ocean Blue", hex: "#1e3a5f" }
+    ],
+    specs: {
+      range: "150 km",
+      speed: "25 km/h",
+      weight: "21 kg",
+      battery: "630 Wh"
+    },
+    features: ["Torque Sensor", "Carbon Fork", "Hydraulic Brakes", "App Integration"],
+    image: "/placeholder.svg",
+    isNew: true
+  },
+  {
+    id: "vision-sport",
+    name: "Vision Sport",
+    tagline: "Born to Move",
+    price: 2899,
+    category: "sport",
+    colors: [
+      { name: "Racing Red", hex: "#b91c1c" },
+      { name: "Carbon Black", hex: "#0a0a0a" },
+      { name: "Electric Yellow", hex: "#eab308" }
+    ],
+    specs: {
+      range: "100 km",
+      speed: "25 km/h",
+      weight: "17 kg",
+      battery: "420 Wh"
+    },
+    features: ["Sport Mode", "Lightweight Frame", "Racing Geometry", "Quick Charge"],
+    image: "/placeholder.svg"
+  },
+  {
+    id: "vision-cargo",
+    name: "Vision Cargo",
+    tagline: "Carry Everything",
+    price: 3899,
+    category: "cargo",
+    colors: [
+      { name: "Utility Grey", hex: "#6b7280" },
+      { name: "Deep Black", hex: "#171717" }
+    ],
+    specs: {
+      range: "80 km",
+      speed: "25 km/h",
+      weight: "32 kg",
+      battery: "750 Wh"
+    },
+    features: ["200kg Capacity", "Dual Battery Option", "Child Seats Compatible", "Rain Cover"],
+    image: "/placeholder.svg"
+  },
+  {
+    id: "vision-lite",
+    name: "Vision Lite",
+    tagline: "Effortless Elegance",
+    price: 1999,
+    category: "city",
+    colors: [
+      { name: "Sand Beige", hex: "#d4c4a8" },
+      { name: "Mint Green", hex: "#98d8c8" },
+      { name: "Soft Pink", hex: "#f0b4b4" }
+    ],
+    specs: {
+      range: "90 km",
+      speed: "25 km/h",
+      weight: "16 kg",
+      battery: "360 Wh"
+    },
+    features: ["Step-Through Frame", "Basket Mount", "Kickstand", "Bell Included"],
+    image: "/placeholder.svg",
+    isNew: true
+  },
+  {
+    id: "vision-commuter-plus",
+    name: "Vision Commuter+",
+    tagline: "Your Daily Partner",
+    price: 2799,
+    category: "commuter",
+    colors: [
+      { name: "Graphite", hex: "#374151" },
+      { name: "Navy Blue", hex: "#1e3a8a" },
+      { name: "Bronze", hex: "#92400e" }
+    ],
+    specs: {
+      range: "130 km",
+      speed: "25 km/h",
+      weight: "20 kg",
+      battery: "540 Wh"
+    },
+    features: ["Fenders Included", "Rack Ready", "Puncture-Proof Tires", "Integrated Lights"],
+    image: "/placeholder.svg",
+    isBestseller: true
+  }
+];
+
+// src/lib/mcp/tools/list-bikes.ts
 var list_bikes_default = defineTool({
   name: "list_bikes",
   title: "List e-bikes",
@@ -42,7 +171,6 @@ var list_bikes_default = defineTool({
 // src/lib/mcp/tools/get-bike.ts
 import { defineTool as defineTool2 } from "npm:@lovable.dev/mcp-js@0.20.0";
 import { z as z2 } from "npm:zod@^3.25.76";
-import { bikeProducts as bikeProducts2 } from "npm:@/data/products";
 var get_bike_default = defineTool2({
   name: "get_bike",
   title: "Get bike details",
@@ -52,7 +180,7 @@ var get_bike_default = defineTool2({
   },
   annotations: { readOnlyHint: true, idempotentHint: true, openWorldHint: false },
   handler: ({ id }) => {
-    const bike = bikeProducts2.find((b) => b.id === id);
+    const bike = bikeProducts.find((b) => b.id === id);
     if (!bike) {
       return {
         content: [{ type: "text", text: `No bike found with id "${id}".` }],
@@ -69,7 +197,190 @@ var get_bike_default = defineTool2({
 // src/lib/mcp/tools/list-accessories.ts
 import { defineTool as defineTool3 } from "npm:@lovable.dev/mcp-js@0.20.0";
 import { z as z3 } from "npm:zod@^3.25.76";
-import { accessories } from "npm:@/data/accessories";
+
+// src/data/accessories.ts
+var accessories = [
+  {
+    id: "helmet-pro",
+    name: "Vision Helmet Pro",
+    tagline: "Aerodynamic Safety",
+    price: 149,
+    category: "safety",
+    colors: [
+      { name: "Matte Black", hex: "#1a1a1a" },
+      { name: "Pearl White", hex: "#f5f5f5" },
+      { name: "WJ Green", hex: "#058c42" }
+    ],
+    specs: {
+      material: "Carbon Fiber",
+      weight: "280g",
+      compatibility: "All head sizes",
+      warranty: "3 years"
+    },
+    features: ["Integrated LED", "Bluetooth Speaker", "MIPS Technology", "Ventilation System"],
+    image: "/placeholder.svg",
+    isBestseller: true,
+    isFeatured: true
+  },
+  {
+    id: "lock-smart",
+    name: "Smart Lock X",
+    tagline: "Ultimate Security",
+    price: 89,
+    originalPrice: 119,
+    category: "tech",
+    colors: [
+      { name: "Stealth Black", hex: "#0a0a0a" },
+      { name: "Graphite", hex: "#4a4a4a" }
+    ],
+    specs: {
+      material: "Hardened Steel",
+      weight: "450g",
+      compatibility: "All WJ Bikes",
+      warranty: "5 years"
+    },
+    features: ["App Control", "GPS Tracking", "Tamper Alert", "Auto-Lock"],
+    image: "/placeholder.svg",
+    isNew: true
+  },
+  {
+    id: "bag-commuter",
+    name: "Commuter Bag",
+    tagline: "Carry Everything",
+    price: 129,
+    category: "storage",
+    colors: [
+      { name: "Urban Grey", hex: "#6b7280" },
+      { name: "Deep Black", hex: "#171717" },
+      { name: "Forest Green", hex: "#08150d" }
+    ],
+    specs: {
+      material: "Recycled Nylon",
+      weight: "680g",
+      compatibility: "Universal",
+      warranty: "2 years"
+    },
+    features: ["Waterproof", "25L Capacity", "Quick Release", "Laptop Sleeve"],
+    image: "/placeholder.svg",
+    isBestseller: true
+  },
+  {
+    id: "light-set",
+    name: "Vision Light Set",
+    tagline: "Be Seen, Be Safe",
+    price: 69,
+    category: "safety",
+    colors: [
+      { name: "Black", hex: "#1a1a1a" }
+    ],
+    specs: {
+      material: "Aircraft Aluminum",
+      weight: "120g",
+      compatibility: "All Bikes",
+      warranty: "2 years"
+    },
+    features: ["800 Lumens", "USB-C Charging", "5 Modes", "Water Resistant"],
+    image: "/placeholder.svg"
+  },
+  {
+    id: "phone-mount",
+    name: "Phone Mount Pro",
+    tagline: "Stay Connected",
+    price: 49,
+    category: "tech",
+    colors: [
+      { name: "Matte Black", hex: "#1a1a1a" },
+      { name: "Silver", hex: "#c0c0c0" }
+    ],
+    specs: {
+      material: "CNC Aluminum",
+      weight: "85g",
+      compatibility: "All Phones",
+      warranty: "Lifetime"
+    },
+    features: ["Magnetic Mount", "360\xB0 Rotation", "Wireless Charging", "Vibration Damping"],
+    image: "/placeholder.svg",
+    isNew: true
+  },
+  {
+    id: "fenders-premium",
+    name: "Premium Fenders",
+    tagline: "Rain or Shine",
+    price: 79,
+    category: "protection",
+    colors: [
+      { name: "Matte Black", hex: "#1a1a1a" },
+      { name: "Carbon Look", hex: "#2d2d2d" }
+    ],
+    specs: {
+      material: "Polycarbonate",
+      weight: "340g",
+      compatibility: "WJ City/Commuter",
+      warranty: "2 years"
+    },
+    features: ["Full Coverage", "Quick Mount", "Splash Guard", "UV Resistant"],
+    image: "/placeholder.svg"
+  },
+  {
+    id: "seat-comfort",
+    name: "Comfort Saddle",
+    tagline: "Ride in Comfort",
+    price: 89,
+    category: "comfort",
+    colors: [
+      { name: "Black Leather", hex: "#1a1a1a" },
+      { name: "Brown Leather", hex: "#8b4513" }
+    ],
+    specs: {
+      material: "Genuine Leather",
+      weight: "420g",
+      compatibility: "Universal",
+      warranty: "3 years"
+    },
+    features: ["Memory Foam", "Breathable", "Waterproof Base", "Ergonomic Design"],
+    image: "/placeholder.svg"
+  },
+  {
+    id: "grips-ergonomic",
+    name: "Ergo Grips",
+    tagline: "Perfect Grip",
+    price: 35,
+    category: "comfort",
+    colors: [
+      { name: "Black", hex: "#1a1a1a" },
+      { name: "WJ Green", hex: "#058c42" },
+      { name: "Brown", hex: "#8b4513" }
+    ],
+    specs: {
+      material: "Kraton Rubber",
+      weight: "95g",
+      compatibility: "All Handlebars",
+      warranty: "1 year"
+    },
+    features: ["Anti-Slip", "Shock Absorbing", "Lock-On System", "Hand Support"],
+    image: "/placeholder.svg"
+  },
+  {
+    id: "mirror-aero",
+    name: "Aero Mirror",
+    tagline: "See Behind",
+    price: 29,
+    category: "safety",
+    colors: [
+      { name: "Black", hex: "#1a1a1a" }
+    ],
+    specs: {
+      material: "Glass + ABS",
+      weight: "45g",
+      compatibility: "All Handlebars",
+      warranty: "1 year"
+    },
+    features: ["Wide Angle", "Foldable", "Anti-Glare", "Tool-Free Mount"],
+    image: "/placeholder.svg"
+  }
+];
+
+// src/lib/mcp/tools/list-accessories.ts
 var list_accessories_default = defineTool3({
   name: "list_accessories",
   title: "List accessories",
