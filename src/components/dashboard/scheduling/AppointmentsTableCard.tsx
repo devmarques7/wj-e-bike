@@ -37,6 +37,7 @@ import {
 import { toast } from "sonner";
 import { useSchedulingData, type AppointmentRow } from "@/hooks/scheduling/useSchedulingData";
 import AppointmentActionsMenu from "@/components/dashboard/scheduling/AppointmentActionsMenu";
+import CustomerAppointmentActionsMenu from "@/components/dashboard/scheduling/CustomerAppointmentActionsMenu";
 import AppointmentCompletionDrawer from "@/components/dashboard/scheduling/AppointmentCompletionDrawer";
 import AppointmentReviewHistoryDialog from "@/components/dashboard/scheduling/AppointmentReviewHistoryDialog";
 import FloatingActiveAppointment from "@/components/dashboard/scheduling/FloatingActiveAppointment";
@@ -286,11 +287,9 @@ export default function AppointmentsTableCard({
                   <TableHead className="text-muted-foreground text-[10px] uppercase tracking-wider font-medium">{t("workshop.cols.service")}</TableHead>
                   <TableHead className="text-muted-foreground text-[10px] uppercase tracking-wider font-medium">{t("workshop.cols.mechanic")}</TableHead>
                   <TableHead className="text-muted-foreground text-[10px] uppercase tracking-wider font-medium">{t("workshop.cols.status")}</TableHead>
-                  {!effectiveReadOnly && (
-                    <TableHead className="text-muted-foreground text-[10px] uppercase tracking-wider font-medium text-right w-[80px]">
-                      {t("workshop.cols.actions")}
-                    </TableHead>
-                  )}
+                  <TableHead className="text-muted-foreground text-[10px] uppercase tracking-wider font-medium text-right w-[80px]">
+                    {t("workshop.cols.actions")}
+                  </TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -301,7 +300,7 @@ export default function AppointmentsTableCard({
                         className="border-border/30 bg-muted/20 hover:bg-muted/30 cursor-pointer"
                         onClick={() => toggleGroup(group.key)}
                       >
-                        <TableCell colSpan={effectiveReadOnly ? 6 : 7} className="py-2">
+                        <TableCell colSpan={7} className="py-2">
                           <div className="flex items-center gap-2 text-xs">
                             {collapsedGroups[group.key] ? (
                               <ChevronRight className="h-3.5 w-3.5 text-muted-foreground" />
@@ -448,7 +447,7 @@ export default function AppointmentsTableCard({
                               </Tooltip>
                             </TooltipProvider>
                           </TableCell>
-                          {!effectiveReadOnly && (
+                          {!effectiveReadOnly ? (
                             <TableCell
                               className="text-right align-middle"
                               onClick={(e) => e.stopPropagation()}
@@ -471,6 +470,18 @@ export default function AppointmentsTableCard({
                                 onReschedule={rescheduleAppointment}
                                 onCancel={cancelAppointment}
                                 onDelete={deleteAppointment}
+                              />
+                            </TableCell>
+                          ) : (
+                            <TableCell
+                              className="text-right align-middle"
+                              onClick={(e) => e.stopPropagation()}
+                            >
+                              <CustomerAppointmentActionsMenu
+                                appointment={apt}
+                                onViewDetails={() => setReviewTarget(apt)}
+                                onReschedule={rescheduleAppointment}
+                                onCancel={cancelAppointment}
                               />
                             </TableCell>
                           )}
