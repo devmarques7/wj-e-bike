@@ -323,8 +323,8 @@ export default function AppointmentsTableCard({
                       group.items.map((apt) => (
                         <TableRow
                           key={apt.id}
-                          className={`border-border/20 hover:bg-muted/30 transition-colors ${isCustomer ? "cursor-pointer" : ""}`}
-                          onClick={isCustomer ? () => setReviewTarget(apt) : undefined}
+                          className={`border-border/20 transition-all duration-300 hover:bg-wj-green/10 hover:text-foreground hover:shadow-[inset_2px_0_0_0_hsl(var(--wj-green)/0.6)] cursor-pointer`}
+                          onClick={() => setReviewTarget(apt)}
                         >
                           <TableCell className="text-xs font-medium align-middle">
                             <div className="flex items-center gap-1.5">
@@ -449,7 +449,10 @@ export default function AppointmentsTableCard({
                             </TooltipProvider>
                           </TableCell>
                           {!effectiveReadOnly && (
-                            <TableCell className="text-right align-middle">
+                            <TableCell
+                              className="text-right align-middle"
+                              onClick={(e) => e.stopPropagation()}
+                            >
                               <AppointmentActionsMenu
                                 appointment={apt}
                                 mechanics={mechanics}
