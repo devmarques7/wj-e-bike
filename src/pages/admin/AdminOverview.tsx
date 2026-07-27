@@ -6,6 +6,7 @@ import KPICarousel from "@/components/dashboard/KPICarousel";
 import AdminSalesRanking from "@/components/dashboard/AdminSalesRanking";
 import AdminMemberSegments from "@/components/dashboard/AdminMemberSegments";
 import AdminAlerts from "@/components/dashboard/AdminAlerts";
+import AdminGlobalSearch from "@/components/dashboard/AdminGlobalSearch";
 import AdminWorkshopStatus from "@/components/dashboard/AdminWorkshopStatus";
 import { useAuth } from "@/contexts/AuthContext";
 import { Navigate, Link } from "react-router-dom";
@@ -116,8 +117,15 @@ export default function AdminOverview() {
           ))}
         </KPICarousel>
 
-        {/* System Alerts - full width above Plan Performance */}
-        <AdminAlerts rows={alerts} loading={loading} />
+        {/* Global search + System Alerts */}
+        <div className="grid grid-cols-12 gap-4 lg:gap-6 lg:h-[420px]">
+          <div className="col-span-12 lg:col-span-8 min-h-0">
+            <AdminGlobalSearch />
+          </div>
+          <div className="col-span-12 lg:col-span-4 min-h-0 overflow-hidden">
+            <AdminAlerts rows={alerts} loading={loading} />
+          </div>
+        </div>
 
         {/* Main Content Grid - 12 Columns */}
         <div className="grid grid-cols-12 gap-4 lg:gap-6">
