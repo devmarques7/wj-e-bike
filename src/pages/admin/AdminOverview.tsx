@@ -70,6 +70,13 @@ export default function AdminOverview() {
     },
   ];
 
+  const quickActions = [
+    { to: "/dashboard/admin/crm", label: t("admin_overview.quick.crm") },
+    { to: "/dashboard/admin/manage", label: t("admin_overview.quick.workshop") },
+    { to: "/dashboard/admin/inventory", label: t("admin_overview.quick.inventory") },
+    { to: "/dashboard/admin/plans", label: t("admin_overview.quick.plans") },
+  ];
+
   return (
     <AdminDashboardLayout>
       <div className="p-4 lg:p-6 space-y-6">
@@ -78,14 +85,28 @@ export default function AdminOverview() {
           initial={{ opacity: 0, y: -10 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.3 }}
-          className="mb-2"
+          className="mb-2 flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between"
         >
-          <h1 className="text-xl sm:text-2xl font-light text-foreground">
-            {t("admin_overview.title")}
-          </h1>
-          <p className="text-sm text-muted-foreground mt-1">
-            {t("admin_overview.subtitle")}
-          </p>
+          <div>
+            <h1 className="text-xl sm:text-2xl font-light text-foreground">
+              {t("admin_overview.title")}
+            </h1>
+            <p className="text-sm text-muted-foreground mt-1">
+              {t("admin_overview.subtitle")}
+            </p>
+          </div>
+          <div className="flex flex-wrap items-center gap-2">
+            {quickActions.map((q) => (
+              <Link
+                key={q.to}
+                to={q.to}
+                className="group flex items-center gap-2 rounded-xl border border-border/30 bg-background/60 backdrop-blur-md px-3 py-2 text-xs sm:text-sm text-foreground hover:bg-muted/50 transition-colors"
+              >
+                {q.label}
+                <ArrowRight className="h-3.5 w-3.5 text-muted-foreground group-hover:translate-x-0.5 transition-transform" />
+              </Link>
+            ))}
+          </div>
         </motion.div>
 
         {/* KPI Cards - carousel on mobile, grid on desktop */}
@@ -94,6 +115,9 @@ export default function AdminOverview() {
             <AdminKPICard key={kpi.label} {...kpi} index={index} />
           ))}
         </KPICarousel>
+
+        {/* System Alerts - full width above Plan Performance */}
+        <AdminAlerts rows={alerts} loading={loading} />
 
         {/* Main Content Grid - 12 Columns */}
         <div className="grid grid-cols-12 gap-4 lg:gap-6">
@@ -110,43 +134,6 @@ export default function AdminOverview() {
           {/* Workshop Status - 4 columns */}
           <div className="col-span-12 lg:col-span-4">
             <AdminWorkshopStatus data={workshop} loading={loading} />
-          </div>
-        </div>
-
-        {/* Bottom Section - Alerts */}
-        <div className="grid grid-cols-12 gap-4 lg:gap-6">
-          <div className="col-span-12 lg:col-span-8">
-            <AdminAlerts rows={alerts} loading={loading} />
-          </div>
-          
-          {/* Placeholder for future component */}
-          <div className="col-span-12 lg:col-span-4">
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.7 }}
-              className="h-full bg-background/60 backdrop-blur-md border border-border/30 rounded-2xl p-6 flex flex-col gap-3"
-            >
-              <div className="flex items-center gap-2">
-                <ShoppingCart className="h-5 w-5 text-wj-green" />
-                <p className="text-sm font-medium text-foreground">{t("admin_overview.quick.title")}</p>
-              </div>
-              {[
-                { to: "/dashboard/admin/crm", label: t("admin_overview.quick.crm") },
-                { to: "/dashboard/admin/manage", label: t("admin_overview.quick.workshop") },
-                { to: "/dashboard/admin/inventory", label: t("admin_overview.quick.inventory") },
-                { to: "/dashboard/admin/plans", label: t("admin_overview.quick.plans") },
-              ].map((q) => (
-                <Link
-                  key={q.to}
-                  to={q.to}
-                  className="flex items-center justify-between p-3 rounded-xl bg-muted/30 border border-border/20 hover:bg-muted/50 transition-colors text-sm text-foreground"
-                >
-                  {q.label}
-                  <ArrowRight className="h-4 w-4 text-muted-foreground" />
-                </Link>
-              ))}
-            </motion.div>
           </div>
         </div>
       </div>
