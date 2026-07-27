@@ -20,14 +20,14 @@ export default function AdminAlerts({ rows, loading }: Props) {
       transition={{ delay: 0.5 }}
       className="h-full"
     >
-      <Card className="h-full bg-background/60 backdrop-blur-md border-border/30 rounded-2xl overflow-hidden">
+      <Card className="h-full bg-background/60 backdrop-blur-md border-border/30 rounded-2xl overflow-hidden flex flex-col">
         <CardHeader className="pb-3">
           <CardTitle className="flex items-center gap-2 text-lg font-medium">
             <Bell className="h-5 w-5 text-wj-green" />
             {t("admin_overview.alerts.title")}
           </CardTitle>
         </CardHeader>
-        <CardContent className="space-y-3">
+        <CardContent className="space-y-3 flex-1 min-h-0 overflow-y-auto">
           {rows.length === 0 ? (
             <p className="text-sm text-muted-foreground py-6 text-center">
               {loading ? t("admin_overview.alerts.loading") : t("admin_overview.alerts.empty")}
