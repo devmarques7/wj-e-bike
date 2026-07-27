@@ -1,5 +1,5 @@
 import { motion } from "framer-motion";
-import { CreditCard, Users, CalendarCheck, Wrench, ShoppingCart, ArrowRight } from "lucide-react";
+import { CreditCard, Users, CalendarCheck, Wrench, ArrowRight } from "lucide-react";
 import AdminDashboardLayout from "@/components/dashboard/AdminDashboardLayout";
 import AdminKPICard from "@/components/dashboard/AdminKPICard";
 import KPICarousel from "@/components/dashboard/KPICarousel";
