@@ -6,6 +6,7 @@ import { useTranslation } from "react-i18next";
 import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { Pagination, PaginationContent, PaginationItem, PaginationLink, PaginationNext, PaginationPrevious } from "@/components/ui/pagination";
 import RoleDashboardLayout from "@/components/dashboard/RoleDashboardLayout";
 import EmptyState from "@/components/dashboard/EmptyState";
 import { supabase } from "@/integrations/supabase/client";
