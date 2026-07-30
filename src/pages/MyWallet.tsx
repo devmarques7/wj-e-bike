@@ -21,6 +21,11 @@ import ServiceAllowanceCard from "@/components/dashboard/wallet/ServiceAllowance
 import ScanEPassDialog from "@/components/dashboard/wallet/ScanEPassDialog";
 import { usePlanAllowance, PLAN_SERVICE_ALLOWANCE } from "@/hooks/wallet/usePlanAllowance";
 import { useGarageBike } from "@/hooks/garage/useGarageBike";
+import ActivityYearGrid from "@/components/dashboard/wallet/ActivityYearGrid";
+import ActivityDayDialog from "@/components/dashboard/wallet/ActivityDayDialog";
+import ServiceFolderStack from "@/components/dashboard/wallet/ServiceFolderStack";
+import ServiceRecordDialog from "@/components/dashboard/wallet/ServiceRecordDialog";
+import { useActivityYear, type ActivityDay, type ActivityRecord } from "@/hooks/wallet/useActivityYear";
 
 type PointEntry = {
   id: string;
@@ -80,6 +85,15 @@ export default function MyWallet() {
   const [cardThemes, setCardThemes] = useState<Record<string, string>>(() => loadWalletThemes());
   const [editingCardId, setEditingCardId] = useState<string | null>(null);
   const [scanOpen, setScanOpen] = useState(false);
+  /** Year activity map + folder history state. */
+  const [activityYear, setActivityYear] = useState(() => new Date().getFullYear());
+  const [selectedDay, setSelectedDay] = useState<ActivityDay | null>(null);
+  const [selectedRecord, setSelectedRecord] = useState<ActivityRecord | null>(null);
+  const {
+    records: activityRecords,
+    daysMap,
+    loading: activityLoading,
+  } = useActivityYear(user?.id, activityYear);
 
   useEffect(() => {
     if (!user?.id) return;
@@ -479,22 +493,36 @@ export default function MyWallet() {
           </div>
         </div>
 
-        <div className="w-full h-full">
-          <div className="h-full rounded-3xl border border-border/50 bg-card overflow-hidden flex flex-col">
-            <div className="p-6 border-b border-border/50">
-              <div className="flex items-center justify-between gap-4">
+        {/* Year activity map + folder history */}
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+          <div className="lg:col-span-7">
+            <ActivityYearGrid
+              year={activityYear}
+              daysMap={daysMap}
+              onYearChange={setActivityYear}
+              onSelectDay={setSelectedDay}
+              selectedDate={selectedDay?.date ?? null}
+              loading={activityLoading}
+            />
+          </div>
+
+          <div className="lg:col-span-5">
+            <div className="rounded-3xl border border-border/50 bg-card p-6">
+              <div className="flex items-center justify-between gap-4 mb-5">
                 <div className="flex items-center gap-3">
                   <div className="w-10 h-10 rounded-xl bg-wj-green/10 flex items-center justify-center">
                     <Wrench className="h-5 w-5 text-wj-green" />
                   </div>
                   <div>
-                    <h3 className="text-lg font-semibold text-foreground">{t("e_pass.transactions")}</h3>
-                    <p className="text-xs text-muted-foreground">{t("e_pass.transactions_sub")}</p>
+                    <h3 className="text-lg font-semibold text-foreground">Service folders</h3>
+                    <p className="text-xs text-muted-foreground">
+                      Every revision and repair, with its full record
+                    </p>
                   </div>
                 </div>
                 <Button
                   onClick={() => navigate("/dashboard")}
-                  className="flex gradient-wj text-white hover:opacity-90"
+                  className="gradient-wj text-white hover:opacity-90"
                   size="sm"
                 >
                   <Calendar className="h-4 w-4 mr-2" />
@@ -502,88 +530,29 @@ export default function MyWallet() {
                   <span className="sm:hidden">{t("e_pass.schedule_now_short")}</span>
                 </Button>
               </div>
-            </div>
 
-            <div className="flex-1 min-h-[240px] overflow-y-auto">
-              {history.length === 0 ? (
-                <EmptyState
-                  icon={Calendar}
-                  title={loading ? t("e_pass.history.loading_title") : t("e_pass.history.empty_title")}
-                  description={loading ? t("e_pass.history.loading_desc") : t("e_pass.history.empty_desc")}
-                  className="h-full"
-                />
-              ) : (
-                <>
-                  <Table>
-                    <TableHeader>
-                      <TableRow className="border-border/50 hover:bg-transparent">
-                        <TableHead className="text-muted-foreground">{t("e_pass.history.date")}</TableHead>
-                        <TableHead className="text-muted-foreground">{t("e_pass.history.service")}</TableHead>
-                        <TableHead className="text-muted-foreground text-right">{t("e_pass.history.points")}</TableHead>
-                        <TableHead className="text-muted-foreground text-right">{t("e_pass.history.status")}</TableHead>
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {paginatedHistory.map((item, index) => (
-                        <motion.tr
-                          key={item.id}
-                          initial={{ opacity: 0, y: 10 }}
-                          animate={{ opacity: 1, y: 0 }}
-                          transition={{ delay: Math.min(index * 0.02, 0.4) }}
-                          className="border-border/30 hover:bg-muted/30"
-                        >
-                          <TableCell className="text-sm text-muted-foreground">
-                            {new Date(item.date).toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric" })}
-                          </TableCell>
-                          <TableCell className="text-sm font-medium text-foreground">{item.service}</TableCell>
-                          <TableCell className="text-right">
-                            <span className="text-wj-green font-semibold">+{item.points}</span>
-                          </TableCell>
-                          <TableCell className="text-right">
-                            <span className="px-2 py-0.5 rounded-full bg-wj-green/10 text-wj-green text-xs font-medium capitalize">
-                              {item.status}
-                            </span>
-                          </TableCell>
-                        </motion.tr>
-                      ))}
-                    </TableBody>
-                  </Table>
-
-                  {totalPages > 1 && (
-                    <div className="sticky bottom-0 border-t border-border/50 bg-card/95 backdrop-blur p-3">
-                      <Pagination>
-                        <PaginationContent>
-                          <PaginationItem>
-                            <PaginationPrevious
-                              onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
-                              className={cn(currentPage === 1 && "pointer-events-none opacity-40")}
-                            />
-                          </PaginationItem>
-                          {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
-                            <PaginationItem key={page}>
-                              <PaginationLink
-                                isActive={page === currentPage}
-                                onClick={() => setCurrentPage(page)}
-                              >
-                                {page}
-                              </PaginationLink>
-                            </PaginationItem>
-                          ))}
-                          <PaginationItem>
-                            <PaginationNext
-                              onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
-                              className={cn(currentPage === totalPages && "pointer-events-none opacity-40")}
-                            />
-                          </PaginationItem>
-                        </PaginationContent>
-                      </Pagination>
-                    </div>
-                  )}
-                </>
-              )}
+              <ServiceFolderStack
+                records={activityRecords}
+                loading={activityLoading}
+                onOpen={setSelectedRecord}
+              />
             </div>
           </div>
         </div>
+
+        <ActivityDayDialog
+          day={selectedDay}
+          onOpenChange={(o) => !o && setSelectedDay(null)}
+          onOpenRecord={(r) => {
+            setSelectedDay(null);
+            setSelectedRecord(r);
+          }}
+        />
+
+        <ServiceRecordDialog
+          record={selectedRecord}
+          onOpenChange={(o) => !o && setSelectedRecord(null)}
+        />
       </div>
 
       <WalletCardThemeDialog
