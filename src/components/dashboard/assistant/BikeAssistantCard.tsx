@@ -49,10 +49,6 @@ export default function BikeAssistantCard() {
           </div>
           <div>
             <p className="text-sm font-semibold text-foreground">{config.name} Assistant</p>
-            <p className="text-[11px] text-muted-foreground">
-              {activeSkills.length} skills active · {config.tone}
-              {savedCalls > 0 && ` · ${savedCalls} instant answers`}
-            </p>
           </div>
         </div>
         <div className="flex items-center gap-1">
