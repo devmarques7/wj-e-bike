@@ -65,6 +65,7 @@ export default function MyWallet() {
   const [hoveredId, setHoveredId] = useState<string | null>(null);
   const [currentPlan, setCurrentPlan] = useState<PlanInfo | null>(null);
   const [history, setHistory] = useState<PointEntry[]>([]);
+  const [currentPage, setCurrentPage] = useState(1);
   const [pickerOpen, setPickerOpen] = useState(false);
 
   useEffect(() => {
