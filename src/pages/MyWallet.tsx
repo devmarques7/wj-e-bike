@@ -538,40 +538,73 @@ export default function MyWallet() {
                   className="h-full"
                 />
               ) : (
-                <Table>
-                  <TableHeader>
-                    <TableRow className="border-border/50 hover:bg-transparent">
-                      <TableHead className="text-muted-foreground">{t("e_pass.history.date")}</TableHead>
-                      <TableHead className="text-muted-foreground">{t("e_pass.history.service")}</TableHead>
-                      <TableHead className="text-muted-foreground text-right">{t("e_pass.history.points")}</TableHead>
-                      <TableHead className="text-muted-foreground text-right">{t("e_pass.history.status")}</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {history.map((item, index) => (
-                      <motion.tr
-                        key={item.id}
-                        initial={{ opacity: 0, y: 10 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        transition={{ delay: Math.min(index * 0.02, 0.4) }}
-                        className="border-border/30 hover:bg-muted/30"
-                      >
-                        <TableCell className="text-sm text-muted-foreground">
-                          {new Date(item.date).toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric" })}
-                        </TableCell>
-                        <TableCell className="text-sm font-medium text-foreground">{item.service}</TableCell>
-                        <TableCell className="text-right">
-                          <span className="text-wj-green font-semibold">+{item.points}</span>
-                        </TableCell>
-                        <TableCell className="text-right">
-                          <span className="px-2 py-0.5 rounded-full bg-wj-green/10 text-wj-green text-xs font-medium capitalize">
-                            {item.status}
-                          </span>
-                        </TableCell>
-                      </motion.tr>
-                    ))}
-                  </TableBody>
-                </Table>
+                <>
+                  <Table>
+                    <TableHeader>
+                      <TableRow className="border-border/50 hover:bg-transparent">
+                        <TableHead className="text-muted-foreground">{t("e_pass.history.date")}</TableHead>
+                        <TableHead className="text-muted-foreground">{t("e_pass.history.service")}</TableHead>
+                        <TableHead className="text-muted-foreground text-right">{t("e_pass.history.points")}</TableHead>
+                        <TableHead className="text-muted-foreground text-right">{t("e_pass.history.status")}</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {paginatedHistory.map((item, index) => (
+                        <motion.tr
+                          key={item.id}
+                          initial={{ opacity: 0, y: 10 }}
+                          animate={{ opacity: 1, y: 0 }}
+                          transition={{ delay: Math.min(index * 0.02, 0.4) }}
+                          className="border-border/30 hover:bg-muted/30"
+                        >
+                          <TableCell className="text-sm text-muted-foreground">
+                            {new Date(item.date).toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric" })}
+                          </TableCell>
+                          <TableCell className="text-sm font-medium text-foreground">{item.service}</TableCell>
+                          <TableCell className="text-right">
+                            <span className="text-wj-green font-semibold">+{item.points}</span>
+                          </TableCell>
+                          <TableCell className="text-right">
+                            <span className="px-2 py-0.5 rounded-full bg-wj-green/10 text-wj-green text-xs font-medium capitalize">
+                              {item.status}
+                            </span>
+                          </TableCell>
+                        </motion.tr>
+                      ))}
+                    </TableBody>
+                  </Table>
+
+                  {totalPages > 1 && (
+                    <div className="sticky bottom-0 border-t border-border/50 bg-card/95 backdrop-blur p-3">
+                      <Pagination>
+                        <PaginationContent>
+                          <PaginationItem>
+                            <PaginationPrevious
+                              onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
+                              className={cn(currentPage === 1 && "pointer-events-none opacity-40")}
+                            />
+                          </PaginationItem>
+                          {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
+                            <PaginationItem key={page}>
+                              <PaginationLink
+                                isActive={page === currentPage}
+                                onClick={() => setCurrentPage(page)}
+                              >
+                                {page}
+                              </PaginationLink>
+                            </PaginationItem>
+                          ))}
+                          <PaginationItem>
+                            <PaginationNext
+                              onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
+                              className={cn(currentPage === totalPages && "pointer-events-none opacity-40")}
+                            />
+                          </PaginationItem>
+                        </PaginationContent>
+                      </Pagination>
+                    </div>
+                  )}
+                </>
               )}
             </div>
           </div>
