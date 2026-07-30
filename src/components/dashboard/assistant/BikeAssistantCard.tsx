@@ -139,7 +139,7 @@ export default function BikeAssistantCard({ className }: BikeAssistantCardProps)
           )}
         >
           {messages.length === 0 ? (
-            <div className="text-center">
+            <div className="flex min-h-full flex-col items-center justify-center text-center">
               <div className="mx-auto mb-5 flex justify-center">
                 <AgentOrb
                   size={96}
