@@ -98,11 +98,7 @@ export default function AgentOrb({ state = "idle", size = 96, className }: Agent
       const breathCycle = 4;
       const breathPhase = (t / breathCycle) % 1;
       const breath = 0.5 - 0.5 * Math.cos(breathPhase * Math.PI * 2); // 0 → 1 → 0
-      // Subtle heartbeat double-beat layered over the breath.
-      const heartCycle = (t * 1.15) % 1;
-      const lub = heartCycle < 0.12 ? Math.sin((heartCycle / 0.12) * Math.PI) : 0;
-      const dub = heartCycle > 0.18 && heartCycle < 0.30 ? Math.sin(((heartCycle - 0.18) / 0.12) * Math.PI) : 0;
-      const heart = (lub + dub) * 0.45;
+
 
       const projected = points.map((p) => {
         const cosY = Math.cos(ry);
@@ -140,11 +136,10 @@ export default function AgentOrb({ state = "idle", size = 96, className }: Agent
           // Breath wave: a single, smooth pulse that emanates from the center,
           // travels to the outer edge, and then recedes back to the center.
           const breathWave = Math.max(0, 1 - Math.abs(dist - breath) / 0.28);
-          // Heartbeat follows the breath with a sharper, tighter pulse.
-          const heartWave = Math.max(0, 1 - Math.abs(dist - (breath * 0.92 + 0.04)) / 0.18) * heart;
-          intensity += breathWave * breathWave * 0.5 + heartWave * 0.9;
-          dot += breathWave * breathWave * 0.9 + heartWave * 1.3;
+          intensity += breathWave * breathWave * 0.5;
+          dot += breathWave * breathWave * 0.9;
         }
+
 
         ctx.beginPath();
         ctx.fillStyle = `rgba(${accent[0]}, ${accent[1]}, ${accent[2]}, ${Math.min(intensity, 1)})`;
