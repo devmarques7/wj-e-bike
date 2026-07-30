@@ -1,4 +1,4 @@
-import { CalendarCheck, CalendarClock, ArrowUpRight, Plus, Sparkles } from "lucide-react";
+import { CalendarCheck, CalendarClock, ArrowUpRight, Plus, Sparkles, ShieldCheck } from "lucide-react";
 import { motion } from "framer-motion";
 import type { PlanAllowance } from "@/hooks/wallet/usePlanAllowance";
 
@@ -178,7 +178,7 @@ function DottedRing({
 }: {
   size: number;
   progress: number;
-  tone: "green" | "dark";
+  tone: "green" | "dark" | "muted";
   children?: React.ReactNode;
 }) {
   const dots = 32;
@@ -198,14 +198,18 @@ function DottedRing({
               cx={cx}
               cy={cy}
               r={size > 100 ? 3.2 : 2.2}
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              transition={{ delay: i * 0.012 }}
+              initial={{ opacity: 0, scale: 0.4 }}
+              animate={{ opacity: 1, scale: 1 }}
+              transition={{ delay: on ? i * 0.035 : 0.2 + i * 0.008, duration: 0.25 }}
               className={
                 tone === "dark"
                   ? on
                     ? "fill-black"
                     : "fill-black/25"
+                  : tone === "muted"
+                  ? on
+                    ? "fill-muted-foreground"
+                    : "fill-border"
                   : on
                   ? "fill-wj-green"
                   : "fill-border"
