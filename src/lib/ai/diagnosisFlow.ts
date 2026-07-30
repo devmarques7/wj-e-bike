@@ -8,6 +8,8 @@
 import {
   SYMPTOMS,
   getSymptom,
+  FULL_EXTRA_QUESTIONS,
+  QUICK_QUESTIONS,
   type DiagnosisQuestion,
   type SymptomDefinition,
   type SymptomId,
@@ -21,22 +23,42 @@ export interface DiagnosisTag {
   answer: string;
 }
 
-export type DiagnosisPhase = "symptom" | "questions" | "notes" | "done";
+export type DiagnosisPhase = "mode" | "symptom" | "questions" | "notes" | "done";
+
+export type DiagnosisMode = "quick" | "full";
+
+export const MODE_QUESTION =
+  "How would you like to do this?";
+export const MODE_QUICK_LABEL = "Quick booking (3 questions)";
+export const MODE_FULL_LABEL = "Full diagnosis (complete analysis)";
+export const MODE_OPTIONS = [MODE_QUICK_LABEL, MODE_FULL_LABEL];
 
 export interface DiagnosisSession {
   symptomId: SymptomId | null;
+  mode: DiagnosisMode;
   phase: DiagnosisPhase;
   /** index of the question currently being asked */
   step: number;
   tags: DiagnosisTag[];
 }
 
-export const NOTES_QUESTION = "Anything else the mechanic should know?";
+export const NOTES_QUESTION = "Describe a bit of the problem in your own words.";
 export const NOTES_OPTIONS = ["No, that's all", "It's urgent", "I have photos"];
 
-export function newSession(symptomId?: SymptomId | null): DiagnosisSession {
+export const SYMPTOM_QUESTION = "Where is the problem?";
+
+/** A session that first asks the rider to choose quick vs full. */
+export function newModeSession(symptomId?: SymptomId | null): DiagnosisSession {
+  return { symptomId: symptomId ?? null, mode: "full", phase: "mode", step: 0, tags: [] };
+}
+
+export function newSession(
+  symptomId?: SymptomId | null,
+  mode: DiagnosisMode = "full",
+): DiagnosisSession {
   return {
     symptomId: symptomId ?? null,
+    mode,
     phase: symptomId ? "questions" : "symptom",
     step: 0,
     tags: symptomId
@@ -44,7 +66,7 @@ export function newSession(symptomId?: SymptomId | null): DiagnosisSession {
           {
             id: "symptom",
             label: getSymptom(symptomId).label,
-            question: "What is wrong?",
+            question: SYMPTOM_QUESTION,
             answer: getSymptom(symptomId).label,
           },
         ]
@@ -57,7 +79,9 @@ export function symptomOf(session: DiagnosisSession): SymptomDefinition | null {
 }
 
 export function questionsOf(session: DiagnosisSession): DiagnosisQuestion[] {
-  return symptomOf(session)?.questions ?? [];
+  if (session.mode === "quick") return QUICK_QUESTIONS;
+  const base = symptomOf(session)?.questions ?? [];
+  return [...base, ...FULL_EXTRA_QUESTIONS];
 }
 
 export interface DiagnosisPrompt {
@@ -67,9 +91,12 @@ export interface DiagnosisPrompt {
 
 /** The question the assistant should ask right now. */
 export function currentPrompt(session: DiagnosisSession): DiagnosisPrompt | null {
+  if (session.phase === "mode") {
+    return { content: MODE_QUESTION, options: MODE_OPTIONS };
+  }
   if (session.phase === "symptom") {
     return {
-      content: "What is happening with your bike? Pick the closest one — or describe it.",
+      content: `${SYMPTOM_QUESTION} Pick the closest one — or describe it.`,
       options: SYMPTOMS.map((s) => s.label),
     };
   }
@@ -121,18 +148,26 @@ export function isOffFlow(text: string, currentOptions: string[]): boolean {
 
 /** Advance the session after a valid answer. */
 export function applyAnswer(session: DiagnosisSession, answer: string): DiagnosisSession {
+  if (session.phase === "mode") {
+    const quick = /quick|rapid|rápid|rapid|3 question|fast/i.test(answer);
+    const mode: DiagnosisMode = quick ? "quick" : "full";
+    const base = newSession(session.symptomId, mode);
+    return base;
+  }
+
   if (session.phase === "symptom") {
     const matched =
       SYMPTOMS.find((s) => norm(s.label) === norm(answer)) ??
       SYMPTOMS.find((s) => norm(answer).includes(norm(s.label)));
     const symptom = matched ?? getSymptom("other");
     return {
+      ...session,
       symptomId: symptom.id,
       phase: "questions",
       step: 0,
       tags: [
         ...session.tags,
-        { id: "symptom", label: symptom.label, question: "What is wrong?", answer: symptom.label },
+        { id: "symptom", label: symptom.label, question: SYMPTOM_QUESTION, answer: symptom.label },
       ],
     };
   }
@@ -171,7 +206,7 @@ export function applyAnswer(session: DiagnosisSession, answer: string): Diagnosi
 /** Remove a tag and rewind the flow to that question. */
 export function removeTag(session: DiagnosisSession, tagId: string): DiagnosisSession {
   if (tagId === "symptom") {
-    return { symptomId: null, phase: "symptom", step: 0, tags: [] };
+    return { ...session, symptomId: null, phase: "symptom", step: 0, tags: [] };
   }
   if (tagId === "notes") {
     return { ...session, phase: "notes", tags: session.tags.filter((t) => t.id !== "notes") };

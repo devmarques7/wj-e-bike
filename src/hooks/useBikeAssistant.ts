@@ -11,13 +11,32 @@ import {
   currentPrompt,
   isOffFlow,
   matchOption,
-  newSession,
+  newModeSession,
   notesOf,
   progressOf,
   removeTag,
   symptomOf,
   type DiagnosisSession,
 } from "@/lib/ai/diagnosisFlow";
+import {
+  BACK_TO_DAYS,
+  NO_FIT_OPTION,
+  bookingPrompt,
+  isUrgentAnswer,
+  matchDay,
+  matchSlot,
+  matchUpcomingDay,
+  periodFromAnswer,
+  type BookingSession,
+} from "@/lib/ai/bookingFlow";
+import {
+  bookSlot,
+  createAppointmentRequest,
+  dayLabel,
+  fetchAvailability,
+  fetchServiceTypes,
+  resolveServiceType,
+} from "@/lib/scheduling/availability";
 import {
   ASSISTANT_CONFIG_STORAGE_KEY,
   ASSISTANT_SKILLS,
@@ -82,6 +101,8 @@ export function useBikeAssistant() {
   const [savedCalls, setSavedCalls] = useState(0);
   const [diagnosis, setDiagnosis] = useState<DiagnosisSession | null>(null);
   const diagnosisRef = useRef<DiagnosisSession | null>(null);
+  const [booking, setBooking] = useState<BookingSession | null>(null);
+  const bookingRef = useRef<BookingSession | null>(null);
   const abortRef = useRef<AbortController | null>(null);
 
   useEffect(() => {
@@ -128,6 +149,8 @@ export function useBikeAssistant() {
     setStatus("idle");
     setDiagnosis(null);
     diagnosisRef.current = null;
+    setBooking(null);
+    bookingRef.current = null;
   }, []);
 
   /* ---------------- Diagnosis flow (deterministic) ---------------- */
@@ -135,6 +158,11 @@ export function useBikeAssistant() {
   const setSession = useCallback((session: DiagnosisSession | null) => {
     diagnosisRef.current = session;
     setDiagnosis(session);
+  }, []);
+
+  const setBookingSession = useCallback((session: BookingSession | null) => {
+    bookingRef.current = session;
+    setBooking(session);
   }, []);
 
   /** Ask the current question of a session (or finish it). */
@@ -154,30 +182,80 @@ export function useBikeAssistant() {
     [pushAssistant],
   );
 
-  const finishDiagnosis = useCallback(
-    (session: DiagnosisSession) => {
-      const symptom = symptomOf(session) ?? getSymptom("other");
-      const briefing = buildBriefing(symptom, answersOf(session), notesOf(session));
-      saveBriefing(briefing);
-      pushAssistant(
-        `Repair briefing ready — **${symptom.label}**${symptom.urgent ? " · priority HIGH" : ""}.\nThe mechanic will see it before you arrive. Shall we pick a slot?`,
-        {
-          action: { type: "navigate", to: "/dashboard/service", label: "Book the revision" },
-        },
-      );
-      setSession({ ...session, phase: "done" });
+  /** Ask the current booking question. */
+  const askBooking = useCallback(
+    (session: BookingSession, prefix?: string) => {
+      const prompt = bookingPrompt(session);
+      if (!prompt) return;
+      pushAssistant(`${prefix ? `${prefix}\n\n` : ""}${prompt.content}`, {
+        options: prompt.options,
+        source: "local",
+      });
     },
-    [pushAssistant, setSession],
+    [pushAssistant],
+  );
+
+  /** After the diagnosis: load real availability and offer conflict-free slots. */
+  const startBooking = useCallback(
+    async (opts: { serviceHint: string; urgent: boolean; notes: string }) => {
+      const types = await fetchServiceTypes();
+      const type = resolveServiceType(types, opts.serviceHint);
+      if (!type) {
+        pushAssistant(
+          "I couldn't load the service catalogue right now. Open the booking page and I'll keep your briefing ready.",
+          { action: { type: "navigate", to: "/dashboard/service", label: "Open booking" } },
+        );
+        return;
+      }
+      const availability = await fetchAvailability(type.id, 7);
+      const session: BookingSession = {
+        phase: availability.length ? "day" : "request_period",
+        serviceTypeId: type.id,
+        serviceName: type.name,
+        availability,
+        date: null,
+        urgent: opts.urgent,
+        notes: opts.notes,
+        period: null,
+        preferredDate: null,
+      };
+      setBookingSession(session);
+      askBooking(
+        session,
+        availability.length ? undefined : "There are no free slots in the next 7 days.",
+      );
+    },
+    [askBooking, pushAssistant, setBookingSession],
+  );
+
+  const finishDiagnosis = useCallback(
+    async (session: DiagnosisSession) => {
+      const symptom = symptomOf(session) ?? getSymptom("other");
+      const answers = answersOf(session);
+      const notes = notesOf(session);
+      const briefing = buildBriefing(symptom, answers, notes);
+      saveBriefing(briefing);
+      setSession({ ...session, phase: "done" });
+      const urgent =
+        Boolean(symptom.urgent) ||
+        answers.some((a) => /urgent|asap|can'?t ride|unsafe/i.test(`${a.answer}`)) ||
+        /urgent/i.test(notes);
+      pushAssistant(
+        `Thank you — your **${symptom.label.toLowerCase()}** briefing is complete${urgent ? " · priority HIGH" : ""}. Let me check the free slots...`,
+      );
+      await startBooking({ serviceHint: symptom.serviceHint, urgent, notes: briefing.summary });
+    },
+    [pushAssistant, setSession, startBooking],
   );
 
   const startDiagnosis = useCallback(
     (symptomId?: SymptomId | null) => {
-      const session = newSession(symptomId ?? null);
+      const session = newModeSession(symptomId ?? null);
       setSession(session);
-      const symptom = symptomOf(session);
+      const symptom = symptomId ? getSymptom(symptomId) : null;
       const intro = symptom
-        ? `Let's diagnose your **${symptom.label.toLowerCase()}**. One quick question at a time — tap an answer or type your own.`
-        : "Let's diagnose your bike. One quick question at a time — tap an answer or type your own.";
+        ? `Let's sort out your **${symptom.label.toLowerCase()}**.`
+        : "Let's get your bike booked in.";
       askCurrent(session, intro);
     },
     [askCurrent, setSession],
@@ -185,8 +263,112 @@ export function useBikeAssistant() {
 
   const cancelDiagnosis = useCallback(() => {
     setSession(null);
+    setBookingSession(null);
     pushAssistant("Diagnosis cancelled. Ask me anything else whenever you want.");
-  }, [pushAssistant, setSession]);
+  }, [pushAssistant, setSession, setBookingSession]);
+
+  /* ---------------- Booking answers (deterministic) ---------------- */
+
+  const handleBookingAnswer = useCallback(
+    async (session: BookingSession, answer: string) => {
+      const wantsRequest = answer.toLowerCase().includes(NO_FIT_OPTION.toLowerCase().slice(0, 12));
+
+      if (session.phase === "day") {
+        if (wantsRequest) {
+          const next = { ...session, phase: "request_period" as const };
+          setBookingSession(next);
+          askBooking(next);
+          return;
+        }
+        const day = matchDay(session, answer);
+        if (!day) return askBooking(session, "I didn't catch that day.");
+        const next = { ...session, date: day.date, phase: "slot" as const };
+        setBookingSession(next);
+        askBooking(next);
+        return;
+      }
+
+      if (session.phase === "slot") {
+        if (answer.toLowerCase().includes(BACK_TO_DAYS.toLowerCase().slice(0, 10))) {
+          const next = { ...session, phase: "day" as const, date: null };
+          setBookingSession(next);
+          askBooking(next);
+          return;
+        }
+        if (wantsRequest) {
+          const next = { ...session, phase: "request_period" as const };
+          setBookingSession(next);
+          askBooking(next);
+          return;
+        }
+        const slot = matchSlot(session, answer);
+        if (!slot || !session.date) return askBooking(session, "That time isn't in the list.");
+        try {
+          await bookSlot({
+            userId: user!.id,
+            serviceTypeId: session.serviceTypeId,
+            date: session.date,
+            slot,
+            urgent: session.urgent,
+            notes: session.notes,
+          });
+          setBookingSession(null);
+          pushAssistant(
+            `Booked — **${dayLabel(session.date)} at ${slot.start}** for ${session.serviceName}. Your repair briefing is attached to the appointment.`,
+            { action: { type: "navigate", to: "/dashboard/service", label: "See my appointment" } },
+          );
+        } catch {
+          const next = { ...session, phase: "day" as const, date: null };
+          setBookingSession(next);
+          askBooking(next, "That slot was just taken. Let's pick another one.");
+        }
+        return;
+      }
+
+      if (session.phase === "request_period") {
+        const next = { ...session, period: periodFromAnswer(answer), phase: "request_day" as const };
+        setBookingSession(next);
+        askBooking(next);
+        return;
+      }
+
+      if (session.phase === "request_day") {
+        const next = {
+          ...session,
+          preferredDate: matchUpcomingDay(answer),
+          phase: "request_urgency" as const,
+        };
+        setBookingSession(next);
+        askBooking(next);
+        return;
+      }
+
+      if (session.phase === "request_urgency") {
+        const urgent = isUrgentAnswer(answer) || session.urgent;
+        try {
+          await createAppointmentRequest({
+            userId: user!.id,
+            serviceTypeId: session.serviceTypeId,
+            period: session.period ?? "any",
+            preferredDate: session.preferredDate,
+            urgent,
+            notes: session.notes,
+          });
+          setBookingSession(null);
+          pushAssistant(
+            `Scheduling **request** sent (not a confirmed booking yet) — ${session.preferredDate ? dayLabel(session.preferredDate) : "any day"}, ${session.period ?? "any"} time${urgent ? ", urgent" : ""}.\nOur team will fit you in and confirm as soon as a slot opens.`,
+            { action: { type: "navigate", to: "/dashboard/service", label: "See my requests" } },
+          );
+        } catch {
+          setBookingSession(null);
+          pushAssistant("I couldn't send the request. Try again from the booking page.", {
+            action: { type: "navigate", to: "/dashboard/service", label: "Open booking" },
+          });
+        }
+      }
+    },
+    [askBooking, pushAssistant, setBookingSession, user],
+  );
 
   /** Removing an answer tag rewinds the flow and re-asks that question. */
   const removeDiagnosisTag = useCallback(
@@ -215,6 +397,16 @@ export function useBikeAssistant() {
       setMessages((prev) => [...prev, { id: uid(), role: "user", content: prompt }]);
       const history = [...messages, { id: uid(), role: "user" as const, content: prompt }];
       setStatus("thinking");
+
+      /* ---------- 0a. Active booking flow: 0 tokens ---------- */
+      const bookingSession = bookingRef.current;
+      if (bookingSession && bookingSession.phase !== "done") {
+        await wait(FLOW_THINKING_MS);
+        await handleBookingAnswer(bookingSession, prompt);
+        setSavedCalls((n) => n + 1);
+        setStatus("idle");
+        return;
+      }
 
       /* ---------- 0. Active diagnosis flow: 0 tokens ---------- */
       const session = diagnosisRef.current;
@@ -250,7 +442,7 @@ export function useBikeAssistant() {
         const next = applyAnswer(session, matched ?? prompt);
         setSession(next);
         setSavedCalls((n) => n + 1);
-        if (next.phase === "done") finishDiagnosis(next);
+        if (next.phase === "done") await finishDiagnosis(next);
         else askCurrent(next);
         setStatus("idle");
         return;
@@ -352,7 +544,7 @@ export function useBikeAssistant() {
         setStatus("idle");
       }
     },
-    [askCurrent, config, finishDiagnosis, messages, pushAssistant, setSession, startDiagnosis, status, user?.id],
+    [askCurrent, config, finishDiagnosis, handleBookingAnswer, messages, pushAssistant, setSession, startDiagnosis, status, user?.id],
   );
 
   const runAction = useCallback(
@@ -382,5 +574,6 @@ export function useBikeAssistant() {
     startDiagnosis,
     removeDiagnosisTag,
     cancelDiagnosis,
+    booking,
   };
 }

@@ -51,6 +51,51 @@ const COMMON_QUESTIONS: DiagnosisQuestion[] = [
   },
 ];
 
+/** Quick path — three questions only, then straight to the slots. */
+export const QUICK_QUESTIONS: DiagnosisQuestion[] = [
+  {
+    id: "quick_urgent",
+    question: "Is it urgent?",
+    options: ["Yes, I can't ride", "Yes, but I can manage", "No, it can wait"],
+  },
+];
+
+/** Full path — everything a mechanic needs before touching the bike. */
+export const FULL_EXTRA_QUESTIONS: DiagnosisQuestion[] = [
+  {
+    id: "where_exact",
+    question: "Where exactly on the bike is it?",
+    options: ["Front", "Rear", "Drivetrain / middle", "Cockpit", "Battery area", "Not sure"],
+    allowFreeText: true,
+  },
+  {
+    id: "behaviour",
+    question: "How does it behave?",
+    options: ["Constant", "Intermittent", "Only under load", "Only when cold or wet", "Getting worse"],
+  },
+  {
+    id: "conditions",
+    question: "When does it happen most?",
+    options: ["While riding", "While braking", "While accelerating", "Standing still", "While charging"],
+  },
+  {
+    id: "impact",
+    question: "How bad is it right now?",
+    options: ["Minor", "Annoying", "It blocks my rides", "It feels unsafe"],
+  },
+  {
+    id: "history",
+    question: "Did anything happen before it started?",
+    options: ["A crash or fall", "A new part was fitted", "A recent service", "Nothing special"],
+    allowFreeText: true,
+  },
+  {
+    id: "urgency",
+    question: "How soon do you need it fixed?",
+    options: ["As soon as possible", "This week", "Anytime in the next weeks"],
+  },
+];
+
 export const SYMPTOMS: SymptomDefinition[] = [
   {
     id: "no_power",
