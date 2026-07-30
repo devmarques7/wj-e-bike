@@ -408,7 +408,9 @@ export default function AppointmentsTableCard({
                         <TableRow
                           key={apt.id}
                           className={`border-border/20 transition-all duration-300 hover:bg-wj-green/10 hover:text-foreground hover:shadow-[inset_2px_0_0_0_hsl(var(--wj-green)/0.6)] cursor-pointer`}
-                          onClick={() => setReviewTarget(apt)}
+                          onClick={() => {
+                            if (!apt.isRequest) setReviewTarget(apt);
+                          }}
                         >
                           <TableCell className="text-xs font-medium align-middle">
                             <div className="flex items-center gap-1.5">
@@ -504,7 +506,10 @@ export default function AppointmentsTableCard({
                               <Tooltip>
                                 <TooltipTrigger asChild>
                                   <span className="inline-flex cursor-default">
-                                    {getStatusBadge(apt.status, t)}
+                                    {getStatusBadge(
+                                      isOverdue(apt) ? "overdue" : (apt.status as string),
+                                      t,
+                                    )}
                                   </span>
                                 </TooltipTrigger>
                                 <TooltipContent side="top" className="text-xs space-y-1">
