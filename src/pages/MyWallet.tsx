@@ -181,7 +181,6 @@ export default function MyWallet() {
   const slug = currentPlan?.slug ?? "free";
   const styles = cardStyles[slug] ?? cardStyles.free;
 
-  const activeBike = linkedBikes[activeBikeIdx];
   /* --------- Apple Wallet queue --------- */
   const orderedBikes = useMemo(() => {
     const byId = new Map(linkedBikes.map((b) => [b.id, b]));
@@ -189,6 +188,8 @@ export default function MyWallet() {
     const missing = linkedBikes.filter((b) => !stackOrder.includes(b.id));
     return [...ordered, ...missing];
   }, [linkedBikes, stackOrder]);
+
+  const activeBike = orderedBikes[0];
 
   /** Bring any card to the front; the previous front goes to the back of the queue. */
   const bringToFront = (id: string) => {
