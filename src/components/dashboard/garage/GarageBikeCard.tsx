@@ -4,7 +4,6 @@ import { Battery, Gauge, MapPin, Zap, ArrowUpRight } from "lucide-react";
 import { Link } from "react-router-dom";
 import type { GarageBike } from "@/hooks/garage/useGarageBike";
 import type { HealthMetric } from "@/hooks/garage/useGarageBike";
-import serviceBikeFull from "@/assets/service-bike-full.png";
 import bikeFull from "@/assets/bike-full.png";
 import bikePanel from "@/assets/bike-panel.png";
 import bikeHeadlight from "@/assets/bike-headlight.png";
