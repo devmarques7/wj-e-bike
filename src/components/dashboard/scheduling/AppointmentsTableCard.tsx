@@ -260,7 +260,13 @@ export default function AppointmentsTableCard({
       return true;
     };
     const arr = ([...appointments, ...requestRows] as ApptRow[])
-      .filter((a) => (mineOnlyMechanicId ? a.assigned_mechanic_id === mineOnlyMechanicId : true))
+      // Staff view: own jobs + anything not assigned yet (so unassigned work is
+      // never invisible to the workshop).
+      .filter((a) =>
+        mineOnlyMechanicId
+          ? a.assigned_mechanic_id === mineOnlyMechanicId || !a.assigned_mechanic_id
+          : true,
+      )
       .filter(matchStatus);
     arr.sort((a, b) => {
       const cmp = a.scheduled_start_time.localeCompare(b.scheduled_start_time);
