@@ -533,38 +533,6 @@ export default function MyWallet() {
             )}
           </div>
 
-          <div className="lg:col-span-5">
-            <div className="rounded-3xl border border-border/50 bg-card p-6">
-              <div className="flex items-center justify-between gap-4 mb-5">
-                <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-xl bg-wj-green/10 flex items-center justify-center">
-                    <Wrench className="h-5 w-5 text-wj-green" />
-                  </div>
-                  <div>
-                    <h3 className="text-lg font-semibold text-foreground">Service folders</h3>
-                    <p className="text-xs text-muted-foreground">
-                      Every revision and repair, with its full record
-                    </p>
-                  </div>
-                </div>
-                <Button
-                  onClick={() => navigate("/dashboard")}
-                  className="gradient-wj text-white hover:opacity-90"
-                  size="sm"
-                >
-                  <Calendar className="h-4 w-4 mr-2" />
-                  <span className="hidden sm:inline">{t("e_pass.schedule_now")}</span>
-                  <span className="sm:hidden">{t("e_pass.schedule_now_short")}</span>
-                </Button>
-              </div>
-
-              <ServiceFolderStack
-                records={activityRecords}
-                loading={activityLoading}
-                onOpen={setSelectedRecord}
-              />
-            </div>
-          </div>
         </div>
 
         <ServiceRecordDialog
