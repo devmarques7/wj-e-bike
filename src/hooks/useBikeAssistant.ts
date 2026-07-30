@@ -204,7 +204,8 @@ export function useBikeAssistant() {
   const runAction = useCallback(
     (action: AssistantAction) => {
       if (action.type === "navigate") navigate(action.to);
-      else window.location.href = action.href;
+      else if (action.type === "external") window.location.href = action.href;
+      // "diagnose" is handled by the UI (opens the diagnosis dialog)
     },
     [navigate],
   );
