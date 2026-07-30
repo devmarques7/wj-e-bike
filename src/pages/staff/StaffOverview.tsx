@@ -76,7 +76,11 @@ export default function StaffOverview() {
     {
       label: "Avg. Service Time",
       value:
-        stats.avgServiceMinutes != null ? `${stats.avgServiceMinutes}m` : "—",
+        stats.avgServiceMinutes != null
+          ? `${String(Math.floor(stats.avgServiceMinutes / 60)).padStart(2, "0")}:${String(
+              stats.avgServiceMinutes % 60
+            ).padStart(2, "0")}m`
+          : "00:00m",
       change:
         serviceDelta == null
           ? "No data yet"
