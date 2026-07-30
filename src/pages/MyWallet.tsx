@@ -225,12 +225,12 @@ export default function MyWallet() {
         <div className="grid grid-cols-1 lg:grid-cols-[1fr_1fr] gap-6 lg:items-stretch">
           {/* Left column — Featured member card */}
           <div
-            className="w-full overflow-visible"
+            className="w-full h-full overflow-visible"
             style={{
               paddingTop: `${WALLET_FIRST_PEEK + Math.max(0, linkedBikes.length - 1) * WALLET_STEP + WALLET_GHOST_EXTRA + 12}px`,
             }}
           >
-            <div className="relative w-full group">
+            <div className="relative w-full h-full group">
             {/* Stacked back cards — same box, uniform ascending step above the featured card */}
             {orderedBikes.slice(1).map((bike, depth) => {
               const hovered = hoveredId === bike.id;
