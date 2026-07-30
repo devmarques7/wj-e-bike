@@ -89,7 +89,7 @@ export default function BikeAssistantCard() {
                 live data from your account.
               </p>
 
-              <div className="mt-5 grid grid-cols-1 gap-2 sm:grid-cols-2 lg:grid-cols-4">
+              <div className="mt-5 flex flex-col gap-2">
                 {suggestions.map((skill) => {
                   const Icon = skill.icon;
                   const prompt = skill.samplePrompts[0];
@@ -98,10 +98,10 @@ export default function BikeAssistantCard() {
                       key={skill.id}
                       type="button"
                       onClick={() => submit(prompt)}
-                      className="group rounded-2xl border border-border/30 bg-background/50 p-3 text-left transition-colors hover:border-wj-green/40 hover:bg-wj-green/5"
+                      className="group flex items-center justify-between gap-3 rounded-2xl border border-border/30 bg-muted/50 p-3 text-left transition-colors hover:border-wj-green/40 hover:bg-wj-green/10"
                     >
                       <p className="text-xs font-medium text-foreground line-clamp-2">{prompt}</p>
-                      <Icon className="mt-3 h-4 w-4 text-muted-foreground group-hover:text-wj-green" />
+                      <Icon className="h-4 w-4 shrink-0 text-muted-foreground group-hover:text-wj-green" />
                     </button>
                   );
                 })}
