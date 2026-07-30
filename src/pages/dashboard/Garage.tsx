@@ -63,21 +63,19 @@ export default function Garage() {
             <ServiceCountdown />
           </div>
 
-          <div className="col-span-12 lg:col-span-8">
-            <BikeHealthGrid metrics={health.metrics} />
-          </div>
-          <div className="col-span-12 lg:col-span-4">
-            <BikeAssistantCard />
-          </div>
-
-          <div className="col-span-12">
+          <div className="col-span-12 lg:col-span-8 flex flex-col gap-4 lg:gap-6">
             <AppointmentsTableCard
               customerUserId={user?.id}
               includeRequests
               title="Service history & requests"
             />
+            <BikeHealthGrid metrics={health.metrics} />
+          </div>
+          <div className="col-span-12 lg:col-span-4">
+            <BikeAssistantCard className="h-full" />
           </div>
         </div>
+
       </div>
     </RoleDashboardLayout>
   );
