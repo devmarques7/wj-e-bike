@@ -145,26 +145,42 @@ export interface BookSlotInput {
 }
 
 export async function bookSlot(input: BookSlotInput) {
+  const subscriptionId = await fetchActiveSubscriptionId(input.userId);
   const { data, error } = await supabase
     .from("appointments")
     .insert({
       user_id: input.userId,
       service_type_id: input.serviceTypeId,
       assigned_mechanic_id: input.slot.mechanicId,
+      subscription_id: subscriptionId,
       scheduled_date: input.date,
       scheduled_start_time: `${input.slot.start}:00`,
       scheduled_end_time: `${input.slot.end}:00`,
       duration_minutes: input.durationMinutes ?? null,
       status: "pending",
-      priority: input.urgent ? "urgent" : "normal",
+      // DB CHECK: priority ∈ (normal | vip | emergency), booked_via ∈ (portal | admin | phone | walk_in)
+      priority: input.urgent ? "emergency" : "normal",
       priority_score: input.urgent ? 100 : 50,
-      booked_via: "assistant",
+      booked_via: "portal",
       notes: input.notes ?? null,
     } as any)
     .select("id, scheduled_date, scheduled_start_time")
     .single();
   if (error) throw error;
   return data;
+}
+
+/** Active subscription of the rider — keeps Plan visible on admin/staff tables. */
+export async function fetchActiveSubscriptionId(userId: string): Promise<string | null> {
+  const { data } = await supabase
+    .from("subscriptions")
+    .select("id")
+    .eq("user_id", userId)
+    .in("status", ["active", "trialing", "past_due"])
+    .order("created_at", { ascending: false })
+    .limit(1)
+    .maybeSingle();
+  return data?.id ?? null;
 }
 
 export type RequestPeriod = "morning" | "afternoon" | "any";
@@ -194,11 +210,13 @@ export async function createAppointmentRequest(input: AppointmentRequestInput) {
   const today = toDateKey(new Date());
   const dateFrom = input.preferredDate ?? today;
   const dateUntil = input.preferredDate ?? null;
+  const subscriptionId = await fetchActiveSubscriptionId(input.userId);
   const { data, error } = await supabase
     .from("appointment_waitlist")
     .insert({
       user_id: input.userId,
       service_type_id: input.serviceTypeId,
+      subscription_id: subscriptionId,
       preferred_date_from: dateFrom,
       preferred_date_until: dateUntil,
       preferred_time_from: from,
