@@ -15,9 +15,11 @@ import {
   notesOf,
   progressOf,
   removeTag,
+  applyJudged,
   symptomOf,
   type DiagnosisSession,
 } from "@/lib/ai/diagnosisFlow";
+import { judgeFreeText } from "@/lib/ai/diagnosisJudge";
 import {
   BACK_TO_DAYS,
   NO_FIT_OPTION,
@@ -416,22 +418,37 @@ export function useBikeAssistant() {
         const matched = matchOption(prompt, options);
 
         if (!matched && isOffFlow(prompt, options)) {
-          // Off-flow → let the model answer, then resume exactly where we were.
-          try {
-            const { data, error: fnError } = await supabase.functions.invoke("bike-assistant", {
-              body: {
-                messages: [{ role: "user", content: prompt }],
-                skills: config.enabledSkills,
-                assistantName: config.name,
-                tone: config.tone,
-              },
-            });
-            if (fnError) throw fnError;
-            if (data?.error) throw new Error(data.error);
-            pushAssistant(data?.content ?? "", { source: "ai" });
-          } catch {
-            pushAssistant("I couldn't check that right now — let's keep the diagnosis going.");
+          // The AI judges the free text: it extracts the context keywords and
+          // turns them into diagnosis answer tags, then the flow resumes.
+          const judged = await judgeFreeText(session, prompt);
+          const result = judged
+            ? applyJudged(session, {
+                symptom: judged.symptom,
+                answers: judged.answers,
+                notes: judged.notes,
+              })
+            : { session, applied: [] as string[] };
+
+          if (result.applied.length) {
+            setSession(result.session);
+            const keywords = (judged?.keywords ?? []).slice(0, 6);
+            const head = [
+              judged?.reply?.trim(),
+              keywords.length ? `Key context: ${keywords.map((k) => `\`${k}\``).join(" · ")}` : "",
+              `I filled in: ${result.applied.map((a) => `**${a}**`).join(", ")}.`,
+            ]
+              .filter(Boolean)
+              .join("\n\n");
+            pushAssistant(head, { source: "ai" });
+            await wait(200);
+            if (result.session.phase === "done") await finishDiagnosis(result.session);
+            else askCurrent(result.session);
+            setStatus("idle");
+            return;
           }
+
+          if (judged?.reply) pushAssistant(judged.reply, { source: "ai" });
+          else pushAssistant("I couldn't read that fully — let's keep the diagnosis going.");
           await wait(200);
           askCurrent(diagnosisRef.current!, "Back to the diagnosis:");
           setStatus("idle");
