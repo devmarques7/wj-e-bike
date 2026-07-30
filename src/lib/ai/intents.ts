@@ -1,5 +1,6 @@
 import { supabase } from "@/integrations/supabase/client";
 import type { AssistantSkillId } from "./skills";
+import { matchSymptom, type SymptomId } from "./diagnosis";
 
 /**
  * Deterministic (zero-token) intent layer.
@@ -12,6 +13,7 @@ import type { AssistantSkillId } from "./skills";
 
 export type AssistantAction =
   | { type: "navigate"; to: string; label: string }
+  | { type: "diagnose"; label: string; symptom?: SymptomId }
   | { type: "external"; href: string; label: string };
 
 export interface LocalAnswer {
@@ -224,6 +226,39 @@ export async function resolveLocalIntent(
   const t = prompt.toLowerCase().trim();
   if (!t) return null;
 
+  /* ================================================================
+   * PRIORITY 1 — book a revision / repair with a guided diagnosis
+   * ================================================================ */
+  const wantsBooking = has(
+    t, "book", "schedule", "scheduling", "marcar", "agendar", "agendamento", "revision", "revisão", "revisao",
+    "repair", "reparo", "conserto", "fix", "arrumar", "consertar", "maintenance", "manutenção", "manutencao",
+  );
+  const symptom = matchSymptom(t);
+
+  if (wantsBooking) {
+    return {
+      source: "local",
+      skill: "routing",
+      content: symptom
+        ? `Let's get **${symptom.label.toLowerCase()}** fixed. I'll ask a few quick questions, build a repair briefing for the mechanic and then open the booking with the right service pre-selected.`
+        : "Let's book your revision. First I'll run a short diagnosis so the mechanic already knows what to look at — it takes about 30 seconds.",
+      action: { type: "diagnose", label: "Start diagnosis & book", symptom: symptom?.id },
+    };
+  }
+
+  /* ================================================================
+   * PRIORITY 2 — help with a bike problem (self-help first)
+   * ================================================================ */
+  if (symptom) {
+    const checks = symptom.quickChecks.map((c) => `· ${c}`).join("\n");
+    return {
+      source: "local",
+      skill: "my_bike",
+      content: `Sounds like a **${symptom.label.toLowerCase()}** issue. Try this first:\n${checks}\n\nIf it doesn't help, I'll run a full diagnosis and book the repair for you.`,
+      action: { type: "diagnose", label: "Run full diagnosis", symptom: symptom.id },
+    };
+  }
+
   /* --- conversational / routing intents (no data, no tokens) --- */
   if (/^(hi|hey|hello|ola|olá|oi|bom dia|boa tarde|good morning)\b/.test(t)) {
     return {
@@ -238,7 +273,8 @@ export async function resolveLocalIntent(
       source: "local",
       skill: "routing",
       content:
-        "I can:\n· Read your bike, mileage and next revision\n· List and manage your appointments (book, reschedule, cancel)\n· Explain plans, prices and what your membership covers\n· Search accessories, parts and bikes\n· Register a new bike or request an E-Pass card\n· Trigger an urgent service request",
+        "Here's how I help, in order:\n1. Diagnose a problem and book the revision with a full repair briefing for the mechanic\n2. Troubleshoot your bike with step-by-step fixes\n3. Find the product or part that solves the problem\n4. Check if your plan covers it — or a better plan that does\n5. Show new bikes and gear worth upgrading to",
+      action: { type: "diagnose", label: "Diagnose my bike" },
     };
   }
 
@@ -286,8 +322,16 @@ export async function resolveLocalIntent(
     return skillOff("appointments", ctx) ?? (await myAppointments(ctx));
   }
 
-  if (has(t, "plan", "plano", "membership", "assinatura", "subscription", "tier")) {
-    return skillOff("pricing", ctx) ?? (await plans());
+  if (has(t, "plan", "plano", "membership", "assinatura", "subscription", "tier", "cover", "covered", "coberto", "cobertura")) {
+    const res = skillOff("pricing", ctx) ?? (await plans());
+    if (has(t, "cover", "covered", "coberto", "cobertura", "upgrade")) {
+      return {
+        ...res,
+        content: `${res.content}\n\nIf your current tier doesn't cover the service you need, upgrading usually costs less than paying it out of pocket.`,
+        action: { type: "navigate", to: "/dashboard/membership", label: "Compare & upgrade" },
+      };
+    }
+    return res;
   }
 
   if (has(t, "service", "serviço", "servico", "maintenance", "manutenção", "manutencao", "revision", "revisão")) {
