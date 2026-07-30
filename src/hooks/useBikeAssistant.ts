@@ -56,6 +56,8 @@ export interface AssistantMessage {
   action?: AssistantAction;
   /** Quick answers rendered as chips (diagnosis flow). */
   options?: string[];
+  /** True when the message is an AI analysis of the rider's free text (collapsed by default). */
+  analysis?: boolean;
 }
 
 function loadConfig(): AssistantConfig {
@@ -439,7 +441,7 @@ export function useBikeAssistant() {
             ]
               .filter(Boolean)
               .join("\n\n");
-            pushAssistant(head, { source: "ai" });
+            pushAssistant(head, { source: "ai", analysis: true });
             await wait(200);
             if (result.session.phase === "done") await finishDiagnosis(result.session);
             else askCurrent(result.session);
