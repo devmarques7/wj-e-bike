@@ -165,6 +165,16 @@ export default function MyWallet() {
 
   const totalPoints = useMemo(() => history.reduce((s, h) => s + h.points, 0), [history]);
 
+  const totalPages = useMemo(() => Math.max(1, Math.ceil(history.length / HISTORY_PAGE_SIZE)), [history]);
+  const paginatedHistory = useMemo(() => {
+    const start = (currentPage - 1) * HISTORY_PAGE_SIZE;
+    return history.slice(start, start + HISTORY_PAGE_SIZE);
+  }, [history, currentPage]);
+
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [history.length]);
+
   // Next maintenance: 3 months from last completed appointment
   const nextMaintenance = useMemo(() => {
     if (history.length === 0) return null;
