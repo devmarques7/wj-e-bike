@@ -74,7 +74,7 @@ const TOOL_DEFS: Record<string, any> = {
     type: "function",
     function: {
       name: "get_my_appointments",
-      description: "Get the customer's appointments (upcoming and recent past).",
+      description: "Get the customer's appointments (upcoming and recent past), including their ids.",
       parameters: { type: "object", properties: {}, additionalProperties: false },
     },
   },
@@ -84,6 +84,108 @@ const TOOL_DEFS: Record<string, any> = {
       name: "get_favorites",
       description: "Featured and subscription-exclusive products recommended for the customer.",
       parameters: { type: "object", properties: {}, additionalProperties: false },
+    },
+  },
+  list_service_slots: {
+    type: "function",
+    function: {
+      name: "list_service_slots",
+      description:
+        "List real free time slots for a given date and service name. Always call this before creating an appointment.",
+      parameters: {
+        type: "object",
+        properties: {
+          date: { type: "string", description: "ISO date YYYY-MM-DD" },
+          service_name: { type: "string", description: "Service type name or keyword" },
+        },
+        required: ["date", "service_name"],
+        additionalProperties: false,
+      },
+    },
+  },
+  create_appointment: {
+    type: "function",
+    function: {
+      name: "create_appointment",
+      description:
+        "Book an appointment for the authenticated customer. Only call after the user explicitly confirmed date, time and service.",
+      parameters: {
+        type: "object",
+        properties: {
+          date: { type: "string", description: "ISO date YYYY-MM-DD" },
+          start_time: { type: "string", description: "HH:MM (24h)" },
+          service_name: { type: "string" },
+          notes: { type: "string", description: "Problem description, may be empty" },
+          urgent: { type: "boolean" },
+        },
+        required: ["date", "start_time", "service_name", "notes", "urgent"],
+        additionalProperties: false,
+      },
+    },
+  },
+  reschedule_appointment: {
+    type: "function",
+    function: {
+      name: "reschedule_appointment",
+      description: "Move an existing appointment to a new date/time. Requires the appointment id.",
+      parameters: {
+        type: "object",
+        properties: {
+          appointment_id: { type: "string" },
+          date: { type: "string" },
+          start_time: { type: "string" },
+        },
+        required: ["appointment_id", "date", "start_time"],
+        additionalProperties: false,
+      },
+    },
+  },
+  cancel_appointment: {
+    type: "function",
+    function: {
+      name: "cancel_appointment",
+      description: "Cancel an appointment by id. Only after explicit user confirmation.",
+      parameters: {
+        type: "object",
+        properties: {
+          appointment_id: { type: "string" },
+          reason: { type: "string" },
+        },
+        required: ["appointment_id", "reason"],
+        additionalProperties: false,
+      },
+    },
+  },
+  register_bike: {
+    type: "function",
+    function: {
+      name: "register_bike",
+      description: "Register a new bike for the customer. Serial must be unique.",
+      parameters: {
+        type: "object",
+        properties: {
+          model: { type: "string" },
+          serial: { type: "string" },
+          color: { type: "string" },
+          km: { type: "number" },
+        },
+        required: ["model", "serial", "color", "km"],
+        additionalProperties: false,
+      },
+    },
+  },
+  request_epass_card: {
+    type: "function",
+    function: {
+      name: "request_epass_card",
+      description:
+        "Request a digital E-Pass card for one of the customer's bikes. Stays pending until an admin approves it.",
+      parameters: {
+        type: "object",
+        properties: { bike_serial: { type: "string" } },
+        required: ["bike_serial"],
+        additionalProperties: false,
+      },
     },
   },
 };
@@ -96,7 +198,25 @@ const SKILL_TOOLS: Record<string, string[]> = {
   bike_catalog: ["search_bikes"],
   appointments: ["get_my_appointments"],
   favorites: ["get_favorites"],
+  actions: [
+    "list_service_slots",
+    "create_appointment",
+    "reschedule_appointment",
+    "cancel_appointment",
+    "register_bike",
+    "request_epass_card",
+  ],
 };
+
+async function resolveServiceType(supabase: any, name: string) {
+  const { data } = await supabase
+    .from("service_types")
+    .select("id, name, duration_minutes, base_price, covered_by_plan_levels")
+    .eq("is_active", true)
+    .ilike("name", `%${name ?? ""}%`)
+    .limit(1);
+  return data?.[0] ?? null;
+}
 
 async function runTool(name: string, args: any, supabase: any, userId: string | null) {
   switch (name) {
@@ -151,7 +271,7 @@ async function runTool(name: string, args: any, supabase: any, userId: string | 
       if (!userId) return { error: "not_authenticated" };
       const { data } = await supabase
         .from("appointments")
-        .select("scheduled_date, scheduled_start_time, status, priority, duration_minutes, extra_charge_eur, is_covered_by_plan, notes, service_types(name)")
+        .select("id, scheduled_date, scheduled_start_time, status, priority, duration_minutes, extra_charge_eur, is_covered_by_plan, notes, service_types(name)")
         .eq("user_id", userId)
         .order("scheduled_date", { ascending: false })
         .limit(15);
@@ -166,6 +286,127 @@ async function runTool(name: string, args: any, supabase: any, userId: string | 
         .limit(12);
       return { recommendations: data ?? [] };
     }
+    case "list_service_slots": {
+      const service = await resolveServiceType(supabase, args?.service_name);
+      if (!service) return { error: "service_not_found" };
+      const { data, error } = await supabase.rpc("get_available_slots", {
+        _date: args?.date,
+        _service_type_id: service.id,
+        _mechanic_id: null,
+      });
+      if (error) return { error: error.message };
+      return { service: service.name, date: args?.date, slots: (data ?? []).slice(0, 20) };
+    }
+    case "create_appointment": {
+      if (!userId) return { error: "not_authenticated" };
+      const service = await resolveServiceType(supabase, args?.service_name);
+      if (!service) return { error: "service_not_found" };
+      const { data: sub } = await supabase
+        .from("subscriptions")
+        .select("id, plan_version_id, plan_versions(plans(tier_level))")
+        .eq("user_id", userId)
+        .eq("status", "active")
+        .limit(1)
+        .maybeSingle();
+      const tier = sub?.plan_versions?.plans?.tier_level ?? 0;
+      const covered = (service.covered_by_plan_levels ?? []).includes(tier);
+      const { data, error } = await supabase
+        .from("appointments")
+        .insert({
+          user_id: userId,
+          service_type_id: service.id,
+          subscription_id: sub?.id ?? null,
+          subscription_plan_level: tier,
+          is_covered_by_plan: covered,
+          extra_charge_eur: covered ? 0 : (service.base_price ?? 0),
+          scheduled_date: args?.date,
+          scheduled_start_time: args?.start_time,
+          duration_minutes: service.duration_minutes,
+          status: "pending",
+          priority: args?.urgent ? "urgent" : "normal",
+          booked_via: "assistant",
+          notes: args?.notes || null,
+        })
+        .select("id, scheduled_date, scheduled_start_time")
+        .single();
+      if (error) return { error: error.message };
+      return { created: data, service: service.name, covered_by_plan: covered };
+    }
+    case "reschedule_appointment": {
+      if (!userId) return { error: "not_authenticated" };
+      const { data, error } = await supabase
+        .from("appointments")
+        .update({
+          scheduled_date: args?.date,
+          scheduled_start_time: args?.start_time,
+          status: "rescheduled",
+        })
+        .eq("id", args?.appointment_id)
+        .eq("user_id", userId)
+        .select("id, scheduled_date, scheduled_start_time")
+        .maybeSingle();
+      if (error) return { error: error.message };
+      return data ? { rescheduled: data } : { error: "appointment_not_found" };
+    }
+    case "cancel_appointment": {
+      if (!userId) return { error: "not_authenticated" };
+      const { data, error } = await supabase
+        .from("appointments")
+        .update({ status: "canceled", notes: args?.reason || null })
+        .eq("id", args?.appointment_id)
+        .eq("user_id", userId)
+        .select("id")
+        .maybeSingle();
+      if (error) return { error: error.message };
+      return data ? { canceled: data.id } : { error: "appointment_not_found" };
+    }
+    case "register_bike": {
+      if (!userId) return { error: "not_authenticated" };
+      const serial = String(args?.serial ?? "").trim();
+      if (serial) {
+        const { data: available } = await supabase.rpc("is_bike_serial_available", { _serial: serial });
+        if (available === false) return { error: "serial_already_registered" };
+      }
+      const { data, error } = await supabase
+        .from("customer_bikes")
+        .insert({
+          customer_id: userId,
+          model: args?.model,
+          serial: serial || null,
+          color: args?.color || null,
+          km: Math.max(0, Math.round(Number(args?.km) || 0)),
+        })
+        .select("id, model, serial")
+        .single();
+      if (error) return { error: error.message };
+      return { registered: data };
+    }
+    case "request_epass_card": {
+      if (!userId) return { error: "not_authenticated" };
+      const { data: bike } = await supabase
+        .from("customer_bikes")
+        .select("id, model, serial")
+        .eq("customer_id", userId)
+        .ilike("serial", `%${args?.bike_serial ?? ""}%`)
+        .limit(1)
+        .maybeSingle();
+      if (!bike) return { error: "bike_not_found" };
+      const { data, error } = await supabase
+        .from("epass_card_requests")
+        .insert({
+          user_id: userId,
+          bike_id: bike.id,
+          bike_serial: bike.serial,
+          bike_model: bike.model,
+          card_number: (bike.serial ?? bike.id).toString().toUpperCase().slice(-12),
+          tier: "light",
+          status: "pending",
+        })
+        .select("id, card_number, status")
+        .single();
+      if (error) return { error: error.message };
+      return { requested: data };
+    }
     default:
       return { error: `unknown_tool:${name}` };
   }
@@ -178,8 +419,19 @@ Deno.serve(async (req) => {
     const apiKey = Deno.env.get("LOVABLE_API_KEY");
     if (!apiKey) return json({ error: "missing_api_key" }, 500);
 
-    const { messages = [], skills = [], assistantName = "E-IA", tone = "concise" } =
-      await req.json();
+    const {
+      messages = [],
+      skills = [],
+      assistantName = "E-IA",
+      tone = "concise",
+      // Deterministic layer already answered these — the model only sees a summary.
+      localContext = "",
+    } = await req.json();
+
+    // ---- token economy: only keep the recent turns, trimmed ----
+    const trimmed = (messages as any[])
+      .slice(-8)
+      .map((m) => ({ role: m.role, content: String(m.content ?? "").slice(0, 2000) }));
 
     const authHeader = req.headers.get("Authorization") ?? "";
     const supabase = createClient(
@@ -195,15 +447,18 @@ Deno.serve(async (req) => {
       .map((t) => TOOL_DEFS[t])
       .filter(Boolean);
 
-    const system = `You are ${assistantName}, the WJ e-bike assistant inside the customer dashboard.
-Tone: ${tone}. Answer in the language the user writes in.
-Always use the available tools to ground answers in real data — never invent prices, dates or model names.
-Prices are in EUR. Keep answers short, structured and actionable; suggest a next step when relevant.
-If a needed skill is not available, say which skill the user should enable.`;
+    const system = `You are ${assistantName}, the WJ e-bike assistant in the customer dashboard.
+Tone: ${tone}. Reply in the user's language. Prices in EUR.
+Ground every fact in tool data — never invent prices, dates, models or ids.
+Be brief: max ~120 words, bullet lists, one clear next step.
+Call at most one tool per turn unless strictly required, and never re-fetch data already present in this conversation.
+Write actions (create/reschedule/cancel/register/request) require an explicit user confirmation in the previous message; if it is missing, ask one short confirmation question instead of calling the tool.
+If the needed skill is off, say which skill to enable.${localContext ? `\nKnown context: ${String(localContext).slice(0, 800)}` : ""}`;
 
-    const convo: any[] = [{ role: "system", content: system }, ...messages];
+    const convo: any[] = [{ role: "system", content: system }, ...trimmed];
 
-    for (let step = 0; step < 6; step++) {
+    let toolCallCount = 0;
+    for (let step = 0; step < 4; step++) {
       const res = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
         method: "POST",
         headers: {
@@ -214,6 +469,7 @@ If a needed skill is not available, say which skill the user should enable.`;
         body: JSON.stringify({
           model: "google/gemini-3.6-flash",
           messages: convo,
+          max_completion_tokens: 700,
           ...(activeTools.length ? { tools: activeTools } : {}),
         }),
       });
@@ -231,21 +487,30 @@ If a needed skill is not available, say which skill the user should enable.`;
 
       const toolCalls = message.tool_calls ?? [];
       if (!toolCalls.length) {
-        return json({ content: message.content ?? "", usedTools: convo.filter((m) => m.role === "tool").map((m) => m.name) });
+        return json({
+          content: message.content ?? "",
+          source: "ai",
+          usedTools: convo.filter((m) => m.role === "tool").map((m) => m.name),
+          usage: data.usage ?? null,
+        });
       }
 
       convo.push(message);
       for (const call of toolCalls) {
+        toolCallCount++;
         let args: any = {};
         try {
           args = JSON.parse(call.function?.arguments || "{}");
         } catch (_) { /* ignore */ }
-        const result = await runTool(call.function.name, args, supabase, userId);
+        const result =
+          toolCallCount > 6
+            ? { error: "tool_budget_exceeded" }
+            : await runTool(call.function.name, args, supabase, userId);
         convo.push({
           role: "tool",
           tool_call_id: call.id,
           name: call.function.name,
-          content: JSON.stringify(result).slice(0, 12000),
+          content: JSON.stringify(result).slice(0, 6000),
         });
       }
     }

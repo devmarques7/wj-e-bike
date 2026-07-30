@@ -1,5 +1,8 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
+import { resolveLocalIntent, type AssistantAction } from "@/lib/ai/intents";
+import { useAuth } from "@/contexts/AuthContext";
 import {
   ASSISTANT_CONFIG_STORAGE_KEY,
   ASSISTANT_SKILLS,
@@ -12,6 +15,9 @@ export interface AssistantMessage {
   id: string;
   role: "user" | "assistant";
   content: string;
+  /** "local" = answered by the deterministic skill layer (0 AI credits) */
+  source?: "local" | "ai";
+  action?: AssistantAction;
 }
 
 function loadConfig(): AssistantConfig {
@@ -26,10 +32,13 @@ function loadConfig(): AssistantConfig {
 }
 
 export function useBikeAssistant() {
+  const navigate = useNavigate();
+  const { user } = useAuth();
   const [config, setConfig] = useState<AssistantConfig>(loadConfig);
   const [messages, setMessages] = useState<AssistantMessage[]>([]);
   const [status, setStatus] = useState<"idle" | "thinking" | "answering">("idle");
   const [error, setError] = useState<string | null>(null);
+  const [savedCalls, setSavedCalls] = useState(0);
   const abortRef = useRef<AbortController | null>(null);
 
   useEffect(() => {
@@ -77,6 +86,33 @@ export function useBikeAssistant() {
       setMessages(history);
       setStatus("thinking");
 
+      /* ---------- 1. Deterministic layer: no AI credits ---------- */
+      try {
+        const local = await resolveLocalIntent(prompt, {
+          userId: user?.id ?? null,
+          enabledSkills: config.enabledSkills,
+          assistantName: config.name,
+        });
+        if (local?.content) {
+          setMessages((prev) => [
+            ...prev,
+            {
+              id: crypto.randomUUID(),
+              role: "assistant",
+              content: local.content,
+              source: "local",
+              action: local.action,
+            },
+          ]);
+          setSavedCalls((n) => n + 1);
+          setStatus("idle");
+          return;
+        }
+      } catch {
+        /* fall through to the AI */
+      }
+
+      /* ---------- 2. Escalate to the model ---------- */
       const controller = new AbortController();
       abortRef.current = controller;
       const timeout = window.setTimeout(
@@ -104,7 +140,12 @@ export function useBikeAssistant() {
 
         setMessages((prev) => [
           ...prev,
-          { id: crypto.randomUUID(), role: "assistant", content: data?.content ?? "" },
+          {
+            id: crypto.randomUUID(),
+            role: "assistant",
+            content: data?.content ?? "",
+            source: "ai",
+          },
         ]);
       } catch (e: any) {
         const message =
@@ -122,8 +163,28 @@ export function useBikeAssistant() {
         setStatus("idle");
       }
     },
-    [config, messages, status],
+    [config, messages, status, user?.id],
   );
 
-  return { config, updateConfig, toggleSkill, activeSkills, messages, status, error, send, reset };
+  const runAction = useCallback(
+    (action: AssistantAction) => {
+      if (action.type === "navigate") navigate(action.to);
+      else window.location.href = action.href;
+    },
+    [navigate],
+  );
+
+  return {
+    config,
+    updateConfig,
+    toggleSkill,
+    activeSkills,
+    messages,
+    status,
+    error,
+    send,
+    reset,
+    runAction,
+    savedCalls,
+  };
 }

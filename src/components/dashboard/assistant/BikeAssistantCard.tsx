@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { ArrowUp, RefreshCw, Settings2, Sparkles } from "lucide-react";
+import { ArrowUp, RefreshCw, Settings2, Zap } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { useBikeAssistant } from "@/hooks/useBikeAssistant";
@@ -13,7 +13,7 @@ import { useAuth } from "@/contexts/AuthContext";
 
 export default function BikeAssistantCard() {
   const { user } = useAuth();
-  const { config, updateConfig, toggleSkill, activeSkills, messages, status, error, send, reset } =
+  const { config, updateConfig, toggleSkill, activeSkills, messages, status, error, send, reset, runAction, savedCalls } =
     useBikeAssistant();
   const [value, setValue] = useState("");
   const [settingsOpen, setSettingsOpen] = useState(false);
@@ -51,6 +51,7 @@ export default function BikeAssistantCard() {
             <p className="text-sm font-semibold text-foreground">{config.name} Assistant</p>
             <p className="text-[11px] text-muted-foreground">
               {activeSkills.length} skills active · {config.tone}
+              {savedCalls > 0 && ` · ${savedCalls} instant answers`}
             </p>
           </div>
         </div>
@@ -117,15 +118,35 @@ export default function BikeAssistantCard() {
                   key={m.id}
                   className={cn("flex", m.role === "user" ? "justify-end" : "justify-start")}
                 >
-                  <div
-                    className={cn(
-                      "max-w-[85%] whitespace-pre-wrap rounded-2xl px-4 py-2.5 text-sm",
-                      m.role === "user"
-                        ? "bg-wj-green/15 text-foreground border border-wj-green/25"
-                        : "bg-background/70 text-foreground border border-border/30",
+                  <div className="max-w-[85%] space-y-2">
+                    <div
+                      className={cn(
+                        "whitespace-pre-wrap rounded-2xl px-4 py-2.5 text-sm",
+                        m.role === "user"
+                          ? "bg-wj-green/15 text-foreground border border-wj-green/25"
+                          : "bg-background/70 text-foreground border border-border/30",
+                      )}
+                    >
+                      {m.content}
+                    </div>
+                    {m.role === "assistant" && (
+                      <div className="flex flex-wrap items-center gap-2">
+                        {m.source === "local" && (
+                          <span className="inline-flex items-center gap-1 rounded-full border border-wj-green/30 bg-wj-green/10 px-2 py-0.5 text-[10px] text-wj-green">
+                            <Zap className="h-3 w-3" /> instant
+                          </span>
+                        )}
+                        {m.action && (
+                          <button
+                            type="button"
+                            onClick={() => runAction(m.action!)}
+                            className="rounded-full border border-wj-green/40 bg-wj-green/10 px-3 py-1 text-[11px] text-wj-green transition-colors hover:bg-wj-green/20"
+                          >
+                            {m.action.label}
+                          </button>
+                        )}
+                      </div>
                     )}
-                  >
-                    {m.content}
                   </div>
                 </div>
               ))}
