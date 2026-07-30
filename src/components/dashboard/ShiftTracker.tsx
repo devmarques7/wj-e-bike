@@ -73,10 +73,13 @@ export default function ShiftTracker() {
   // Map shared status into the visual states this card supports.
   const visual: "idle" | "active" | "paused" | "completed" = status === "completed" ? "completed" : status;
   const isCompleted = visual === "completed";
+  const isPaused = visual === "paused";
 
   // Dynamic mesh gradient palette per theme
   const shaderColors = isCompleted
-    ? ["#022c1a", "#058c42", "#10b981", "#86efac", "#ecfdf5"]
+    ? ["#450a0a", "#dc2626", "#f87171", "#058c42", "#86efac"]
+    : isPaused
+    ? ["#3a2a02", "#a16207", "#eab308", "#fde047", "#fefce8"]
     : theme === "dark"
     ? ["#0a0a0a", "#0d2818", "#058c42", "#10b981", "#022c1a"]
     : ["#f5f7f5", "#dff5e8", "#058c42", "#86efac", "#ecfdf5"];
@@ -124,7 +127,9 @@ export default function ShiftTracker() {
         <div className={cn(
           "absolute inset-0",
           isCompleted
-            ? "bg-gradient-to-t from-wj-green/90 via-wj-green/50 to-wj-green/20 dark:from-wj-green/90 dark:via-wj-green/60 dark:to-wj-green/30"
+            ? "bg-gradient-to-t from-destructive/85 via-destructive/40 to-wj-green/40"
+            : isPaused
+            ? "bg-gradient-to-t from-amber-500/85 via-amber-500/40 to-amber-400/20"
             : "bg-gradient-to-t from-background/90 via-background/40 to-background/10 dark:from-background/80 dark:via-background/30 dark:to-transparent"
         )} />
         
@@ -133,7 +138,7 @@ export default function ShiftTracker() {
           <div>
             <div className={cn(
               "w-9 h-9 rounded-xl flex items-center justify-center mb-3 border",
-              isCompleted
+              isCompleted || isPaused
                 ? "bg-white/20 border-white/30"
                 : "bg-wj-green/20 border-wj-green/30"
             )}>
@@ -143,7 +148,7 @@ export default function ShiftTracker() {
                 <Clock className="h-4 w-4 text-wj-green" />
               )}
             </div>
-            <h3 className={cn("text-sm font-semibold mb-1", isCompleted ? "text-white" : "text-foreground")}>
+            <h3 className={cn("text-sm font-semibold mb-1", isCompleted || isPaused ? "text-white" : "text-foreground")}>
               {isCompleted
                 ? "Shift Completed"
                 : visual === "idle"
@@ -152,7 +157,7 @@ export default function ShiftTracker() {
                 ? "Shift Active"
                 : "Shift Paused"}
             </h3>
-            <p className={cn("text-[10px] leading-relaxed", isCompleted ? "text-white/80" : "text-muted-foreground")}>
+            <p className={cn("text-[10px] leading-relaxed", isCompleted || isPaused ? "text-white/80" : "text-muted-foreground")}>
               {isCompleted
                 ? "You've clocked out for today"
                 : visual === "idle"
@@ -204,11 +209,9 @@ export default function ShiftTracker() {
               <div className="text-center py-2">
                 <p className={cn(
                   "text-2xl font-mono font-bold",
-                  isCompleted
+                  isCompleted || isPaused
                     ? "text-white"
-                    : visual === "active"
-                    ? "text-wj-green"
-                    : "text-amber-500"
+                    : "text-wj-green"
                 )}>
                   {formatTime(elapsedSec)}
                 </p>
@@ -255,7 +258,7 @@ export default function ShiftTracker() {
                       disabled={working}
                       variant="outline"
                       size="sm"
-                      className="flex-1 h-9 text-xs border-wj-green/30 text-wj-green hover:bg-wj-green/10"
+                      className="flex-1 h-9 text-xs border-white/40 text-white hover:bg-white/15"
                     >
                       <Play className="h-3.5 w-3.5 mr-1.5" />
                       Resume
