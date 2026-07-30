@@ -13,7 +13,7 @@ import EmptyState from "@/components/dashboard/EmptyState";
 import { supabase } from "@/integrations/supabase/client";
 import StyledEPassQR from "@/components/dashboard/StyledEPassQR";
 import BikePickerDialog, { LinkedBike } from "@/components/dashboard/BikePickerDialog";
-import WalletMemberCard from "@/components/dashboard/WalletMemberCard";
+import WalletMemberCard, { WalletCardBack } from "@/components/dashboard/WalletMemberCard";
 import WalletCardThemeDialog from "@/components/dashboard/WalletCardThemeDialog";
 import { loadWalletThemes, saveWalletThemes, themeForIndex } from "@/lib/wallet/cardThemes";
 
@@ -355,7 +355,7 @@ export default function MyWallet() {
                 </div>
                 {/* BACK */}
                 <div
-                  className="absolute inset-0 rounded-3xl overflow-hidden bg-gradient-to-br from-background to-secondary border border-border/60 shadow-2xl transition-all duration-300 hover:border-wj-green/60"
+                  className="absolute inset-0 rounded-3xl overflow-hidden shadow-2xl"
                   style={{
                     backfaceVisibility: "hidden",
                     WebkitBackfaceVisibility: "hidden",
@@ -364,51 +364,28 @@ export default function MyWallet() {
                     pointerEvents: isFlipped ? "auto" : "none",
                   }}
                 >
-                  <div className="absolute inset-0 opacity-10">
-                    <div className="absolute top-4 left-4 w-32 h-32 rounded-full bg-wj-green blur-3xl" />
-                    <div className="absolute bottom-4 right-4 w-24 h-24 rounded-full bg-wj-green blur-2xl" />
-                  </div>
-                  <div className="relative z-10 h-full p-4 sm:p-5 lg:p-6 grid grid-cols-[1fr_auto] gap-4 sm:gap-6">
-                    {/* LEFT: accent + QR pinned to bottom */}
-                    <div className="flex flex-col justify-between min-w-0">
-                      <div className="flex flex-col items-start leading-none select-none">
-                        <span className="text-[9px] sm:text-[10px] text-wj-green/80 tracking-[0.2em] uppercase font-medium">E-Pass</span>
-                        <span className="text-xl sm:text-2xl font-bold text-wj-green tracking-tight">WJ</span>
-                      </div>
-                      <div className="w-[120px] h-[120px] sm:w-[150px] sm:h-[150px] lg:w-[180px] lg:h-[180px] flex items-center justify-center overflow-hidden">
-                        <StyledEPassQR
-                          data={`https://wjbikes.nl/epass/${activeBikeId}`}
-                          size={200}
-                          className="!w-full !h-full flex items-center justify-center [&_svg]:max-w-full [&_svg]:max-h-full"
-                          overrides={{ backgroundColor: "transparent" }}
-                        />
-                      </div>
-                    </div>
-
-                    {/* RIGHT: stacked member details, label above value */}
-                    <div className="flex flex-col justify-end items-start text-left gap-3 sm:gap-4 min-w-0 py-2">
-                      {user?.email && (
-                        <div className="min-w-0 max-w-[180px]">
-                          <p className="text-[8px] sm:text-[9px] uppercase tracking-widest text-muted-foreground mb-0.5">{t("e_pass.email", { defaultValue: "Email" })}</p>
-                          <p className="text-foreground text-[11px] sm:text-xs font-medium truncate">{user.email}</p>
-                        </div>
-                      )}
-                      <div className="min-w-0 max-w-[180px]">
-                        <p className="text-[8px] sm:text-[9px] uppercase tracking-widest text-muted-foreground mb-0.5">{t("e_pass.member", { defaultValue: "Owner" })}</p>
-                        <p className="text-foreground text-sm sm:text-base font-semibold truncate">{user?.name || "Guest"}</p>
-                      </div>
-                      <div className="min-w-0 max-w-[180px]">
-                        <p className="text-[8px] sm:text-[9px] uppercase tracking-widest text-muted-foreground mb-0.5">{t("e_pass.bike", { defaultValue: "Bike" })}</p>
-                        <p className="text-foreground text-[11px] sm:text-xs font-medium truncate">{activeBikeName}</p>
-                      </div>
-                      {activeBikeSerial && (
-                        <div className="min-w-0 max-w-[180px]">
-                          <p className="text-[8px] sm:text-[9px] uppercase tracking-widest text-muted-foreground mb-0.5">{t("e_pass.serial", { defaultValue: "Serial" })}</p>
-                          <p className="text-foreground text-[11px] sm:text-xs font-mono tracking-wider truncate">{activeBikeSerial}</p>
-                        </div>
-                      )}
-                    </div>
-                  </div>
+                  <WalletCardBack
+                    themeId={themeFor(activeBikeId)}
+                    planName={currentPlan?.name ?? "Free"}
+                    qr={
+                      <StyledEPassQR
+                        data={`https://wjbikes.nl/epass/${activeBikeId}`}
+                        size={200}
+                        className="!w-full !h-full flex items-center justify-center [&_svg]:max-w-full [&_svg]:max-h-full"
+                        overrides={{ backgroundColor: "transparent" }}
+                      />
+                    }
+                    rows={[
+                      ...(user?.email
+                        ? [{ label: t("e_pass.email", { defaultValue: "Email" }), value: user.email }]
+                        : []),
+                      { label: t("e_pass.member", { defaultValue: "Owner" }), value: user?.name || "Guest" },
+                      { label: t("e_pass.bike", { defaultValue: "Bike" }), value: activeBikeName },
+                      ...(activeBikeSerial
+                        ? [{ label: t("e_pass.serial", { defaultValue: "Serial" }), value: activeBikeSerial }]
+                        : []),
+                    ]}
+                  />
                 </div>
               </div>
             </motion.div>
