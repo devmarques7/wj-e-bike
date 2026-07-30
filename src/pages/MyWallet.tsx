@@ -23,7 +23,7 @@ import { usePlanAllowance, PLAN_SERVICE_ALLOWANCE } from "@/hooks/wallet/usePlan
 import { useGarageBike } from "@/hooks/garage/useGarageBike";
 import ActivityYearGrid from "@/components/dashboard/wallet/ActivityYearGrid";
 import ActivityMonthGrid from "@/components/dashboard/wallet/ActivityMonthGrid";
-import ActivityDayDialog from "@/components/dashboard/wallet/ActivityDayDialog";
+import ActivityDayPanel from "@/components/dashboard/wallet/ActivityDayPanel";
 import ServiceFolderStack from "@/components/dashboard/wallet/ServiceFolderStack";
 import ServiceRecordDialog from "@/components/dashboard/wallet/ServiceRecordDialog";
 import { useActivityYear, type ActivityDay, type ActivityRecord } from "@/hooks/wallet/useActivityYear";
@@ -498,12 +498,24 @@ export default function MyWallet() {
         {/* Year activity map + folder history */}
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
           <div className="lg:col-span-7">
-            {expandedMonth === null ? (
+            {selectedDay ? (
+              <ActivityDayPanel
+                day={selectedDay}
+                backLabel={expandedMonth !== null ? "Back to month" : "Back to year"}
+                onBack={() => setSelectedDay(null)}
+                healthScore={health?.overall}
+                bikeName={garageBike?.model || activeBikeName}
+                onOpenRecord={(r) => setSelectedRecord(r)}
+              />
+            ) : expandedMonth === null ? (
               <ActivityYearGrid
                 year={activityYear}
                 daysMap={daysMap}
                 onYearChange={setActivityYear}
-                onSelectDay={setSelectedDay}
+                onSelectDay={(d) => {
+                  setExpandedMonth(new Date(d.date).getMonth());
+                  setSelectedDay(d);
+                }}
                 onExpandMonth={setExpandedMonth}
                 selectedDate={selectedDay?.date ?? null}
                 loading={activityLoading}
@@ -554,17 +566,6 @@ export default function MyWallet() {
             </div>
           </div>
         </div>
-
-        <ActivityDayDialog
-          day={selectedDay}
-          onOpenChange={(o) => !o && setSelectedDay(null)}
-          healthScore={health?.overall}
-          bikeName={garageBike?.model || activeBikeName}
-          onOpenRecord={(r) => {
-            setSelectedDay(null);
-            setSelectedRecord(r);
-          }}
-        />
 
         <ServiceRecordDialog
           record={selectedRecord}
