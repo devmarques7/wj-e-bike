@@ -37,6 +37,10 @@ type PlanInfo = {
 const WALLET_FIRST_PEEK = 42; // px the closest back card peeks above the featured card
 const WALLET_STEP = 26; // px between each ascending step
 const WALLET_GHOST_EXTRA = 30; // extra room for the "stack a new card" slot on top
+/** Uniform taper applied per depth so every card keeps the exact same box. */
+const WALLET_SCALE_STEP = 0.03;
+/** Extra lift applied on hover (Apple Wallet "peek" gesture). */
+const WALLET_HOVER_LIFT = 14;
 
 const cardStyles: Record<string, { gradient: string; border: string; text: string }> = {
   free:  { gradient: "from-emerald-400 to-emerald-600", border: "border-emerald-400", text: "text-emerald-300" },
@@ -52,7 +56,9 @@ export default function MyWallet() {
   const [loading, setLoading] = useState(true);
   const [isFlipped, setIsFlipped] = useState(false);
   const [linkedBikes, setLinkedBikes] = useState<LinkedBike[]>([]);
-  const [activeBikeIdx, setActiveBikeIdx] = useState(0);
+  /** Card queue: index 0 is the featured card, the rest ascend behind it. */
+  const [stackOrder, setStackOrder] = useState<string[]>([]);
+  const [hoveredId, setHoveredId] = useState<string | null>(null);
   const [currentPlan, setCurrentPlan] = useState<PlanInfo | null>(null);
   const [history, setHistory] = useState<PointEntry[]>([]);
   const [pickerOpen, setPickerOpen] = useState(false);
@@ -145,7 +151,7 @@ export default function MyWallet() {
       setCurrentPlan(cur);
       setHistory(entries);
       setLinkedBikes(bikes);
-      setActiveBikeIdx(0);
+      setStackOrder(bikes.map((b) => b.id));
       setLoading(false);
     })();
 
@@ -175,7 +181,27 @@ export default function MyWallet() {
   const slug = currentPlan?.slug ?? "free";
   const styles = cardStyles[slug] ?? cardStyles.free;
 
-  const activeBike = linkedBikes[activeBikeIdx];
+  /* --------- Apple Wallet queue --------- */
+  const orderedBikes = useMemo(() => {
+    const byId = new Map(linkedBikes.map((b) => [b.id, b]));
+    const ordered = stackOrder.map((id) => byId.get(id)).filter(Boolean) as LinkedBike[];
+    const missing = linkedBikes.filter((b) => !stackOrder.includes(b.id));
+    return [...ordered, ...missing];
+  }, [linkedBikes, stackOrder]);
+
+  const activeBike = orderedBikes[0];
+
+  /** Bring any card to the front; the previous front goes to the back of the queue. */
+  const bringToFront = (id: string) => {
+    setStackOrder(() => {
+      const ids = orderedBikes.map((b) => b.id);
+      if (ids[0] === id) return ids;
+      const rest = ids.filter((x) => x !== id && x !== ids[0]);
+      return [id, ...rest, ids[0]];
+    });
+    setIsFlipped(false);
+  };
+
   const activeBikeId = activeBike?.id || (user as any)?.bikeId || user?.id || "unknown";
   const activeBikeName = activeBike?.model || (user as any)?.bikeName || t("e_pass.no_bike");
   const activeBikeSerial = activeBike?.serial || (user as any)?.bikeId || "—";
@@ -205,26 +231,24 @@ export default function MyWallet() {
             }}
           >
             <div className="relative w-full group">
-            {/* Stacked back cards (one per non-active bike) — peek above the main card */}
-            {linkedBikes.map((bike, i) => {
-              if (i === activeBikeIdx) return null;
-              // Order from furthest (top) to closest (just behind main)
-              const stackOrder = linkedBikes
-                .map((_, idx) => idx)
-                .filter((idx) => idx !== activeBikeIdx);
-              const depth = stackOrder.indexOf(i); // 0 = closest to main
+            {/* Stacked back cards — same box, uniform ascending step above the featured card */}
+            {orderedBikes.slice(1).map((bike, depth) => {
+              const hovered = hoveredId === bike.id;
               const peek = WALLET_FIRST_PEEK + depth * WALLET_STEP; // px peeking above main card
-              const scale = 1 - (depth + 1) * 0.035; // taper: same box, smaller scale the further back
+              const lift = hovered ? WALLET_HOVER_LIFT : 0;
+              const scale = 1 - (depth + 1) * WALLET_SCALE_STEP + (hovered ? WALLET_SCALE_STEP : 0);
               const tierStyle = cardStyles[slug] ?? cardStyles.free;
               return (
                 <button
                   key={bike.id}
                   type="button"
-                  onClick={(e) => { e.stopPropagation(); setActiveBikeIdx(i); setIsFlipped(false); }}
-                  className={`absolute inset-x-0 bottom-0 aspect-[1.6/1] sm:aspect-[1.75/1] rounded-3xl overflow-hidden bg-slate-100 border ${tierStyle.border} shadow-xl transition-all duration-300 origin-bottom text-left hover:shadow-[0_25px_60px_-12px_rgba(5,140,66,0.45)] hover:border-wj-green/60`}
+                  onClick={(e) => { e.stopPropagation(); bringToFront(bike.id); }}
+                  onMouseEnter={() => setHoveredId(bike.id)}
+                  onMouseLeave={() => setHoveredId((prev) => (prev === bike.id ? null : prev))}
+                  className={`absolute inset-x-0 bottom-0 aspect-[1.6/1] sm:aspect-[1.75/1] rounded-3xl overflow-hidden bg-slate-100 border ${tierStyle.border} shadow-xl transition-all duration-500 ease-out origin-bottom text-left hover:shadow-[0_25px_60px_-12px_rgba(5,140,66,0.45)] hover:border-wj-green/60`}
                   style={{
-                    transform: `translateY(-${peek}px) scale(${scale})`,
-                    zIndex: 20 - (depth + 1),
+                    transform: `translateY(-${peek + lift}px) scale(${scale})`,
+                    zIndex: hovered ? 30 : 20 - (depth + 1),
                   }}
                   title={bike.model || bike.serial}
                 >
@@ -243,9 +267,9 @@ export default function MyWallet() {
 
             {/* Ghost stacked card (add new) — sits at the very top of the stack */}
             {(() => {
-              const otherCount = Math.max(0, linkedBikes.length - 1);
+              const otherCount = Math.max(0, orderedBikes.length - 1);
               const ghostTop = WALLET_FIRST_PEEK + otherCount * WALLET_STEP + WALLET_GHOST_EXTRA;
-              const ghostScale = 1 - (otherCount + 1) * 0.035;
+              const ghostScale = 1 - (otherCount + 1) * WALLET_SCALE_STEP;
               return (
                 <button
                   type="button"
@@ -385,13 +409,13 @@ export default function MyWallet() {
             </div>
 
             {/* Bike switcher dots */}
-            {linkedBikes.length > 1 && (
+            {orderedBikes.length > 1 && (
               <div className="flex justify-center gap-2 mt-4">
-                {linkedBikes.map((b, i) => (
+                {orderedBikes.map((b, i) => (
                   <button
                     key={b.id}
-                    onClick={(e) => { e.stopPropagation(); setActiveBikeIdx(i); }}
-                    className={`h-2 rounded-full transition-all ${i === activeBikeIdx ? "w-6 bg-wj-green" : "w-2 bg-border hover:bg-muted-foreground/40"}`}
+                    onClick={(e) => { e.stopPropagation(); bringToFront(b.id); }}
+                    className={`h-2 rounded-full transition-all ${i === 0 ? "w-6 bg-wj-green" : "w-2 bg-border hover:bg-muted-foreground/40"}`}
                     aria-label={b.model || `Bike ${i + 1}`}
                   />
                 ))}
@@ -544,7 +568,7 @@ export default function MyWallet() {
         onOpenChange={setPickerOpen}
         onRegistered={(bike) => {
           setLinkedBikes((prev) => [bike, ...prev]);
-          setActiveBikeIdx(0);
+          setStackOrder((prev) => [bike.id, ...prev.filter((id) => id !== bike.id)]);
           // Flip card back to front so user sees the new bike
           setIsFlipped(false);
         }}
