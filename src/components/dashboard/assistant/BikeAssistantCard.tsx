@@ -8,6 +8,7 @@ import { ASSISTANT_SKILLS } from "@/lib/ai/skills";
 import AssistantSettingsDialog from "./AssistantSettingsDialog";
 import { AssistantIcon } from "./assistantIcons";
 import { cn } from "@/lib/utils";
+import AgentOrb from "@/components/agent/AgentOrb";
 import { useAuth } from "@/contexts/AuthContext";
 
 export default function BikeAssistantCard() {
