@@ -1,0 +1,1 @@
+GRANT EXECUTE ON FUNCTION public.get_available_slots(date, uuid, uuid) TO anon;
