@@ -2,6 +2,7 @@ import { Pencil } from "lucide-react";
 import type { ReactNode } from "react";
 import { cn } from "@/lib/utils";
 import { getWalletTheme } from "@/lib/wallet/cardThemes";
+import { CardWaveBackground } from "./CardWaveBackground";
 
 export interface WalletMemberCardProps {
   /** Mirrors the layout (dark panel moves to the right) — used for the card back. */
