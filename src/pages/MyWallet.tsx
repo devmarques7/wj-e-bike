@@ -32,6 +32,13 @@ type PlanInfo = {
 };
 
 
+// Apple Wallet stack geometry — every card shares the same bottom baseline and
+// steps upward, getting narrower the further back it sits.
+const WALLET_FIRST_PEEK = 42; // px the closest back card peeks above the featured card
+const WALLET_STEP = 26; // px between each ascending step
+const WALLET_GHOST_EXTRA = 30; // extra room for the "stack a new card" slot on top
+const WALLET_INSET = 12; // px each side per depth level (width taper)
+
 const cardStyles: Record<string, { gradient: string; border: string; text: string }> = {
   free:  { gradient: "from-emerald-400 to-emerald-600", border: "border-emerald-400", text: "text-emerald-300" },
   light: { gradient: "from-zinc-400 to-zinc-600", border: "border-zinc-400", text: "text-zinc-300" },
@@ -192,7 +199,12 @@ export default function MyWallet() {
         {/* Main grid: featured card + plan/actions */}
         <div className="grid grid-cols-1 lg:grid-cols-[1fr_1fr] gap-6 lg:items-stretch">
           {/* Left column — Featured member card */}
-          <div className="w-full overflow-visible" style={{ paddingTop: `${88 + Math.max(0, linkedBikes.length - 1) * 25}px` }}>
+          <div
+            className="w-full overflow-visible"
+            style={{
+              paddingTop: `${WALLET_FIRST_PEEK + Math.max(0, linkedBikes.length - 1) * WALLET_STEP + WALLET_GHOST_EXTRA + 12}px`,
+            }}
+          >
             <div className="relative w-full group">
             {/* Stacked back cards (one per non-active bike) — peek above the main card */}
             {linkedBikes.map((bike, i) => {
@@ -202,15 +214,16 @@ export default function MyWallet() {
                 .map((_, idx) => idx)
                 .filter((idx) => idx !== activeBikeIdx);
               const depth = stackOrder.indexOf(i); // 0 = closest to main
-              const peek = 40 + depth * 25; // px peeking above main card
+              const peek = WALLET_FIRST_PEEK + depth * WALLET_STEP; // px peeking above main card
+              const inset = (depth + 1) * WALLET_INSET; // narrower the further back it sits
               const tierStyle = cardStyles[slug] ?? cardStyles.free;
               return (
                 <button
                   key={bike.id}
                   type="button"
                   onClick={(e) => { e.stopPropagation(); setActiveBikeIdx(i); setIsFlipped(false); }}
-                  className={`absolute left-0 right-0 bottom-0 rounded-3xl overflow-hidden bg-slate-100 border ${tierStyle.border} shadow-xl transition-all duration-300 origin-top text-left hover:-translate-y-2 hover:shadow-[0_25px_60px_-12px_rgba(5,140,66,0.45)] hover:border-wj-green/60`}
-                  style={{ top: `-${peek}px`, zIndex: 10 + depth }}
+                  className={`absolute bottom-0 rounded-3xl overflow-hidden bg-slate-100 border ${tierStyle.border} shadow-xl transition-all duration-300 origin-bottom text-left hover:-translate-y-2 hover:shadow-[0_25px_60px_-12px_rgba(5,140,66,0.45)] hover:border-wj-green/60`}
+                  style={{ top: `-${peek}px`, left: inset, right: inset, zIndex: 20 - (depth + 1) }}
                   title={bike.model || bike.serial}
                 >
                   <div className="h-full px-5 pt-3 pb-2 flex items-start justify-between text-slate-900">
@@ -229,15 +242,16 @@ export default function MyWallet() {
             {/* Ghost stacked card (add new) — sits at the very top of the stack */}
             {(() => {
               const otherCount = Math.max(0, linkedBikes.length - 1);
-              const ghostTop = 80 + otherCount * 25;
+              const ghostTop = WALLET_FIRST_PEEK + otherCount * WALLET_STEP + WALLET_GHOST_EXTRA;
+              const ghostInset = (otherCount + 1) * WALLET_INSET;
               return (
                 <button
                   type="button"
                   onClick={() => setPickerOpen(true)}
                   disabled={!canLinkAnother}
                   title={canLinkAnother ? t("e_pass.add_bike_hint") : t("e_pass.no_other_bike")}
-                  className="absolute left-0 right-0 bottom-0 rounded-3xl border-2 border-dashed border-slate-300 bg-slate-100 flex flex-col items-center justify-start gap-1.5 text-slate-600 transition-all duration-300 origin-top pt-3 hover:-translate-y-2 hover:border-wj-green/60 hover:shadow-[0_25px_60px_-12px_rgba(5,140,66,0.45)] active:translate-y-[-2px] disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:translate-y-0 disabled:hover:border-slate-300 disabled:hover:shadow-none disabled:hover:bg-slate-100"
-                  style={{ top: `-${ghostTop}px`, zIndex: 5 }}
+                  className="absolute bottom-0 rounded-3xl border-2 border-dashed border-slate-300 bg-slate-100 flex flex-col items-center justify-start gap-1.5 text-slate-600 transition-all duration-300 origin-bottom pt-3 hover:-translate-y-2 hover:border-wj-green/60 hover:shadow-[0_25px_60px_-12px_rgba(5,140,66,0.45)] active:translate-y-[-2px] disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:translate-y-0 disabled:hover:border-slate-300 disabled:hover:shadow-none disabled:hover:bg-slate-100"
+                  style={{ top: `-${ghostTop}px`, left: ghostInset, right: ghostInset, zIndex: 5 }}
                 >
                   <div className="p-2 rounded-full bg-wj-green/10 border border-wj-green/30 transition-colors">
                     <Plus className="h-5 w-5" />
