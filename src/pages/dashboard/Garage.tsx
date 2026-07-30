@@ -117,7 +117,7 @@ export default function Garage() {
 
         <div className="grid grid-cols-12 gap-4 lg:gap-6">
           <div className="col-span-12 lg:col-span-8">
-            <GarageBikeCard bike={bike} overall={health.overall} />
+            <GarageBikeCard bike={bike} overall={health.overall} metrics={health.metrics} />
           </div>
           <div className="col-span-12 lg:col-span-4">
             <ServiceCountdown />
