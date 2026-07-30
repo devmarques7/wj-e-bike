@@ -43,6 +43,20 @@ function toISODate(d: Date) {
   return d.toISOString().slice(0, 10);
 }
 
+/**
+ * Revision cycle rule (always returns a minimum expected next revision):
+ * - never serviced  -> baseline is the purchase date  (+3 months)
+ * - already serviced -> baseline is the last service date (+3 months)
+ * Only when neither date exists do we ask the rider to set it up.
+ */
+function resolveCycle(bike: Bike) {
+  const baseISO = bike.last_service_at ?? bike.purchased_at;
+  if (!baseISO) return null;
+  const last = new Date(baseISO);
+  const next = bike.next_service_at ? new Date(bike.next_service_at) : addDays(last, SERVICE_CYCLE_DAYS);
+  return { last, next, fromPurchase: !bike.last_service_at };
+}
+
 export default function ServiceCountdown() {
   const navigate = useNavigate();
   const { user } = useAuth();
@@ -125,20 +139,20 @@ export default function ServiceCountdown() {
 
   const handleSaveSetup = async () => {
     if (!editingBike) return;
-    if (!formPurchased || !formLastService) {
-      toast.error("Purchase date and last service date are required.");
+    if (!formPurchased && !formLastService) {
+      toast.error("Add the purchase date or the last service date.");
       return;
     }
     setSaving(true);
-    const last = new Date(formLastService);
+    const last = new Date(formLastService || formPurchased);
     const next = addDays(last, SERVICE_CYCLE_DAYS);
     const count = Math.max(0, parseInt(formServicesCount || "0", 10) || 0);
 
     const { error } = await supabase
       .from("customer_bikes")
       .update({
-        purchased_at: formPurchased,
-        last_service_at: formLastService,
+        purchased_at: formPurchased || null,
+        last_service_at: formLastService || null,
         next_service_at: toISODate(next),
         services_completed: count,
       })
@@ -339,7 +353,8 @@ function BikeServiceCard({
   onSetup: () => void;
   onBook: () => void;
 }) {
-  const needsSetup = !bike.last_service_at || !bike.next_service_at;
+  const cycle = resolveCycle(bike);
+  const needsSetup = !cycle;
 
   const x = useMotionValue(0);
   const sliderTrackRef = useRef<HTMLDivElement>(null);
@@ -374,9 +389,8 @@ function BikeServiceCard({
   const filledBars = Math.round((progressPercent / 100) * totalBars);
 
   useEffect(() => {
-    if (needsSetup) return;
-    const last = new Date(bike.last_service_at!);
-    const next = new Date(bike.next_service_at!);
+    if (!cycle) return;
+    const { last, next } = cycle;
     const totalCycleMs = next.getTime() - last.getTime();
 
     const tick = () => {
@@ -398,7 +412,8 @@ function BikeServiceCard({
     tick();
     const id = setInterval(tick, 60_000);
     return () => clearInterval(id);
-  }, [bike.last_service_at, bike.next_service_at, needsSetup]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [bike.last_service_at, bike.next_service_at, bike.purchased_at]);
 
   const isUrgent = progressPercent < 20;
   const isCritical = progressPercent < 5 || countdown.days === 0;
@@ -453,7 +468,7 @@ function BikeServiceCard({
       {needsSetup ? (
         <div className="flex-1 flex flex-col items-start justify-center gap-3">
           <p className="text-sm text-foreground/90 max-w-[260px]">
-            Tell us when you bought this bike and your last revision to start the countdown.
+            Add the purchase date (or your last revision) and we'll set the 3-month cycle for you.
           </p>
           <button
             onClick={onSetup}
@@ -486,6 +501,12 @@ function BikeServiceCard({
             <p className="text-xs text-muted-foreground mt-1.5 uppercase tracking-wider">
               Until next service · {bike.services_completed} done
             </p>
+            {cycle && (
+              <p className="text-[10px] text-muted-foreground/80 mt-1">
+                Due {cycle.next.toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" })}
+                {cycle.fromPurchase ? " · estimated from purchase date" : " · 3 months after last revision"}
+              </p>
+            )}
           </div>
 
           <div className="w-full max-w-xs relative">
