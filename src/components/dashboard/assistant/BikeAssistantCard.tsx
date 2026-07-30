@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { ArrowUp, RefreshCw, Settings2, Zap, Stethoscope, Wrench, Package, Tag, Bike } from "lucide-react";
+import { ArrowUp, RefreshCw, Settings2, Zap, Stethoscope, Wrench, Package, Tag, Bike, X } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { useBikeAssistant } from "@/hooks/useBikeAssistant";
@@ -9,8 +9,6 @@ import { AssistantIcon } from "./assistantIcons";
 import { cn } from "@/lib/utils";
 import AgentOrb from "@/components/agent/AgentOrb";
 import { useAuth } from "@/contexts/AuthContext";
-import BikeDiagnosisDialog from "./BikeDiagnosisDialog";
-import type { SymptomId } from "@/lib/ai/diagnosis";
 import type { AssistantAction } from "@/lib/ai/intents";
 
 /** The assistant's priority flows, in the order we want riders to use them. */
@@ -57,11 +55,13 @@ export default function BikeAssistantCard() {
     reset,
     runAction,
     savedCalls,
+    diagnosis,
+    diagnosisProgress,
+    removeDiagnosisTag,
+    cancelDiagnosis,
   } = useBikeAssistant();
   const [value, setValue] = useState("");
   const [settingsOpen, setSettingsOpen] = useState(false);
-  const [diagnosisOpen, setDiagnosisOpen] = useState(false);
-  const [diagnosisSymptom, setDiagnosisSymptom] = useState<SymptomId | null>(null);
   const [inputFocused, setInputFocused] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
@@ -86,14 +86,8 @@ export default function BikeAssistantCard() {
   const lastAssistantId = [...messages].reverse().find((m) => m.role === "assistant")?.id ?? null;
   const orbInComposer = inputFocused && messages.length > 0;
 
-  const handleAction = (action: AssistantAction) => {
-    if (action.type === "diagnose") {
-      setDiagnosisSymptom(action.symptom ?? null);
-      setDiagnosisOpen(true);
-      return;
-    }
-    runAction(action);
-  };
+  const handleAction = (action: AssistantAction) => runAction(action);
+  const diagnosisActive = Boolean(diagnosis && diagnosis.phase !== "done");
 
   return (
     <div className="relative overflow-hidden rounded-3xl border border-border/30 bg-background/60 backdrop-blur-md">
@@ -182,6 +176,7 @@ export default function BikeAssistantCard() {
                   const isLast = m.id === lastAssistantId;
                   const isAssistant = m.role === "assistant";
                   const parsed = isAssistant ? parseOptions(m.content) : { text: m.content, options: [] };
+                  const chips = m.options?.length ? m.options : parsed.options;
                   return (
                     <div key={m.id} className="relative flex gap-3">
                       {/* Rail */}
@@ -226,9 +221,9 @@ export default function BikeAssistantCard() {
                         >
                           {parsed.text || m.content}
                         </div>
-                        {isAssistant && parsed.options.length > 0 && (
+                        {isAssistant && chips.length > 0 && (
                           <div className="flex flex-wrap gap-1.5">
-                            {parsed.options.map((option, i) => (
+                            {chips.map((option, i) => (
                               <button
                                 key={`${m.id}-opt-${i}`}
                                 type="button"
@@ -306,6 +301,40 @@ export default function BikeAssistantCard() {
 
         {/* Composer */}
         <div className="relative z-10 mt-5 rounded-2xl border border-border/30 bg-background/70 p-2">
+          {diagnosis && diagnosis.tags.length > 0 && (
+            <div className="mb-2 flex flex-wrap items-center gap-1.5 px-1">
+              {diagnosis.tags.map((tag) => (
+                <span
+                  key={tag.id}
+                  className="group inline-flex max-w-full items-center gap-1 rounded-full border border-wj-green/40 bg-wj-green/10 py-1 pl-2.5 pr-1 text-[11px] text-wj-green"
+                  title={tag.question}
+                >
+                  <span className="truncate">{tag.label}</span>
+                  <button
+                    type="button"
+                    onClick={() => removeDiagnosisTag(tag.id)}
+                    disabled={busy}
+                    aria-label={`Remove answer ${tag.label}`}
+                    className="rounded-full p-0.5 transition-colors hover:bg-wj-green/25 disabled:opacity-40"
+                  >
+                    <X className="h-3 w-3" />
+                  </button>
+                </span>
+              ))}
+              {diagnosisActive && diagnosisProgress && (
+                <span className="ml-auto inline-flex items-center gap-2 text-[10px] text-muted-foreground">
+                  diagnosis {diagnosisProgress.done}/{diagnosisProgress.total}
+                  <button
+                    type="button"
+                    onClick={cancelDiagnosis}
+                    className="underline underline-offset-2 transition-colors hover:text-foreground"
+                  >
+                    cancel
+                  </button>
+                </span>
+              )}
+            </div>
+          )}
           <div className="flex items-center gap-2">
             <AnimatePresence>
               {orbInComposer && (
@@ -328,7 +357,7 @@ export default function BikeAssistantCard() {
               onKeyDown={(e) => {
                 if (e.key === "Enter") submit(value);
               }}
-              placeholder="Ask whatever you want..."
+              placeholder={diagnosisActive ? "Tap an answer or type your own..." : "Ask whatever you want..."}
               className="border-0 bg-transparent focus-visible:ring-0 focus-visible:ring-offset-0"
               disabled={busy}
             />
@@ -351,12 +380,6 @@ export default function BikeAssistantCard() {
         config={config}
         updateConfig={updateConfig}
         toggleSkill={toggleSkill}
-      />
-
-      <BikeDiagnosisDialog
-        open={diagnosisOpen}
-        onOpenChange={setDiagnosisOpen}
-        initialSymptom={diagnosisSymptom}
       />
     </div>
   );
