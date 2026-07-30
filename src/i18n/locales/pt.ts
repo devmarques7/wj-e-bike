@@ -613,6 +613,7 @@ const pt = {
     status: {
       completed: "Concluído", confirmed: "Confirmado", in_progress: "Em curso",
       pending: "Pendente", rescheduled: "Reagendado", canceled: "Cancelado", no_show: "No-show",
+      requested: "Solicitado", overdue: "Atrasado",
     },
     status_tip: { last_change: "Última alteração", started: "Iniciado", ended: "Concluído" },
     rel: { no_record: "Sem registo", just_now: "agora mesmo", min: "há {{n}} min", hour: "há {{n}}h", day: "há {{n}}d" },
