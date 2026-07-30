@@ -70,10 +70,12 @@ function readThemeColor(varName: string, fallback: string): string {
 }
 
 export function resolveThemeQRColors() {
+  // QR codes are always rendered on dark surfaces (E-Pass cards, back faces),
+  // so the dots and corners must always stay light regardless of the theme.
   return {
-    dots: readThemeColor("--foreground", "#0a0a0a"),
-    corners: readThemeColor("--primary", "#058c42"),
-    background: readThemeColor("--background", "#ffffff"),
+    dots: readThemeColor("--primary-foreground", "#f8f8f8"),
+    corners: readThemeColor("--primary-foreground", "#f8f8f8"),
+    background: readThemeColor("--background", "#0a0a0a"),
   };
 }
 
