@@ -16,7 +16,7 @@ import BikePickerDialog, { LinkedBike } from "@/components/dashboard/BikePickerD
 import WalletMemberCard, { WalletCardBack } from "@/components/dashboard/WalletMemberCard";
 import WalletCardThemeDialog from "@/components/dashboard/WalletCardThemeDialog";
 import { loadWalletThemes, saveWalletThemes, themeForIndex } from "@/lib/wallet/cardThemes";
-import WalletQuickActions from "@/components/dashboard/wallet/WalletQuickActions";
+import WalletActionTiles from "@/components/dashboard/wallet/WalletActionTiles";
 import ServiceAllowanceCard from "@/components/dashboard/wallet/ServiceAllowanceCard";
 import BikeHealthCard from "@/components/dashboard/wallet/BikeHealthCard";
 import ScanEPassDialog from "@/components/dashboard/wallet/ScanEPassDialog";
@@ -458,39 +458,13 @@ export default function MyWallet() {
           </div>
         </div>
 
-        {/* Quick actions — scan, health, booking, services */}
-        <WalletQuickActions
-          actions={[
-            {
-              key: "scan",
-              label: "Scan E-Pass",
-              hint: "Show QR at the workshop",
-              icon: QrCode,
-              accent: true,
-              onClick: () => setScanOpen(true),
-            },
-            {
-              key: "health",
-              label: "Bike health",
-              hint: `${health.overall}% overall`,
-              icon: HeartPulse,
-              onClick: () => navigate("/dashboard/garage"),
-            },
-            {
-              key: "book",
-              label: "Book service",
-              hint: `${allowance.remaining} left on plan`,
-              icon: CalendarPlus,
-              onClick: () => navigate("/dashboard"),
-            },
-            {
-              key: "plans",
-              label: "All services",
-              hint: "Plans & upgrades",
-              icon: LayoutGrid,
-              onClick: () => navigate("/membership-plans"),
-            },
-          ]}
+        {/* Shortcuts — scan / add card rail + wide tiles */}
+        <WalletActionTiles
+          onScan={() => setScanOpen(true)}
+          onAddCard={() => setPickerOpen(true)}
+          onTips={() => navigate("/dashboard/garage")}
+          onPlans={() => navigate("/membership-plans")}
+          onAllBikes={() => navigate("/dashboard/bike")}
         />
 
         {/* Plan usage + bike condition */}
