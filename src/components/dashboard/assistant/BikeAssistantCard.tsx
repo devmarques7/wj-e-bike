@@ -126,17 +126,16 @@ export default function BikeAssistantCard({ className }: BikeAssistantCardProps)
         </div>
       </div>
 
-      <div className="relative px-5 py-6">
+      <div className="relative flex-1 flex flex-col min-h-0 px-5 py-6">
         {/* Glow */}
         <div className="pointer-events-none absolute left-1/2 top-0 h-[220px] w-[420px] -translate-x-1/2 rounded-full bg-wj-green/10 blur-[90px]" />
 
         <div
           ref={scrollRef}
           className={cn(
-            "relative z-10 overflow-y-auto",
+            "relative z-10 flex-1 min-h-0 overflow-y-auto",
             messages.length > 0 &&
-              "max-h-[440px] rounded-2xl border border-border/25 bg-muted/30 p-4 backdrop-blur-sm",
-            messages.length === 0 && "max-h-[320px]",
+              "rounded-2xl border border-border/25 bg-muted/30 p-4 backdrop-blur-sm",
           )}
         >
           {messages.length === 0 ? (
