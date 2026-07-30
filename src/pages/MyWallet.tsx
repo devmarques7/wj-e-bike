@@ -20,7 +20,7 @@ import WalletActionTiles from "@/components/dashboard/wallet/WalletActionTiles";
 import ServiceAllowanceCard from "@/components/dashboard/wallet/ServiceAllowanceCard";
 import BikeHealthCard from "@/components/dashboard/wallet/BikeHealthCard";
 import ScanEPassDialog from "@/components/dashboard/wallet/ScanEPassDialog";
-import { usePlanAllowance } from "@/hooks/wallet/usePlanAllowance";
+import { usePlanAllowance, PLAN_SERVICE_ALLOWANCE } from "@/hooks/wallet/usePlanAllowance";
 import { useGarageBike } from "@/hooks/garage/useGarageBike";
 
 type PointEntry = {
@@ -73,6 +73,7 @@ export default function MyWallet() {
   const [stackOrder, setStackOrder] = useState<string[]>([]);
   const [hoveredId, setHoveredId] = useState<string | null>(null);
   const [currentPlan, setCurrentPlan] = useState<PlanInfo | null>(null);
+  const [plans, setPlans] = useState<PlanInfo[]>([]);
   const [history, setHistory] = useState<PointEntry[]>([]);
   const [currentPage, setCurrentPage] = useState(1);
   const [pickerOpen, setPickerOpen] = useState(false);
@@ -167,6 +168,7 @@ export default function MyWallet() {
 
       if (cancelled) return;
       setCurrentPlan(cur);
+      setPlans(planList);
       setHistory(entries);
       setLinkedBikes(bikes);
       setStackOrder(bikes.map((b) => b.id));
@@ -243,6 +245,24 @@ export default function MyWallet() {
 
   /** Plan-covered appointment allowance (used / scheduled / remaining). */
   const allowance = usePlanAllowance(currentPlan?.slug);
+
+  /** Higher tiers than the current plan, ranked by how much extra coverage they add. */
+  const upgradeOptions = useMemo(() => {
+    const currentTier = currentPlan?.tier_level ?? 0;
+    const currentAllowance = PLAN_SERVICE_ALLOWANCE[currentPlan?.slug ?? "free"] ?? 1;
+    return plans
+      .filter((p) => p.tier_level > currentTier)
+      .sort((a, b) => a.tier_level - b.tier_level)
+      .slice(0, 3)
+      .map((p) => {
+        const target = PLAN_SERVICE_ALLOWANCE[p.slug] ?? currentAllowance;
+        const percent = Math.max(
+          0,
+          Math.round(((target - currentAllowance) / Math.max(1, currentAllowance)) * 100),
+        );
+        return { slug: p.slug, name: p.name, percent };
+      });
+  }, [plans, currentPlan]);
   /** Bike condition + next revision, reused from the Garage health model. */
   const { bike: garageBike, health, nextRevision, daysToRevision } = useGarageBike(activeBike?.id ?? null);
 
@@ -424,9 +444,12 @@ export default function MyWallet() {
               <ServiceAllowanceCard
                 planName={currentPlan?.name ?? "Free"}
                 allowance={allowance}
-                planDescription={currentPlan?.description ?? t("e_pass.no_benefits")}
-                features={currentPlan?.features ?? []}
+                revisionDays={daysToRevision}
+                revisionDate={nextRevision}
+                bikeName={garageBike?.model || activeBikeName}
+                upgradeOptions={upgradeOptions}
                 onUpgrade={() => navigate("/membership-plans")}
+                onBook={() => navigate("/dashboard/garage")}
               />
             </div>
 
