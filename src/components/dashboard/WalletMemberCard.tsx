@@ -3,6 +3,8 @@ import { cn } from "@/lib/utils";
 import { getWalletTheme } from "@/lib/wallet/cardThemes";
 
 export interface WalletMemberCardProps {
+  /** Mirrors the layout (dark panel moves to the right) — used for the card back. */
+  mirrored?: boolean;
   themeId?: string | null;
   /** Top-left label, e.g. "Member card". */
   label?: string;
@@ -25,6 +27,7 @@ export interface WalletMemberCardProps {
  * only the colour theme changes.
  */
 export default function WalletMemberCard({
+  mirrored,
   themeId,
   label = "Member card",
   bikeName,
@@ -43,7 +46,7 @@ export default function WalletMemberCard({
 
   return (
     <div
-      className={cn("relative w-full h-full overflow-hidden rounded-3xl flex", className)}
+      className={cn("relative w-full h-full overflow-hidden rounded-3xl flex", mirrored && "flex-row-reverse", className)}
       style={{ background: theme.background }}
     >
       {/* Dark chip panel — full height, left side */}
