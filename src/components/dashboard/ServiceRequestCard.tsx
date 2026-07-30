@@ -283,19 +283,9 @@ export default function ServiceRequestCard() {
         transition={{ delay: 0.1 }}
         className="relative h-full rounded-3xl overflow-hidden bg-background"
       >
-        {/* Video Background */}
-        <motion.video
-          ref={videoRef}
-          autoPlay
-          muted
-          playsInline
-          animate={{ opacity: videoOpacity }}
-          transition={{ duration: 0.8, ease: "easeInOut" }}
-          className="absolute inset-0 w-full h-full object-cover"
-        >
-          <source src="/videos/member-pass-bg.mp4" type="video/mp4" />
-        </motion.video>
-        
+        {/* Shader Background */}
+        <ShaderBackground className="absolute inset-0 w-full h-full block" />
+
         {/* Overlay */}
         <div className="absolute inset-0 bg-gradient-to-br from-black/70 via-black/50 to-black/70" />
         
