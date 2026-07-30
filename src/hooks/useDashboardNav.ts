@@ -48,7 +48,7 @@ const CUSTOMER_CONFIG: DashboardNavConfig = {
     { icon: Bike,            label: "Bike",      href: "/dashboard/bike" },
     { icon: Wrench,          label: "Service",   href: "/dashboard/service" },
     { icon: Heart,           label: "Favorites", href: "/dashboard/favorites" },
-    { icon: Crown,           label: "VIP",       href: "/dashboard/vip" },
+    { icon: Crown,           label: "Membership", href: "/dashboard/membership" },
   ],
   more: [],
 };
