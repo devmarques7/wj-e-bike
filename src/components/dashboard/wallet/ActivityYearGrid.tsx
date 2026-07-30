@@ -9,6 +9,8 @@ interface Props {
   daysMap: Map<string, ActivityDay>;
   onYearChange: (year: number) => void;
   onSelectDay: (day: ActivityDay) => void;
+  /** Expands a month (0-11) into the large calendar view. */
+  onExpandMonth: (month: number) => void;
   selectedDate?: string | null;
   loading?: boolean;
 }
@@ -28,6 +30,7 @@ export default function ActivityYearGrid({
   daysMap,
   onYearChange,
   onSelectDay,
+  onExpandMonth,
   selectedDate,
   loading,
 }: Props) {
@@ -91,11 +94,14 @@ export default function ActivityYearGrid({
       </div>
 
       <div className="mt-6 grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-x-6 gap-y-5">
-        {months.map((month) => (
+        {months.map((month, mIndex) => (
           <div key={month.label}>
-            <p className="text-[10px] font-semibold uppercase tracking-widest text-muted-foreground mb-2">
+            <button
+              onClick={() => onExpandMonth(mIndex)}
+              className="text-[10px] font-semibold uppercase tracking-widest text-muted-foreground hover:text-wj-green transition mb-2"
+            >
               {month.label}
-            </p>
+            </button>
             <div className="grid grid-cols-7 gap-1.5">
               {month.days.map((date) => {
                 const day = daysMap.get(date);

@@ -22,6 +22,7 @@ import ScanEPassDialog from "@/components/dashboard/wallet/ScanEPassDialog";
 import { usePlanAllowance, PLAN_SERVICE_ALLOWANCE } from "@/hooks/wallet/usePlanAllowance";
 import { useGarageBike } from "@/hooks/garage/useGarageBike";
 import ActivityYearGrid from "@/components/dashboard/wallet/ActivityYearGrid";
+import ActivityMonthGrid from "@/components/dashboard/wallet/ActivityMonthGrid";
 import ActivityDayDialog from "@/components/dashboard/wallet/ActivityDayDialog";
 import ServiceFolderStack from "@/components/dashboard/wallet/ServiceFolderStack";
 import ServiceRecordDialog from "@/components/dashboard/wallet/ServiceRecordDialog";
@@ -88,6 +89,7 @@ export default function MyWallet() {
   /** Year activity map + folder history state. */
   const [activityYear, setActivityYear] = useState(() => new Date().getFullYear());
   const [selectedDay, setSelectedDay] = useState<ActivityDay | null>(null);
+  const [expandedMonth, setExpandedMonth] = useState<number | null>(null);
   const [selectedRecord, setSelectedRecord] = useState<ActivityRecord | null>(null);
   const {
     records: activityRecords,
@@ -496,14 +498,27 @@ export default function MyWallet() {
         {/* Year activity map + folder history */}
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
           <div className="lg:col-span-7">
-            <ActivityYearGrid
-              year={activityYear}
-              daysMap={daysMap}
-              onYearChange={setActivityYear}
-              onSelectDay={setSelectedDay}
-              selectedDate={selectedDay?.date ?? null}
-              loading={activityLoading}
-            />
+            {expandedMonth === null ? (
+              <ActivityYearGrid
+                year={activityYear}
+                daysMap={daysMap}
+                onYearChange={setActivityYear}
+                onSelectDay={setSelectedDay}
+                onExpandMonth={setExpandedMonth}
+                selectedDate={selectedDay?.date ?? null}
+                loading={activityLoading}
+              />
+            ) : (
+              <ActivityMonthGrid
+                year={activityYear}
+                month={expandedMonth}
+                daysMap={daysMap}
+                onMonthChange={setExpandedMonth}
+                onClose={() => setExpandedMonth(null)}
+                onSelectDay={setSelectedDay}
+                selectedDate={selectedDay?.date ?? null}
+              />
+            )}
           </div>
 
           <div className="lg:col-span-5">
@@ -543,6 +558,8 @@ export default function MyWallet() {
         <ActivityDayDialog
           day={selectedDay}
           onOpenChange={(o) => !o && setSelectedDay(null)}
+          healthScore={health?.overall}
+          bikeName={garageBike?.model || activeBikeName}
           onOpenRecord={(r) => {
             setSelectedDay(null);
             setSelectedRecord(r);
