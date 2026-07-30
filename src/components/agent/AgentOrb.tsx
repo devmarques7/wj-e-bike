@@ -98,11 +98,7 @@ export default function AgentOrb({ state = "idle", size = 96, className }: Agent
       const breathCycle = 4;
       const breathPhase = (t / breathCycle) % 1;
       const breath = 0.5 - 0.5 * Math.cos(breathPhase * Math.PI * 2); // 0 → 1 → 0
-      // Subtle heartbeat double-beat layered over the breath.
-      const heartCycle = (t * 1.15) % 1;
-      const lub = heartCycle < 0.12 ? Math.sin((heartCycle / 0.12) * Math.PI) : 0;
-      const dub = heartCycle > 0.18 && heartCycle < 0.30 ? Math.sin(((heartCycle - 0.18) / 0.12) * Math.PI) : 0;
-      const heart = (lub + dub) * 0.45;
+
 
       const projected = points.map((p) => {
         const cosY = Math.cos(ry);
