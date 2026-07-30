@@ -1,15 +1,9 @@
 import { motion } from "framer-motion";
-import { Wrench, Clock, Calendar, Check, Bike, QrCode, HeartPulse, CalendarPlus, LayoutGrid } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useEffect, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
-import { cn } from "@/lib/utils";
 import { useAuth } from "@/contexts/AuthContext";
-import { Button } from "@/components/ui/button";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Pagination, PaginationContent, PaginationItem, PaginationLink, PaginationNext, PaginationPrevious } from "@/components/ui/pagination";
 import RoleDashboardLayout from "@/components/dashboard/RoleDashboardLayout";
-import EmptyState from "@/components/dashboard/EmptyState";
 import { supabase } from "@/integrations/supabase/client";
 import StyledEPassQR from "@/components/dashboard/StyledEPassQR";
 import BikePickerDialog, { LinkedBike } from "@/components/dashboard/BikePickerDialog";
@@ -24,7 +18,6 @@ import { useGarageBike } from "@/hooks/garage/useGarageBike";
 import ActivityYearGrid from "@/components/dashboard/wallet/ActivityYearGrid";
 import ActivityMonthGrid from "@/components/dashboard/wallet/ActivityMonthGrid";
 import ActivityDayPanel from "@/components/dashboard/wallet/ActivityDayPanel";
-import ServiceFolderStack from "@/components/dashboard/wallet/ServiceFolderStack";
 import ServiceRecordDialog from "@/components/dashboard/wallet/ServiceRecordDialog";
 import { useActivityYear, type ActivityDay, type ActivityRecord } from "@/hooks/wallet/useActivityYear";
 
@@ -497,7 +490,7 @@ export default function MyWallet() {
 
         {/* Year activity map + folder history */}
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
-          <div className="lg:col-span-7">
+          <div className="lg:col-span-12">
             {selectedDay ? (
               <ActivityDayPanel
                 day={selectedDay}
@@ -533,38 +526,6 @@ export default function MyWallet() {
             )}
           </div>
 
-          <div className="lg:col-span-5">
-            <div className="rounded-3xl border border-border/50 bg-card p-6">
-              <div className="flex items-center justify-between gap-4 mb-5">
-                <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-xl bg-wj-green/10 flex items-center justify-center">
-                    <Wrench className="h-5 w-5 text-wj-green" />
-                  </div>
-                  <div>
-                    <h3 className="text-lg font-semibold text-foreground">Service folders</h3>
-                    <p className="text-xs text-muted-foreground">
-                      Every revision and repair, with its full record
-                    </p>
-                  </div>
-                </div>
-                <Button
-                  onClick={() => navigate("/dashboard")}
-                  className="gradient-wj text-white hover:opacity-90"
-                  size="sm"
-                >
-                  <Calendar className="h-4 w-4 mr-2" />
-                  <span className="hidden sm:inline">{t("e_pass.schedule_now")}</span>
-                  <span className="sm:hidden">{t("e_pass.schedule_now_short")}</span>
-                </Button>
-              </div>
-
-              <ServiceFolderStack
-                records={activityRecords}
-                loading={activityLoading}
-                onOpen={setSelectedRecord}
-              />
-            </div>
-          </div>
         </div>
 
         <ServiceRecordDialog
