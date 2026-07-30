@@ -323,7 +323,7 @@ export default function MyWallet() {
               >
                 {/* FRONT */}
                 <div
-                  className="absolute inset-0 rounded-3xl overflow-hidden bg-gradient-to-br from-background to-secondary border border-border/60 shadow-2xl transition-all duration-300 hover:border-wj-green/60"
+                  className="absolute inset-0 rounded-3xl overflow-hidden shadow-2xl"
                   style={{
                     backfaceVisibility: "hidden",
                     WebkitBackfaceVisibility: "hidden",
@@ -332,40 +332,19 @@ export default function MyWallet() {
                     pointerEvents: isFlipped ? "none" : "auto",
                   }}
                 >
-                  <div className="absolute inset-0 opacity-10">
-                    <div className="absolute top-4 right-4 w-32 h-32 rounded-full bg-wj-green blur-3xl" />
-                    <div className="absolute bottom-4 left-4 w-24 h-24 rounded-full bg-wj-green blur-2xl" />
-                  </div>
-                  <div className="relative z-10 h-full p-4 sm:p-5 lg:p-6 flex flex-col justify-between">
-                    <div className="flex items-start justify-between">
-                      <div>
-                        <p className="text-[9px] sm:text-[10px] uppercase tracking-[0.2em] text-muted-foreground font-medium">{t("e_pass.member_card")}</p>
-                        <h3 className="text-base sm:text-lg font-bold text-foreground tracking-tight truncate max-w-[180px]">
-                          {activeBikeName !== t("e_pass.no_bike") ? activeBikeName : "WJ Vision"}
-                        </h3>
-                        <p className="text-[9px] text-muted-foreground font-mono tracking-wider mt-0.5 truncate max-w-[180px]">{activeBikeSerial}</p>
-                      </div>
-                      <div className={`px-3 py-1 rounded-full bg-gradient-to-r ${styles.gradient} text-[10px] sm:text-xs font-bold uppercase tracking-wider text-white`}>
-                        {currentPlan?.name ?? "Free"}
-                      </div>
-                    </div>
-                    <div className="space-y-1">
-                      <p className="text-muted-foreground text-[9px] sm:text-[10px] uppercase tracking-widest">{t("e_pass.card_number")}</p>
-                      <p className="text-foreground text-sm sm:text-base lg:text-lg font-mono tracking-[0.1em] sm:tracking-[0.15em]">
-                        4532 •••• •••• {(user?.id || "0000").replace(/-/g, "").slice(-4).toUpperCase()}
-                      </p>
-                    </div>
-                    <div className="flex items-end justify-between">
-                      <div>
-                        <p className="text-muted-foreground text-[9px] sm:text-[10px] uppercase tracking-widest mb-0.5">{t("e_pass.member")}</p>
-                        <p className="text-foreground text-xs sm:text-sm font-medium">{user?.name || "Guest"}</p>
-                      </div>
-                      <div className="text-right">
-                        <p className="text-muted-foreground text-[9px] sm:text-[10px] uppercase tracking-widest mb-0.5">{t("e_pass.total_points")}</p>
-                        <p className="text-wj-green text-base sm:text-lg font-bold">{totalPoints.toLocaleString()}</p>
-                      </div>
-                    </div>
-                  </div>
+                  <WalletMemberCard
+                    themeId={themeFor(activeBikeId)}
+                    label={t("e_pass.member_card")}
+                    bikeName={activeBikeName !== t("e_pass.no_bike") ? activeBikeName : "WJ Vision"}
+                    serial={activeBikeSerial}
+                    planName={currentPlan?.name ?? "Free"}
+                    memberName={user?.name || "Guest"}
+                    cardNumber={cardNumber}
+                    points={totalPoints}
+                    pointsLabel={t("e_pass.total_points")}
+                    showEdit
+                    onEdit={() => setEditingCardId(activeBikeId)}
+                  />
                 </div>
                 {/* BACK */}
                 <div
