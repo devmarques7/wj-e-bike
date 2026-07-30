@@ -78,10 +78,8 @@ export default function Garage() {
           <div className="col-span-12 lg:col-span-4">
             <BikeAssistantCard className="h-full" />
           </div>
-
         </div>
       </div>
     </RoleDashboardLayout>
-
   );
 }
