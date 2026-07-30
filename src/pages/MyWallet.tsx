@@ -13,7 +13,7 @@ import EmptyState from "@/components/dashboard/EmptyState";
 import { supabase } from "@/integrations/supabase/client";
 import StyledEPassQR from "@/components/dashboard/StyledEPassQR";
 import BikePickerDialog, { LinkedBike } from "@/components/dashboard/BikePickerDialog";
-import WalletMemberCard from "@/components/dashboard/WalletMemberCard";
+import WalletMemberCard, { WalletCardBack } from "@/components/dashboard/WalletMemberCard";
 import WalletCardThemeDialog from "@/components/dashboard/WalletCardThemeDialog";
 import { loadWalletThemes, saveWalletThemes, themeForIndex } from "@/lib/wallet/cardThemes";
 
