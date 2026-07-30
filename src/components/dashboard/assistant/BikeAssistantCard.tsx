@@ -4,7 +4,6 @@ import { ArrowUp, RefreshCw, Settings2, Zap, Stethoscope, Wrench, Package, Tag, 
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { useBikeAssistant } from "@/hooks/useBikeAssistant";
-import { ASSISTANT_SKILLS } from "@/lib/ai/skills";
 import AssistantSettingsDialog from "./AssistantSettingsDialog";
 import { AssistantIcon } from "./assistantIcons";
 import { cn } from "@/lib/utils";
@@ -22,6 +21,26 @@ const PRIORITY_ACTIONS = [
   { icon: Tag, label: "Is it covered by my plan?", prompt: "Is this service covered by my plan?" },
   { icon: Bike, label: "Explore new bikes", prompt: "Which bike should I upgrade to?" },
 ];
+
+/**
+ * Splits an assistant reply into prose + the option lines it offered
+ * (bullets, dashes or numbered items) so they can be rendered as chips.
+ */
+function parseOptions(content: string): { text: string; options: string[] } {
+  const lines = content.split("\n");
+  const options: string[] = [];
+  const kept: string[] = [];
+  for (const line of lines) {
+    const match = line.match(/^\s*(?:[-*•]|\d+[.)])\s+(.{3,140})$/);
+    if (match) {
+      options.push(match[1].trim().replace(/^\*\*|\*\*$/g, ""));
+    } else {
+      kept.push(line);
+    }
+  }
+  if (!options.length) return { text: content, options: [] };
+  return { text: kept.join("\n").replace(/\n{3,}/g, "\n\n").trim(), options };
+}
 
 export default function BikeAssistantCard() {
   const { user } = useAuth();
