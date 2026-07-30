@@ -243,7 +243,7 @@ export default function MyWallet() {
           <div
             className="w-full h-full overflow-visible"
             style={{
-              paddingTop: `${WALLET_FIRST_PEEK + Math.max(0, linkedBikes.length - 1) * WALLET_STEP + WALLET_GHOST_EXTRA + 12}px`,
+              paddingTop: `${WALLET_FIRST_PEEK + Math.max(0, linkedBikes.length - 1) * WALLET_STEP + 12}px`,
             }}
           >
             <div className="relative w-full h-full group">
@@ -252,7 +252,7 @@ export default function MyWallet() {
               const hovered = hoveredId === bike.id;
               const peek = WALLET_FIRST_PEEK + depth * WALLET_STEP; // px peeking above main card
               const lift = hovered ? WALLET_HOVER_LIFT : 0;
-              const scale = 1 - (depth + 1) * WALLET_SCALE_STEP + (hovered ? WALLET_SCALE_STEP : 0);
+              const scale = 1 - (depth + 1) * WALLET_SCALE_STEP;
               const tierStyle = cardStyles[slug] ?? cardStyles.free;
               return (
                 <button
@@ -280,31 +280,6 @@ export default function MyWallet() {
                 </button>
               );
             })}
-
-            {/* Ghost stacked card (add new) — sits at the very top of the stack */}
-            {(() => {
-              const otherCount = Math.max(0, orderedBikes.length - 1);
-              const ghostTop = WALLET_FIRST_PEEK + otherCount * WALLET_STEP + WALLET_GHOST_EXTRA;
-              const ghostScale = 1 - (otherCount + 1) * WALLET_SCALE_STEP;
-              return (
-                <button
-                  type="button"
-                  onClick={() => setPickerOpen(true)}
-                  disabled={!canLinkAnother}
-                  title={canLinkAnother ? t("e_pass.add_bike_hint") : t("e_pass.no_other_bike")}
-                  className="absolute inset-x-0 bottom-0 aspect-[1.6/1] sm:aspect-[1.75/1] rounded-3xl border-2 border-dashed border-slate-300 bg-slate-100 flex flex-col items-center justify-start gap-1.5 text-slate-600 transition-all duration-300 origin-bottom pt-3 hover:border-wj-green/60 hover:shadow-[0_25px_60px_-12px_rgba(5,140,66,0.45)] disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:border-slate-300 disabled:hover:shadow-none disabled:hover:bg-slate-100"
-                  style={{
-                    transform: `translateY(-${ghostTop}px) scale(${ghostScale})`,
-                    zIndex: 5,
-                  }}
-                >
-                  <div className="p-2 rounded-full bg-wj-green/10 border border-wj-green/30 transition-colors">
-                    <Plus className="h-5 w-5" />
-                  </div>
-                  <span className="text-[10px] uppercase tracking-widest">{t("e_pass.add_bike_hint")}</span>
-                </button>
-              );
-            })()}
 
             {/* Featured card — always in front */}
             <div
