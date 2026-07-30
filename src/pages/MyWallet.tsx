@@ -231,26 +231,24 @@ export default function MyWallet() {
             }}
           >
             <div className="relative w-full group">
-            {/* Stacked back cards (one per non-active bike) — peek above the main card */}
-            {linkedBikes.map((bike, i) => {
-              if (i === activeBikeIdx) return null;
-              // Order from furthest (top) to closest (just behind main)
-              const stackOrder = linkedBikes
-                .map((_, idx) => idx)
-                .filter((idx) => idx !== activeBikeIdx);
-              const depth = stackOrder.indexOf(i); // 0 = closest to main
+            {/* Stacked back cards — same box, uniform ascending step above the featured card */}
+            {orderedBikes.slice(1).map((bike, depth) => {
+              const hovered = hoveredId === bike.id;
               const peek = WALLET_FIRST_PEEK + depth * WALLET_STEP; // px peeking above main card
-              const scale = 1 - (depth + 1) * 0.035; // taper: same box, smaller scale the further back
+              const lift = hovered ? WALLET_HOVER_LIFT : 0;
+              const scale = 1 - (depth + 1) * WALLET_SCALE_STEP + (hovered ? WALLET_SCALE_STEP : 0);
               const tierStyle = cardStyles[slug] ?? cardStyles.free;
               return (
                 <button
                   key={bike.id}
                   type="button"
-                  onClick={(e) => { e.stopPropagation(); setActiveBikeIdx(i); setIsFlipped(false); }}
-                  className={`absolute inset-x-0 bottom-0 aspect-[1.6/1] sm:aspect-[1.75/1] rounded-3xl overflow-hidden bg-slate-100 border ${tierStyle.border} shadow-xl transition-all duration-300 origin-bottom text-left hover:shadow-[0_25px_60px_-12px_rgba(5,140,66,0.45)] hover:border-wj-green/60`}
+                  onClick={(e) => { e.stopPropagation(); bringToFront(bike.id); }}
+                  onMouseEnter={() => setHoveredId(bike.id)}
+                  onMouseLeave={() => setHoveredId((prev) => (prev === bike.id ? null : prev))}
+                  className={`absolute inset-x-0 bottom-0 aspect-[1.6/1] sm:aspect-[1.75/1] rounded-3xl overflow-hidden bg-slate-100 border ${tierStyle.border} shadow-xl transition-all duration-500 ease-out origin-bottom text-left hover:shadow-[0_25px_60px_-12px_rgba(5,140,66,0.45)] hover:border-wj-green/60`}
                   style={{
-                    transform: `translateY(-${peek}px) scale(${scale})`,
-                    zIndex: 20 - (depth + 1),
+                    transform: `translateY(-${peek + lift}px) scale(${scale})`,
+                    zIndex: hovered ? 30 : 20 - (depth + 1),
                   }}
                   title={bike.model || bike.serial}
                 >
@@ -269,9 +267,9 @@ export default function MyWallet() {
 
             {/* Ghost stacked card (add new) — sits at the very top of the stack */}
             {(() => {
-              const otherCount = Math.max(0, linkedBikes.length - 1);
+              const otherCount = Math.max(0, orderedBikes.length - 1);
               const ghostTop = WALLET_FIRST_PEEK + otherCount * WALLET_STEP + WALLET_GHOST_EXTRA;
-              const ghostScale = 1 - (otherCount + 1) * 0.035;
+              const ghostScale = 1 - (otherCount + 1) * WALLET_SCALE_STEP;
               return (
                 <button
                   type="button"
