@@ -1,4 +1,4 @@
-import { Fragment, useMemo, useState } from "react";
+import { Fragment, useEffect, useMemo, useState } from "react";
 import { motion } from "framer-motion";
 import { useTranslation } from "react-i18next";
 import {
@@ -35,6 +35,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { toast } from "sonner";
+import { supabase } from "@/integrations/supabase/client";
 import { useSchedulingData, type AppointmentRow } from "@/hooks/scheduling/useSchedulingData";
 import AppointmentActionsMenu from "@/components/dashboard/scheduling/AppointmentActionsMenu";
 import CustomerAppointmentActionsMenu from "@/components/dashboard/scheduling/CustomerAppointmentActionsMenu";
@@ -80,6 +81,8 @@ const getStatusBadge = (status: string, t: (k: string) => string) => {
     rescheduled: "bg-amber-400",
     canceled: "bg-red-500",
     no_show: "bg-red-500/70",
+    requested: "bg-sky-400",
+    overdue: "bg-orange-500",
   };
   return (
     <Badge className={`${base} bg-muted/30 text-foreground/80 border-border/40`}>
@@ -88,6 +91,14 @@ const getStatusBadge = (status: string, t: (k: string) => string) => {
     </Badge>
   );
 };
+
+/** An appointment row that may actually be a pending scheduling REQUEST. */
+type TableRow = AppointmentRow & { isRequest?: boolean; requestStatus?: string };
+
+const isOverdue = (a: TableRow) =>
+  !a.isRequest &&
+  ["pending", "confirmed", "rescheduled"].includes(a.status) &&
+  a.scheduled_date < new Date().toISOString().slice(0, 10);
 
 interface AppointmentsTableCardProps {
   /** Hide the actions column (read-only mode for non-managers). */
@@ -98,6 +109,8 @@ interface AppointmentsTableCardProps {
   mineOnlyMechanicId?: string;
   /** Customer view: scope to this user's appointments and force read-only. */
   customerUserId?: string;
+  /** Also list scheduling requests (waitlist) as rows with a "requested" status. */
+  includeRequests?: boolean;
 }
 
 /**
@@ -110,13 +123,14 @@ export default function AppointmentsTableCard({
   title,
   mineOnlyMechanicId,
   customerUserId,
+  includeRequests = false,
 }: AppointmentsTableCardProps) {
   const { t, i18n } = useTranslation();
   const isCustomer = !!customerUserId;
   const effectiveReadOnly = readOnly || isCustomer;
   const [activeTab, setActiveTab] = useState("day");
   const [statusFilter, setStatusFilter] = useState<
-    "all" | "pending" | "ongoing" | "completed"
+    "all" | "requested" | "pending" | "ongoing" | "completed" | "canceled" | "overdue"
   >("all");
   const [groupBy, setGroupBy] = useState<
     "none" | "status" | "mechanic" | "service" | "plan"
@@ -139,26 +153,85 @@ export default function AppointmentsTableCard({
     refetch,
   } = useSchedulingData({ customerUserId });
 
+  /* Scheduling requests (waitlist) — shown alongside real appointments. */
+  const [requestRows, setRequestRows] = useState<TableRow[]>([]);
+  useEffect(() => {
+    if (!includeRequests) {
+      setRequestRows([]);
+      return;
+    }
+    let cancelled = false;
+    (async () => {
+      let q = supabase
+        .from("appointment_waitlist")
+        .select("id, user_id, service_type_id, preferred_date_from, preferred_time_from, status, created_at")
+        .order("created_at", { ascending: false });
+      if (customerUserId) q = q.eq("user_id", customerUserId);
+      const { data } = await q;
+      if (cancelled) return;
+      setRequestRows(
+        (data ?? []).map((r: any) => ({
+          id: r.id,
+          user_id: r.user_id,
+          service_type_id: r.service_type_id,
+          assigned_mechanic_id: null,
+          scheduled_date: r.preferred_date_from,
+          scheduled_start_time: (r.preferred_time_from ?? "00:00:00") as string,
+          scheduled_end_time: null,
+          duration_minutes: null,
+          status: (r.status === "booked"
+            ? "completed"
+            : r.status === "expired"
+              ? "canceled"
+              : "requested") as any,
+          priority: "normal",
+          priority_score: 0,
+          customer_name: null,
+          customer_email: null,
+          mechanic_name: null,
+          service_name: null,
+          service_color: null,
+          plan_name: null,
+          plan_color: null,
+          plan_tier: null,
+          updated_at: r.created_at,
+          work_started_at: null,
+          work_ended_at: null,
+          isRequest: true,
+          requestStatus: r.status,
+        })),
+      );
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [includeRequests, customerUserId, appointments.length]);
+
   const activeAppointment =
     appointments.find((a) => a.status === "in_progress" && a.work_started_at) ?? null;
 
   const filteredSorted = useMemo(() => {
-    const matchStatus = (s: string) => {
+    const matchStatus = (a: TableRow) => {
+      const s = a.status as string;
       if (statusFilter === "all") return true;
-      if (statusFilter === "pending") return ["pending", "confirmed", "rescheduled"].includes(s);
+      if (statusFilter === "requested") return s === "requested";
+      if (statusFilter === "overdue") return isOverdue(a);
+      if (statusFilter === "pending")
+        return ["pending", "confirmed", "rescheduled"].includes(s) && !isOverdue(a);
       if (statusFilter === "ongoing") return s === "in_progress";
       if (statusFilter === "completed") return s === "completed";
+      if (statusFilter === "canceled") return ["canceled", "no_show"].includes(s);
       return true;
     };
-    const arr = appointments
+    const arr = ([...appointments, ...requestRows] as TableRow[])
       .filter((a) => (mineOnlyMechanicId ? a.assigned_mechanic_id === mineOnlyMechanicId : true))
-      .filter((a) => matchStatus(a.status));
+      .filter(matchStatus);
     arr.sort((a, b) => {
       const cmp = a.scheduled_start_time.localeCompare(b.scheduled_start_time);
       return sortAsc ? cmp : -cmp;
     });
     return arr;
-  }, [appointments, statusFilter, sortAsc, mineOnlyMechanicId]);
+  }, [appointments, requestRows, statusFilter, sortAsc, mineOnlyMechanicId]);
 
   const groupedAppointments = useMemo(() => {
     if (groupBy === "none") return [{ key: "all", label: "", items: filteredSorted }];
@@ -221,9 +294,13 @@ export default function AppointmentsTableCard({
               value={statusFilter}
               onValueChange={(v) => setStatusFilter(v as typeof statusFilter)}
             >
-              <TabsList className="bg-muted/40 h-8">
+              <TabsList className="bg-muted/40 h-8 flex-wrap">
                 <TabsTrigger value="all" className="text-[11px] h-6 px-2.5">
                   {t("workshop.appts.all")}
+                </TabsTrigger>
+                <TabsTrigger value="requested" className="text-[11px] h-6 px-2.5">
+                  <span className="inline-block w-1.5 h-1.5 rounded-full bg-sky-400 mr-1.5" />
+                  {t("workshop.appts.requested", "Requested")}
                 </TabsTrigger>
                 <TabsTrigger value="pending" className="text-[11px] h-6 px-2.5">
                   <span className="inline-block w-1.5 h-1.5 rounded-full bg-amber-400 mr-1.5" />
@@ -236,6 +313,14 @@ export default function AppointmentsTableCard({
                 <TabsTrigger value="completed" className="text-[11px] h-6 px-2.5">
                   <span className="inline-block w-1.5 h-1.5 rounded-full bg-wj-green mr-1.5" />
                   {t("workshop.appts.completed")}
+                </TabsTrigger>
+                <TabsTrigger value="overdue" className="text-[11px] h-6 px-2.5">
+                  <span className="inline-block w-1.5 h-1.5 rounded-full bg-orange-500 mr-1.5" />
+                  {t("workshop.appts.overdue", "Overdue")}
+                </TabsTrigger>
+                <TabsTrigger value="canceled" className="text-[11px] h-6 px-2.5">
+                  <span className="inline-block w-1.5 h-1.5 rounded-full bg-red-500 mr-1.5" />
+                  {t("workshop.appts.canceled", "Canceled")}
                 </TabsTrigger>
               </TabsList>
             </Tabs>
