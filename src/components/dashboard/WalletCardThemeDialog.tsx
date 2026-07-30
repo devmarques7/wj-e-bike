@@ -16,6 +16,7 @@ interface WalletCardThemeDialogProps {
   themeId?: string | null;
   onSelect: (themeId: string) => void;
   preview?: {
+    label?: string;
     bikeName?: string;
     serial?: string;
     planName?: string;
