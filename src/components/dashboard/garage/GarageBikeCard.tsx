@@ -3,7 +3,7 @@ import { Battery, Gauge, MapPin, Zap, ArrowUpRight } from "lucide-react";
 import { Link } from "react-router-dom";
 import type { GarageBike } from "@/hooks/garage/useGarageBike";
 import type { HealthMetric } from "@/hooks/garage/useGarageBike";
-import AnimatedFatbike from "./AnimatedFatbike";
+import bikeFull from "@/assets/bike-full.png";
 
 interface Props {
   bike: GarageBike | null;
@@ -40,10 +40,15 @@ export default function GarageBikeCard({ bike, overall, metrics = [] }: Props) {
       </div>
 
       <div className="mt-5 grid grid-cols-12 gap-4">
-        <div className="col-span-12 sm:col-span-7 relative rounded-2xl bg-muted/30 border border-border/20 p-4 min-h-[200px] overflow-hidden">
-          <AnimatedFatbike metrics={metrics} />
+        <div className="col-span-12 sm:col-span-7 relative rounded-2xl bg-muted/30 border border-border/20 p-4 min-h-[200px] overflow-hidden flex items-center justify-center">
+          <img
+            src={bike?.image_url || bikeFull}
+            alt={bike?.model ? `${bike.model} e-bike` : "WJ e-bike"}
+            loading="lazy"
+            className="w-full max-h-[220px] object-contain drop-shadow-[0_20px_40px_rgba(0,0,0,0.45)]"
+          />
           <span className="absolute left-4 top-3 text-[10px] uppercase tracking-wider text-muted-foreground/70">
-            Hover components for live wear
+            {bike?.color ? `${bike.color} · ` : ""}Registered bike
           </span>
         </div>
 
