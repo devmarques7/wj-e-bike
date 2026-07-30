@@ -206,14 +206,14 @@ export default function MyWallet() {
 
   const activeBike = orderedBikes[0];
 
-  /** Bring any card to the front; the previous front goes to the back of the queue. */
+  /** Clicking a back card moves it to the front of the queue, while the previous front card
+   * is sent to the back of the stack (last peek). */
   const bringToFront = (id: string) => {
-    setStackOrder(() => {
-      const ids = orderedBikes.map((b) => b.id);
-      if (ids[0] === id) return ids;
-      const rest = ids.filter((x) => x !== id && x !== ids[0]);
-      return [id, ...rest, ids[0]];
-    });
+    if (activeBike?.id === id) return;
+    const ids = orderedBikes.map((b) => b.id);
+    const oldFront = ids[0];
+    const rest = ids.filter((x) => x !== id && x !== oldFront);
+    setStackOrder([id, ...rest, oldFront]);
     setIsFlipped(false);
   };
 
