@@ -1,5 +1,5 @@
 import { motion } from "framer-motion";
-import { Wrench, Clock, Calendar, Check, Bike, QrCode, HeartPulse, CalendarPlus, LayoutGrid } from "lucide-react";
+import { Clock, Check, Bike, QrCode, HeartPulse, CalendarPlus, LayoutGrid } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useEffect, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
@@ -21,11 +21,6 @@ import ServiceAllowanceCard from "@/components/dashboard/wallet/ServiceAllowance
 import ScanEPassDialog from "@/components/dashboard/wallet/ScanEPassDialog";
 import { usePlanAllowance, PLAN_SERVICE_ALLOWANCE } from "@/hooks/wallet/usePlanAllowance";
 import { useGarageBike } from "@/hooks/garage/useGarageBike";
-import ActivityYearGrid from "@/components/dashboard/wallet/ActivityYearGrid";
-import ActivityDayDialog from "@/components/dashboard/wallet/ActivityDayDialog";
-import ServiceFolderStack from "@/components/dashboard/wallet/ServiceFolderStack";
-import ServiceRecordDialog from "@/components/dashboard/wallet/ServiceRecordDialog";
-import { useActivityYear, type ActivityDay, type ActivityRecord } from "@/hooks/wallet/useActivityYear";
 
 type PointEntry = {
   id: string;
@@ -85,15 +80,6 @@ export default function MyWallet() {
   const [cardThemes, setCardThemes] = useState<Record<string, string>>(() => loadWalletThemes());
   const [editingCardId, setEditingCardId] = useState<string | null>(null);
   const [scanOpen, setScanOpen] = useState(false);
-  /** Year activity map + folder history state. */
-  const [activityYear, setActivityYear] = useState(() => new Date().getFullYear());
-  const [selectedDay, setSelectedDay] = useState<ActivityDay | null>(null);
-  const [selectedRecord, setSelectedRecord] = useState<ActivityRecord | null>(null);
-  const {
-    records: activityRecords,
-    daysMap,
-    loading: activityLoading,
-  } = useActivityYear(user?.id, activityYear);
 
   useEffect(() => {
     if (!user?.id) return;
@@ -493,66 +479,6 @@ export default function MyWallet() {
           </div>
         </div>
 
-        {/* Year activity map + folder history */}
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
-          <div className="lg:col-span-7">
-            <ActivityYearGrid
-              year={activityYear}
-              daysMap={daysMap}
-              onYearChange={setActivityYear}
-              onSelectDay={setSelectedDay}
-              selectedDate={selectedDay?.date ?? null}
-              loading={activityLoading}
-            />
-          </div>
-
-          <div className="lg:col-span-5">
-            <div className="rounded-3xl border border-border/50 bg-card p-6">
-              <div className="flex items-center justify-between gap-4 mb-5">
-                <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-xl bg-wj-green/10 flex items-center justify-center">
-                    <Wrench className="h-5 w-5 text-wj-green" />
-                  </div>
-                  <div>
-                    <h3 className="text-lg font-semibold text-foreground">Service folders</h3>
-                    <p className="text-xs text-muted-foreground">
-                      Every revision and repair, with its full record
-                    </p>
-                  </div>
-                </div>
-                <Button
-                  onClick={() => navigate("/dashboard")}
-                  className="gradient-wj text-white hover:opacity-90"
-                  size="sm"
-                >
-                  <Calendar className="h-4 w-4 mr-2" />
-                  <span className="hidden sm:inline">{t("e_pass.schedule_now")}</span>
-                  <span className="sm:hidden">{t("e_pass.schedule_now_short")}</span>
-                </Button>
-              </div>
-
-              <ServiceFolderStack
-                records={activityRecords}
-                loading={activityLoading}
-                onOpen={setSelectedRecord}
-              />
-            </div>
-          </div>
-        </div>
-
-        <ActivityDayDialog
-          day={selectedDay}
-          onOpenChange={(o) => !o && setSelectedDay(null)}
-          onOpenRecord={(r) => {
-            setSelectedDay(null);
-            setSelectedRecord(r);
-          }}
-        />
-
-        <ServiceRecordDialog
-          record={selectedRecord}
-          onOpenChange={(o) => !o && setSelectedRecord(null)}
-        />
       </div>
 
       <WalletCardThemeDialog
