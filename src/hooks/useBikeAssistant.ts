@@ -12,12 +12,10 @@ import {
   isOffFlow,
   matchOption,
   newModeSession,
-  newSession,
   notesOf,
   progressOf,
   removeTag,
   symptomOf,
-  type DiagnosisMode,
   type DiagnosisSession,
 } from "@/lib/ai/diagnosisFlow";
 import {
