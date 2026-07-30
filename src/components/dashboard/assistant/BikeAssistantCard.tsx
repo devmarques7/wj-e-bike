@@ -13,8 +13,20 @@ import { useAuth } from "@/contexts/AuthContext";
 
 export default function BikeAssistantCard() {
   const { user } = useAuth();
-  const { config, updateConfig, toggleSkill, activeSkills, messages, status, error, send, reset, runAction, savedCalls } =
-    useBikeAssistant();
+  const {
+    config,
+    updateConfig,
+    toggleSkill,
+    activeSkills,
+    messages,
+    status,
+    thinkingPhrase,
+    error,
+    send,
+    reset,
+    runAction,
+    savedCalls,
+  } = useBikeAssistant();
   const [value, setValue] = useState("");
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [inputFocused, setInputFocused] = useState(false);
@@ -39,6 +51,8 @@ export default function BikeAssistantCard() {
   };
 
   const suggestions = activeSkills.slice(0, 4);
+  const lastAssistantId = [...messages].reverse().find((m) => m.role === "assistant")?.id ?? null;
+  const orbInComposer = inputFocused && messages.length > 0;
 
   return (
     <div className="relative overflow-hidden rounded-3xl border border-border/30 bg-background/60 backdrop-blur-md">
