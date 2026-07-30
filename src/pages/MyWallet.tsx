@@ -21,6 +21,11 @@ import ServiceAllowanceCard from "@/components/dashboard/wallet/ServiceAllowance
 import ScanEPassDialog from "@/components/dashboard/wallet/ScanEPassDialog";
 import { usePlanAllowance, PLAN_SERVICE_ALLOWANCE } from "@/hooks/wallet/usePlanAllowance";
 import { useGarageBike } from "@/hooks/garage/useGarageBike";
+import ActivityYearGrid from "@/components/dashboard/wallet/ActivityYearGrid";
+import ActivityDayDialog from "@/components/dashboard/wallet/ActivityDayDialog";
+import ServiceFolderStack from "@/components/dashboard/wallet/ServiceFolderStack";
+import ServiceRecordDialog from "@/components/dashboard/wallet/ServiceRecordDialog";
+import { useActivityYear, type ActivityDay, type ActivityRecord } from "@/hooks/wallet/useActivityYear";
 
 type PointEntry = {
   id: string;
@@ -80,6 +85,15 @@ export default function MyWallet() {
   const [cardThemes, setCardThemes] = useState<Record<string, string>>(() => loadWalletThemes());
   const [editingCardId, setEditingCardId] = useState<string | null>(null);
   const [scanOpen, setScanOpen] = useState(false);
+  /** Year activity map + folder history state. */
+  const [activityYear, setActivityYear] = useState(() => new Date().getFullYear());
+  const [selectedDay, setSelectedDay] = useState<ActivityDay | null>(null);
+  const [selectedRecord, setSelectedRecord] = useState<ActivityRecord | null>(null);
+  const {
+    records: activityRecords,
+    daysMap,
+    loading: activityLoading,
+  } = useActivityYear(user?.id, activityYear);
 
   useEffect(() => {
     if (!user?.id) return;
