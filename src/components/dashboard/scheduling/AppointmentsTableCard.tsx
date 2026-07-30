@@ -6,6 +6,7 @@ import {
   Loader2,
   ChevronDown,
   ChevronRight,
+  ChevronLeft,
   ArrowUpDown,
   Layers,
 } from "lucide-react";
@@ -275,8 +276,23 @@ export default function AppointmentsTableCard({
     return arr;
   }, [appointments, requestRows, statusFilter, sortAsc, mineOnlyMechanicId]);
 
+  /* Pagination: at most 5 rows per page; the viewport shows ~3 and scrolls. */
+  const PAGE_SIZE = 5;
+  const [page, setPage] = useState(0);
+  const totalPages = Math.max(1, Math.ceil(filteredSorted.length / PAGE_SIZE));
+  useEffect(() => {
+    setPage((p) => Math.min(p, totalPages - 1));
+  }, [totalPages]);
+  useEffect(() => {
+    setPage(0);
+  }, [statusFilter, groupBy, sortAsc]);
+  const pagedRows = useMemo(
+    () => filteredSorted.slice(page * PAGE_SIZE, page * PAGE_SIZE + PAGE_SIZE),
+    [filteredSorted, page],
+  );
+
   const groupedAppointments = useMemo(() => {
-    if (groupBy === "none") return [{ key: "all", label: "", items: filteredSorted }];
+    if (groupBy === "none") return [{ key: "all", label: "", items: pagedRows }];
     const map = new Map<string, { key: string; label: string; items: ApptRow[] }>();
     const labelFor = (a: ApptRow): { key: string; label: string } => {
       switch (groupBy) {
@@ -298,14 +314,14 @@ export default function AppointmentsTableCard({
           return { key: "all", label: "" };
       }
     };
-    for (const a of filteredSorted) {
+    for (const a of pagedRows) {
       const { key, label } = labelFor(a);
       const g = map.get(key) ?? { key, label, items: [] };
       g.items.push(a);
       map.set(key, g);
     }
     return Array.from(map.values());
-  }, [filteredSorted, groupBy, t]);
+  }, [pagedRows, groupBy, t]);
 
   const toggleGroup = (key: string) =>
     setCollapsedGroups((prev) => ({ ...prev, [key]: !prev[key] }));
@@ -395,7 +411,7 @@ export default function AppointmentsTableCard({
           </div>
         </div>
 
-        <div className="overflow-x-auto flex-1 flex flex-col">
+        <div className="overflow-x-auto max-h-[228px] overflow-y-auto flex-1 flex flex-col">
           {loading ? (
             <div className="flex-1 flex items-center justify-center gap-2 text-sm text-muted-foreground">
               <Loader2 className="h-4 w-4 animate-spin" /> {t("workshop.appts.loading")}
@@ -625,6 +641,38 @@ export default function AppointmentsTableCard({
             </Table>
           )}
         </div>
+
+        {!loading && filteredSorted.length > 0 && (
+          <div className="flex items-center justify-between gap-2 px-4 py-2.5 border-t border-border/30">
+            <span className="text-[11px] text-muted-foreground tabular-nums">
+              {page * PAGE_SIZE + 1}–{Math.min((page + 1) * PAGE_SIZE, filteredSorted.length)} /{" "}
+              {filteredSorted.length}
+            </span>
+            <div className="flex items-center gap-1.5">
+              <Button
+                size="sm"
+                variant="outline"
+                className="h-7 px-2 text-[11px] border-border/40"
+                disabled={page === 0}
+                onClick={() => setPage((p) => Math.max(0, p - 1))}
+              >
+                <ChevronLeft className="h-3.5 w-3.5" />
+              </Button>
+              <span className="text-[11px] text-muted-foreground tabular-nums">
+                {page + 1}/{totalPages}
+              </span>
+              <Button
+                size="sm"
+                variant="outline"
+                className="h-7 px-2 text-[11px] border-border/40"
+                disabled={page >= totalPages - 1}
+                onClick={() => setPage((p) => Math.min(totalPages - 1, p + 1))}
+              >
+                <ChevronRight className="h-3.5 w-3.5" />
+              </Button>
+            </div>
+          </div>
+        )}
       </motion.div>
 
       <AppointmentCompletionDrawer
