@@ -597,6 +597,21 @@ export default function MyWallet() {
         </div>
       </div>
 
+      <WalletCardThemeDialog
+        open={editingCardId !== null}
+        onOpenChange={(o) => !o && setEditingCardId(null)}
+        themeId={editingCardId ? themeFor(editingCardId) : undefined}
+        onSelect={(themeId) => editingCardId && applyTheme(editingCardId, themeId)}
+        preview={{
+          label: t("e_pass.member_card"),
+          bikeName: activeBikeName !== t("e_pass.no_bike") ? activeBikeName : "WJ Vision",
+          serial: activeBikeSerial,
+          planName: currentPlan?.name ?? "Free",
+          memberName: user?.name || "Guest",
+          cardNumber,
+        }}
+      />
+
       <BikePickerDialog
         open={pickerOpen}
         onOpenChange={setPickerOpen}
