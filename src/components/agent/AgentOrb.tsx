@@ -101,16 +101,26 @@ export default function AgentOrb({ state = "idle", size = 96, className }: Agent
 
 
       const projected = points.map((p) => {
+        // Ocean ripple: continuous wave displacement across the sphere surface.
+        const ripple1 = Math.sin(p.x * 3 + t * 1.6) * Math.cos(p.y * 2.5 + t * 1.1) * 0.05;
+        const ripple2 = Math.cos(p.z * 2.2 + t * 0.9) * Math.sin(p.y * 3.2 + t * 1.4) * 0.04;
+        const ripple = ripple1 + ripple2;
+
+        const px = p.x * (1 + ripple);
+        const py = p.y * (1 + ripple);
+        const pz = p.z * (1 + ripple);
+
         const cosY = Math.cos(ry);
         const sinY = Math.sin(ry);
-        let x = p.x * cosY - p.z * sinY;
-        let z = p.x * sinY + p.z * cosY;
+        let x = px * cosY - pz * sinY;
+        let z = px * sinY + pz * cosY;
         const cosX = Math.cos(rx);
         const sinX = Math.sin(rx);
-        const y = p.y * cosX - z * sinX;
-        z = p.y * sinX + z * cosX;
+        const y = py * cosX - z * sinX;
+        z = py * sinX + z * cosX;
         return { x, y, z, oy: p.y };
       });
+
       projected.sort((a, b) => a.z - b.z);
 
       for (const p of projected) {
