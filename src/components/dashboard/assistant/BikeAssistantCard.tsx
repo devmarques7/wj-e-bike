@@ -249,10 +249,24 @@ export default function BikeAssistantCard() {
         {/* Composer */}
         <div className="relative z-10 mt-5 rounded-2xl border border-border/30 bg-background/70 p-2">
           <div className="flex items-center gap-2">
+            <AnimatePresence>
+              {orbInComposer && (
+                <motion.div layoutId="assistant-orb" className="shrink-0 pl-1">
+                  <AgentOrb
+                    size={30}
+                    state={
+                      status === "thinking" ? "thinking" : status === "answering" ? "speaking" : "idle"
+                    }
+                  />
+                </motion.div>
+              )}
+            </AnimatePresence>
             <Input
               ref={inputRef}
               value={value}
               onChange={(e) => setValue(e.target.value)}
+              onFocus={() => setInputFocused(true)}
+              onBlur={() => setInputFocused(false)}
               onKeyDown={(e) => {
                 if (e.key === "Enter") submit(value);
               }}
