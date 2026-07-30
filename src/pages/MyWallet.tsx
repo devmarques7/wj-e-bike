@@ -37,6 +37,10 @@ type PlanInfo = {
 const WALLET_FIRST_PEEK = 42; // px the closest back card peeks above the featured card
 const WALLET_STEP = 26; // px between each ascending step
 const WALLET_GHOST_EXTRA = 30; // extra room for the "stack a new card" slot on top
+/** Uniform taper applied per depth so every card keeps the exact same box. */
+const WALLET_SCALE_STEP = 0.03;
+/** Extra lift applied on hover (Apple Wallet "peek" gesture). */
+const WALLET_HOVER_LIFT = 14;
 
 const cardStyles: Record<string, { gradient: string; border: string; text: string }> = {
   free:  { gradient: "from-emerald-400 to-emerald-600", border: "border-emerald-400", text: "text-emerald-300" },
@@ -52,7 +56,9 @@ export default function MyWallet() {
   const [loading, setLoading] = useState(true);
   const [isFlipped, setIsFlipped] = useState(false);
   const [linkedBikes, setLinkedBikes] = useState<LinkedBike[]>([]);
-  const [activeBikeIdx, setActiveBikeIdx] = useState(0);
+  /** Card queue: index 0 is the featured card, the rest ascend behind it. */
+  const [stackOrder, setStackOrder] = useState<string[]>([]);
+  const [hoveredId, setHoveredId] = useState<string | null>(null);
   const [currentPlan, setCurrentPlan] = useState<PlanInfo | null>(null);
   const [history, setHistory] = useState<PointEntry[]>([]);
   const [pickerOpen, setPickerOpen] = useState(false);
