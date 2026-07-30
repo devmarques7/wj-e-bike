@@ -2,7 +2,6 @@ import { useEffect, useRef, useState } from "react";
 import { Loader2, Send, Sparkles } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
-import { ScrollArea } from "@/components/ui/scroll-area";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
@@ -85,7 +84,7 @@ export function GeminiChat({
         <span className="text-sm font-medium text-foreground">{title}</span>
       </div>
 
-      <ScrollArea className="flex-1 min-h-[280px]" viewportRef={scrollRef}>
+      <div ref={scrollRef} className="flex-1 min-h-[280px] max-h-[60vh] overflow-y-auto">
         <div className="p-5 space-y-4">
           {messages.length === 0 && (
             <p className="text-sm text-muted-foreground">{greeting}</p>
@@ -114,7 +113,7 @@ export function GeminiChat({
             </div>
           )}
         </div>
-      </ScrollArea>
+      </div>
 
       <div className="p-4 border-t border-border/40 flex items-end gap-2">
         <Textarea
