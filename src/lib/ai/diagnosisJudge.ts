@@ -128,9 +128,13 @@ export function localJudge(text: string, session: DiagnosisSession): JudgeResult
   let symptom: string | null = null;
   if (session.phase === "symptom") {
     const match = SYMPTOMS.find((s) =>
-      [...(s.keywords ?? []), s.label]
+      [s.label, s.description, s.serviceHint]
         .map((k) => String(k).toLowerCase())
-        .some((k) => k.length > 2 && lower.includes(k)),
+        .some((k) =>
+          k
+            .split(/[^\p{L}]+/u)
+            .some((w) => w.length > 4 && lower.includes(w)),
+        ),
     );
     symptom = match?.label ?? null;
   }
