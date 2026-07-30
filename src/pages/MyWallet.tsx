@@ -151,7 +151,7 @@ export default function MyWallet() {
       setCurrentPlan(cur);
       setHistory(entries);
       setLinkedBikes(bikes);
-      setActiveBikeIdx(0);
+      setStackOrder(bikes.map((b) => b.id));
       setLoading(false);
     })();
 
@@ -182,6 +182,25 @@ export default function MyWallet() {
   const styles = cardStyles[slug] ?? cardStyles.free;
 
   const activeBike = linkedBikes[activeBikeIdx];
+  /* --------- Apple Wallet queue --------- */
+  const orderedBikes = useMemo(() => {
+    const byId = new Map(linkedBikes.map((b) => [b.id, b]));
+    const ordered = stackOrder.map((id) => byId.get(id)).filter(Boolean) as LinkedBike[];
+    const missing = linkedBikes.filter((b) => !stackOrder.includes(b.id));
+    return [...ordered, ...missing];
+  }, [linkedBikes, stackOrder]);
+
+  /** Bring any card to the front; the previous front goes to the back of the queue. */
+  const bringToFront = (id: string) => {
+    setStackOrder(() => {
+      const ids = orderedBikes.map((b) => b.id);
+      if (ids[0] === id) return ids;
+      const rest = ids.filter((x) => x !== id && x !== ids[0]);
+      return [id, ...rest, ids[0]];
+    });
+    setIsFlipped(false);
+  };
+
   const activeBikeId = activeBike?.id || (user as any)?.bikeId || user?.id || "unknown";
   const activeBikeName = activeBike?.model || (user as any)?.bikeName || t("e_pass.no_bike");
   const activeBikeSerial = activeBike?.serial || (user as any)?.bikeId || "—";
