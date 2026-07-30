@@ -1,12 +1,13 @@
+import type { ReactNode } from "react";
 import { motion } from "framer-motion";
-import { QrCode, Plus, GraduationCap, LayoutGrid, Crown, type LucideIcon } from "lucide-react";
+import { QrCode, Plus, Crown, type LucideIcon } from "lucide-react";
 
 interface WalletActionTilesProps {
   onScan: () => void;
   onAddCard: () => void;
-  onTips: () => void;
   onPlans: () => void;
-  onAllBikes: () => void;
+  /** Rendered next to the "Plans" tile, replacing the old "All bikes" shortcut. */
+  bikeSlot?: ReactNode;
 }
 
 const tileBase =
@@ -45,9 +46,8 @@ function WideTile({
 export default function WalletActionTiles({
   onScan,
   onAddCard,
-  onTips,
   onPlans,
-  onAllBikes,
+  bikeSlot,
 }: WalletActionTilesProps) {
   return (
     <div className="grid grid-cols-[64px_1fr] sm:grid-cols-[72px_1fr] gap-3">
@@ -74,10 +74,9 @@ export default function WalletActionTiles({
       </div>
 
       {/* Wide tiles */}
-      <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
-        <WideTile icon={GraduationCap} label="Tips and training" onClick={onTips} delay={0.05} />
-        <WideTile icon={Crown} label="Plans" onClick={onPlans} delay={0.1} />
-        <WideTile icon={LayoutGrid} label="All bikes" onClick={onAllBikes} delay={0.15} />
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+        <WideTile icon={Crown} label="Plans" onClick={onPlans} delay={0.05} />
+        {bikeSlot ? <div className="min-w-0">{bikeSlot}</div> : null}
       </div>
     </div>
   );
