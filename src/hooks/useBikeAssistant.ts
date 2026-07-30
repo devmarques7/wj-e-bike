@@ -216,6 +216,7 @@ export function useBikeAssistant() {
     activeSkills,
     messages,
     status,
+    thinkingPhrase,
     error,
     send,
     reset,
