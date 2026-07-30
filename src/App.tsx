@@ -26,6 +26,7 @@ import CompleteProfile from "./pages/CompleteProfile";
 import Dashboard from "./pages/Dashboard";
 import ServiceDashboard from "./pages/ServiceDashboard";
 import BikeCatalog from "./pages/dashboard/BikeCatalog";
+import Membership from "./pages/dashboard/Membership";
 import UrgentService from "./pages/UrgentService";
 import MyWallet from "./pages/MyWallet";
 import EPassPage from "./pages/EPassPage";
@@ -98,6 +99,8 @@ const App = () => (
               <Route path="/dashboard/v-id" element={<MyWallet />} />
               <Route path="/dashboard/service" element={<ServiceDashboard />} />
               <Route path="/dashboard/bike" element={<BikeCatalog />} />
+              <Route path="/dashboard/membership" element={<Membership />} />
+              <Route path="/dashboard/vip" element={<Membership />} />
               <Route path="/dashboard/*" element={<Dashboard />} />
               
               {/* Admin Dashboard Routes */}

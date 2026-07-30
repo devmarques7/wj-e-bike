@@ -19,7 +19,7 @@ const navItems = [
   { href: "/dashboard/bike", icon: Bike, label: "Bike" },
   { href: "/dashboard/service", icon: Wrench, label: "Service" },
   { href: "/dashboard/favorites", icon: Heart, label: "Favorites" },
-  { href: "/dashboard/vip", icon: Crown, label: "VIP" },
+  { href: "/dashboard/membership", icon: Crown, label: "Membership" },
 ];
 
 export default function DashboardHeader() {
