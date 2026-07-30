@@ -499,6 +499,8 @@ export default function MyWallet() {
                 healthScore={health?.overall}
                 bikeName={garageBike?.model || activeBikeName}
                 onOpenRecord={(r) => setSelectedRecord(r)}
+                daysMap={daysMap}
+                onSelectDay={setSelectedDay}
               />
             ) : expandedMonth === null ? (
               <ActivityYearGrid

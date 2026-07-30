@@ -1,3 +1,4 @@
+import { useMemo } from "react";
 import { motion } from "framer-motion";
 import { Wrench, ShoppingBag, RotateCcw, Sparkles, HeartPulse, FileText, Folder, ChevronLeft } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -10,6 +11,9 @@ interface Props {
   onOpenRecord: (record: ActivityRecord) => void;
   healthScore?: number;
   bikeName?: string;
+  /** All days with activity in the year, used for the inline month strip. */
+  daysMap?: Map<string, ActivityDay>;
+  onSelectDay?: (day: ActivityDay) => void;
 }
 
 const KIND_ICON = {
@@ -19,6 +23,12 @@ const KIND_ICON = {
   purchase: ShoppingBag,
 } as const;
 
+const WEEK = ["M", "T", "W", "T", "F", "S", "S"];
+
+function iso(y: number, m: number, d: number) {
+  return `${y}-${String(m + 1).padStart(2, "0")}-${String(d).padStart(2, "0")}`;
+}
+
 /** Inline day view: replaces the calendar inside the same container. */
 export default function ActivityDayPanel({
   day,
@@ -27,9 +37,21 @@ export default function ActivityDayPanel({
   onOpenRecord,
   healthScore,
   bikeName,
+  daysMap,
+  onSelectDay,
 }: Props) {
   const date = new Date(day.date);
   const briefing = day.records.find((r) => r.briefing)?.briefing;
+
+  const [yy, mm] = day.date.split("-").map(Number);
+  const cells = useMemo(() => {
+    const total = new Date(yy, mm, 0).getDate();
+    const lead = (new Date(yy, mm - 1, 1).getDay() + 6) % 7;
+    return [
+      ...Array.from({ length: lead }, () => null),
+      ...Array.from({ length: total }, (_, i) => iso(yy, mm - 1, i + 1)),
+    ];
+  }, [yy, mm]);
 
   return (
     <motion.div
@@ -59,6 +81,40 @@ export default function ActivityDayPanel({
           {date.toLocaleDateString("en-GB", { month: "long" })}{" "}
           <span className="text-muted-foreground/70">{date.getFullYear()}</span>
         </p>
+
+        {/* Month dot strip (reference layout): current day highlighted */}
+        <div className="mt-5">
+          <div className="grid grid-cols-7 gap-1.5 text-center mb-1.5">
+            {WEEK.map((w, i) => (
+              <span key={i} className="text-[10px] uppercase tracking-widest text-muted-foreground/70">
+                {w}
+              </span>
+            ))}
+          </div>
+          <div className="grid grid-cols-7 gap-1.5">
+            {cells.map((d, i) => {
+              if (!d) return <span key={`lead-${i}`} />;
+              const hit = daysMap?.get(d);
+              const isCurrent = d === day.date;
+              return (
+                <button
+                  key={d}
+                  disabled={!hit || isCurrent}
+                  onClick={() => hit && onSelectDay?.(hit)}
+                  title={hit ? `${hit.records.length} activities` : undefined}
+                  className={cn(
+                    "aspect-square rounded-full transition-all",
+                    isCurrent
+                      ? "bg-wj-green ring-2 ring-wj-green/40 ring-offset-2 ring-offset-card"
+                      : hit
+                        ? "bg-foreground/80 hover:bg-wj-green cursor-pointer"
+                        : "bg-muted/60",
+                  )}
+                />
+              );
+            })}
+          </div>
+        </div>
 
         <div className="flex flex-wrap items-center gap-2 mt-4">
           {day.records.map((r) => (
