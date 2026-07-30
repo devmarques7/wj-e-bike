@@ -144,7 +144,7 @@ export default function MobileFooterNav() {
                 "absolute -bottom-4 left-1/2 -translate-x-1/2 text-[9px] font-medium whitespace-nowrap",
                 isActive("/dashboard/garage") ? "text-wj-green" : "text-muted-foreground"
               )}>
-                Service
+                Garage
               </span>
             </Link>
           </div>
