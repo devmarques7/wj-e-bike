@@ -1,5 +1,4 @@
 import { motion } from "framer-motion";
-import { Wrench, Clock, Calendar, Check, Bike, QrCode, HeartPulse, CalendarPlus, LayoutGrid } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useEffect, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
