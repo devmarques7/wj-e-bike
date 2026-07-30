@@ -93,8 +93,16 @@ export default function AgentOrb({ state = "idle", size = 96, className }: Agent
       // Scan band position for "thinking": travels top → bottom, in sphere Y space (1 → -1).
       const scanCycle = (t * 0.75) % 1;
       const scanY = 1 - scanCycle * 2;
-      // Idle pulse ripple, expanding from the center outward.
-      const pulse = (t * 0.6) % 1;
+      // Idle breath: a slow, human-like inhale/exhale that expands from the core outward
+      // and returns, forever. 4s full cycle, ease-in-out via cosine.
+      const breathCycle = 4;
+      const breathPhase = (t / breathCycle) % 1;
+      const breath = 0.5 - 0.5 * Math.cos(breathPhase * Math.PI * 2); // 0 → 1 → 0
+      // Subtle heartbeat double-beat layered over the breath.
+      const heartCycle = (t * 1.15) % 1;
+      const lub = heartCycle < 0.12 ? Math.sin((heartCycle / 0.12) * Math.PI) : 0;
+      const dub = heartCycle > 0.18 && heartCycle < 0.30 ? Math.sin(((heartCycle - 0.18) / 0.12) * Math.PI) : 0;
+      const heart = (lub + dub) * 0.45;
 
       const projected = points.map((p) => {
         const cosY = Math.cos(ry);
@@ -129,9 +137,13 @@ export default function AgentOrb({ state = "idle", size = 96, className }: Agent
           dot += shimmer * 0.7;
         } else {
           const dist = Math.sqrt(p.x * p.x + p.y * p.y);
-          const wave = Math.max(0, 1 - Math.abs(dist - pulse) / 0.28);
-          intensity += wave * wave * 0.5;
-          dot += wave * wave * 0.9;
+          // Breath wave: a single, smooth pulse that emanates from the center,
+          // travels to the outer edge, and then recedes back to the center.
+          const breathWave = Math.max(0, 1 - Math.abs(dist - breath) / 0.28);
+          // Heartbeat follows the breath with a sharper, tighter pulse.
+          const heartWave = Math.max(0, 1 - Math.abs(dist - (breath * 0.92 + 0.04)) / 0.18) * heart;
+          intensity += breathWave * breathWave * 0.5 + heartWave * 0.9;
+          dot += breathWave * breathWave * 0.9 + heartWave * 1.3;
         }
 
         ctx.beginPath();
