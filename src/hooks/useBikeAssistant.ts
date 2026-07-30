@@ -49,17 +49,6 @@ function pickPhrases() {
   return [THINKING_PHRASES[0], ...shuffled.filter((p) => p !== THINKING_PHRASES[0])];
 }
 
-function _unusedLoadConfig(): AssistantConfig {
-  if (typeof window === "undefined") return DEFAULT_ASSISTANT_CONFIG;
-  try {
-    const raw = window.localStorage.getItem(ASSISTANT_CONFIG_STORAGE_KEY);
-    if (!raw) return DEFAULT_ASSISTANT_CONFIG;
-    return { ...DEFAULT_ASSISTANT_CONFIG, ...JSON.parse(raw) } as AssistantConfig;
-  } catch {
-    return DEFAULT_ASSISTANT_CONFIG;
-  }
-}
-
 export function useBikeAssistant() {
   const navigate = useNavigate();
   const { user } = useAuth();
