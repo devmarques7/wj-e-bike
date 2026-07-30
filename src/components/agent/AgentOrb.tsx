@@ -47,10 +47,11 @@ function tokenToRgb(token: string, fallback: [number, number, number]) {
 
 /**
  * Global agent orb: a rotating 3D point-cloud sphere.
- * - `idle`      → soft radial pulse rippling outward.
+ * - `idle`      → soft radial breath rippling outward with gentle ocean-like ripples.
  * - `thinking`  → bright scan band sweeping top → bottom.
  * - `speaking`  → faster rotation with a gentle shimmer.
  */
+
 export default function AgentOrb({ state = "idle", size = 96, className }: AgentOrbProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const stateRef = useRef<AgentOrbState>(state);
