@@ -410,7 +410,7 @@ export default function AppointmentsTableCard({
           </div>
         </div>
 
-        <div className="overflow-x-auto flex-1 flex flex-col">
+        <div className="overflow-x-auto max-h-[228px] overflow-y-auto flex-1 flex flex-col">
           {loading ? (
             <div className="flex-1 flex items-center justify-center gap-2 text-sm text-muted-foreground">
               <Loader2 className="h-4 w-4 animate-spin" /> {t("workshop.appts.loading")}
