@@ -6,15 +6,11 @@ import BikeAssistantCard from "@/components/dashboard/assistant/BikeAssistantCar
 import AppointmentsTableCard from "@/components/dashboard/scheduling/AppointmentsTableCard";
 import GarageBikeCard from "@/components/dashboard/garage/GarageBikeCard";
 import BikeHealthGrid from "@/components/dashboard/garage/BikeHealthGrid";
-import RevisionCycleCard from "@/components/dashboard/garage/RevisionCycleCard";
 import ServiceCountdown from "@/components/dashboard/ServiceCountdown";
 import { useAuth } from "@/contexts/AuthContext";
 import { useGarageBike } from "@/hooks/garage/useGarageBike";
-import { useMyMembership } from "@/hooks/plans/useMyMembership";
 import { supabase } from "@/integrations/supabase/client";
 
-/** Fallback revision allowance per plan tier when the plan has no explicit value. */
-const TIER_REVISIONS: Record<number, number> = { 0: 1, 1: 2, 2: 4, 3: 6 };
 
 export default function Garage() {
   const { user, isAuthenticated, isLoading: authLoading } = useAuth();
