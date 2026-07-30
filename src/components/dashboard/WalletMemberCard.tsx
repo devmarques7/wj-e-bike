@@ -73,6 +73,8 @@ export default function WalletMemberCard({
 
       {/* Colour side */}
       <div className="relative flex-1 min-w-0 flex flex-col">
+        <CardWaveBackground color={theme.ink} opacity={0.08} />
+
         {/* Oversized wordmark */}
         <span
           aria-hidden
