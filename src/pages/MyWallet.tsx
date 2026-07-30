@@ -33,6 +33,7 @@ type PlanInfo = {
 
 
 const cardStyles: Record<string, { gradient: string; border: string; text: string }> = {
+*** END ***
   free:  { gradient: "from-emerald-400 to-emerald-600", border: "border-emerald-400", text: "text-emerald-300" },
   light: { gradient: "from-zinc-400 to-zinc-600", border: "border-zinc-400", text: "text-zinc-300" },
   plus:  { gradient: "from-blue-400 to-blue-600", border: "border-blue-400", text: "text-blue-300" },
