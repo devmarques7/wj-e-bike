@@ -17,7 +17,7 @@ const navItems = [
   { href: "/dashboard", icon: LayoutGrid, label: "Overview" },
   { href: "/dashboard/v-id", icon: CreditCard, label: "V-ID" },
   { href: "/dashboard/bike", icon: Bike, label: "Bike" },
-  { href: "/dashboard/service", icon: Wrench, label: "Service" },
+  { href: "/dashboard/garage", icon: Wrench, label: "Service" },
   { href: "/dashboard/favorites", icon: Heart, label: "Favorites" },
   { href: "/dashboard/membership", icon: Crown, label: "Membership" },
 ];

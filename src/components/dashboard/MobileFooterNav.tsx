@@ -25,7 +25,7 @@ interface NavItem {
 const menuNavItems: NavItem[] = [
   { icon: CreditCard, label: "V-ID", href: "/dashboard" },
   { icon: Bike, label: "Bike", href: "/dashboard/bike" },
-  { icon: Calendar, label: "Service", href: "/dashboard/service" },
+  { icon: Calendar, label: "Service", href: "/dashboard/garage" },
   { icon: Wrench, label: "Care", href: "/dashboard/maintenance" },
   { icon: Heart, label: "Favorites", href: "/dashboard/favorites" },
   { icon: Crown, label: "VIP", href: "/dashboard/concierge", tier: ["black"] },
@@ -129,12 +129,12 @@ export default function MobileFooterNav() {
               />
             </button>
 
-            <Link to="/dashboard/service" className="relative z-10 -mb-1">
+            <Link to="/dashboard/garage" className="relative z-10 -mb-1">
               <motion.div
                 whileTap={{ scale: 0.9 }}
                 className={cn(
                   "w-10 h-10 rounded-full flex items-center justify-center transition-all duration-300",
-                  isActive("/dashboard/service")
+                  isActive("/dashboard/garage")
                     ? "bg-wj-green text-primary-foreground shadow-lg shadow-wj-green/30"
                     : "bg-muted text-muted-foreground"
                 )}
@@ -143,7 +143,7 @@ export default function MobileFooterNav() {
               </motion.div>
               <span className={cn(
                 "absolute -bottom-4 left-1/2 -translate-x-1/2 text-[9px] font-medium whitespace-nowrap",
-                isActive("/dashboard/service") ? "text-wj-green" : "text-muted-foreground"
+                isActive("/dashboard/garage") ? "text-wj-green" : "text-muted-foreground"
               )}>
                 Service
               </span>

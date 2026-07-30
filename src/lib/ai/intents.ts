@@ -108,7 +108,7 @@ async function myBike(ctx: IntentContext): Promise<LocalAnswer | null> {
     skill: "my_bike",
     content: lines.join("\n\n"),
     action: overdue
-      ? { type: "navigate", to: "/dashboard/service", label: "Book the revision" }
+      ? { type: "navigate", to: "/dashboard/garage", label: "Book the revision" }
       : undefined,
   };
 }
@@ -127,7 +127,7 @@ async function myAppointments(ctx: IntentContext): Promise<LocalAnswer | null> {
       source: "local",
       skill: "appointments",
       content: "You have no appointments yet.",
-      action: { type: "navigate", to: "/dashboard/service", label: "Schedule a service" },
+      action: { type: "navigate", to: "/dashboard/garage", label: "Schedule a service" },
     };
   }
 
@@ -141,7 +141,7 @@ async function myAppointments(ctx: IntentContext): Promise<LocalAnswer | null> {
     source: "local",
     skill: "appointments",
     content: `Your latest appointments:\n${rows.join("\n")}`,
-    action: { type: "navigate", to: "/dashboard/service", label: "Manage appointments" },
+    action: { type: "navigate", to: "/dashboard/garage", label: "Manage appointments" },
   };
 }
 
@@ -184,7 +184,7 @@ async function serviceCatalog(): Promise<LocalAnswer> {
     source: "local",
     skill: "service_catalog",
     content: rows.length ? `Available services:\n${rows.join("\n")}` : "No services published.",
-    action: { type: "navigate", to: "/dashboard/service", label: "Book a service" },
+    action: { type: "navigate", to: "/dashboard/garage", label: "Book a service" },
   };
 }
 
@@ -316,7 +316,7 @@ export async function resolveLocalIntent(
         source: "local",
         skill: "routing",
         content: "Let's schedule it. The booking flow checks your plan coverage and shows the real free slots per mechanic.",
-        action: { type: "navigate", to: "/dashboard/service", label: "Open scheduling" },
+        action: { type: "navigate", to: "/dashboard/garage", label: "Open scheduling" },
       };
     }
     return skillOff("appointments", ctx) ?? (await myAppointments(ctx));
