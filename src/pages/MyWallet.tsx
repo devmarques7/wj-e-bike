@@ -472,20 +472,24 @@ export default function MyWallet() {
               <WalletActionTiles
                 onScan={() => setScanOpen(true)}
                 onAddCard={() => setPickerOpen(true)}
+                onTips={() => navigate("/dashboard/garage")}
                 onPlans={() => navigate("/membership-plans")}
-                bikeSlot={
-                  <BikeHealthCard
-                    bikeName={garageBike?.model || activeBikeName}
-                    overall={health.overall}
-                    metrics={health.metrics}
-                    daysToRevision={daysToRevision}
-                    nextRevision={nextRevision}
-                    onOpenGarage={() => navigate("/dashboard/garage")}
-                  />
-                }
+                onAllBikes={() => navigate("/dashboard/bike")}
               />
             </div>
           </div>
+        </div>
+
+        {/* Plan usage + bike condition */}
+        <div className="grid grid-cols-1 gap-6 lg:items-stretch">
+          <BikeHealthCard
+            bikeName={garageBike?.model || activeBikeName}
+            overall={health.overall}
+            metrics={health.metrics}
+            daysToRevision={daysToRevision}
+            nextRevision={nextRevision}
+            onOpenGarage={() => navigate("/dashboard/garage")}
+          />
         </div>
 
         {/* History table */}
