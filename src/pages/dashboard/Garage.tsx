@@ -64,16 +64,21 @@ export default function Garage() {
           </div>
 
           <div className="col-span-12 lg:col-span-8 flex flex-col gap-4 lg:gap-6">
-            <AppointmentsTableCard
-              customerUserId={user?.id}
-              includeRequests
-              title="Service history & requests"
-            />
-            <BikeHealthGrid metrics={health.metrics} />
+            <div className="flex-none">
+              <AppointmentsTableCard
+                customerUserId={user?.id}
+                includeRequests
+                title="Service history & requests"
+              />
+            </div>
+            <div className="flex-1 min-h-0">
+              <BikeHealthGrid metrics={health.metrics} />
+            </div>
           </div>
           <div className="col-span-12 lg:col-span-4">
             <BikeAssistantCard className="h-full" />
           </div>
+
         </div>
 
       </div>
