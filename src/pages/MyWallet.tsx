@@ -246,22 +246,36 @@ export default function MyWallet() {
   /** Plan-covered appointment allowance (used / scheduled / remaining). */
   const allowance = usePlanAllowance(currentPlan?.slug);
 
-  /** Higher tiers than the current plan, ranked by how much extra coverage they add. */
+  /**
+   * Care-efficiency ranking: the current plan plus the tiers above it.
+   * `percent` is the plan's coverage relative to the best plan available
+   * (100% = maximum care efficiency), so the dotted rings fill gradually.
+   */
   const upgradeOptions = useMemo(() => {
     const currentTier = currentPlan?.tier_level ?? 0;
-    const currentAllowance = PLAN_SERVICE_ALLOWANCE[currentPlan?.slug ?? "free"] ?? 1;
-    return plans
+    const currentSlug = currentPlan?.slug ?? "free";
+    const maxAllowance = Math.max(
+      1,
+      ...plans.map((p) => PLAN_SERVICE_ALLOWANCE[p.slug] ?? 1),
+      PLAN_SERVICE_ALLOWANCE[currentSlug] ?? 1,
+    );
+    const higher = plans
       .filter((p) => p.tier_level > currentTier)
       .sort((a, b) => a.tier_level - b.tier_level)
-      .slice(0, 3)
-      .map((p) => {
-        const target = PLAN_SERVICE_ALLOWANCE[p.slug] ?? currentAllowance;
-        const percent = Math.max(
-          0,
-          Math.round(((target - currentAllowance) / Math.max(1, currentAllowance)) * 100),
-        );
-        return { slug: p.slug, name: p.name, percent };
-      });
+      .slice(0, 2);
+    const current = plans.find((p) => p.slug === currentSlug);
+    const list = [
+      ...higher.map((p) => ({ slug: p.slug, name: p.name, current: false })),
+      {
+        slug: currentSlug,
+        name: current?.name ?? currentPlan?.name ?? "Free",
+        current: true,
+      },
+    ];
+    return list.map((p) => ({
+      ...p,
+      percent: Math.round(((PLAN_SERVICE_ALLOWANCE[p.slug] ?? 1) / maxAllowance) * 100),
+    }));
   }, [plans, currentPlan]);
   /** Bike condition + next revision, reused from the Garage health model. */
   const { bike: garageBike, health, nextRevision, daysToRevision } = useGarageBike(activeBike?.id ?? null);

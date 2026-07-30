@@ -1,12 +1,14 @@
-import { CalendarCheck, CalendarClock, ArrowUpRight, Plus, Sparkles } from "lucide-react";
+import { CalendarCheck, CalendarClock, ArrowUpRight, Plus, Sparkles, ShieldCheck } from "lucide-react";
 import { motion } from "framer-motion";
 import type { PlanAllowance } from "@/hooks/wallet/usePlanAllowance";
 
 export interface UpgradeOption {
   slug: string;
   name: string;
-  /** How much more the plan offers compared to the current one (0-100). */
+  /** Care-efficiency of the plan relative to the best plan available (0-100). */
   percent: number;
+  /** Marks the plan the rider is subscribed to today. */
+  current?: boolean;
 }
 
 interface ServiceAllowanceCardProps {
@@ -74,27 +76,36 @@ export default function ServiceAllowanceCard({
 
         <div className="rounded-3xl border border-border/50 bg-card p-4 sm:p-5 flex-1">
           <p className="text-[10px] uppercase tracking-widest text-muted-foreground mb-3">
-            Upgrade potential
+            Care efficiency
           </p>
           <div className="grid grid-cols-3 gap-2">
             {(upgradeOptions.length
               ? upgradeOptions
-              : [{ slug: "max", name: "Top plan", percent: 100 }]
+              : [{ slug: "max", name: "Top plan", percent: 100, current: true }]
             )
               .slice(0, 3)
               .map((opt) => (
                 <button
                   key={opt.slug}
-                  onClick={onUpgrade}
+                  onClick={opt.current ? undefined : onUpgrade}
                   className="flex flex-col items-center gap-1.5 group"
                 >
-                  <DottedRing size={68} progress={opt.percent / 100} tone="green">
-                    <Sparkles className="h-4 w-4 text-foreground/70 group-hover:text-wj-green transition-colors" />
+                  <DottedRing size={68} progress={opt.percent / 100} tone={opt.current ? "muted" : "green"}>
+                    {opt.current ? (
+                      <ShieldCheck className="h-4 w-4 text-foreground/70" />
+                    ) : (
+                      <Sparkles className="h-4 w-4 text-foreground/70 group-hover:text-wj-green transition-colors" />
+                    )}
                   </DottedRing>
                   <span className="text-xs text-muted-foreground truncate max-w-full">
                     {opt.name}
+                    {opt.current && " ·"}
                   </span>
-                  <span className="text-[11px] font-semibold text-wj-green">+{opt.percent}%</span>
+                  <span
+                    className={`text-[11px] font-semibold ${opt.current ? "text-muted-foreground" : "text-wj-green"}`}
+                  >
+                    {opt.percent}%
+                  </span>
                 </button>
               ))}
           </div>
@@ -167,7 +178,7 @@ function DottedRing({
 }: {
   size: number;
   progress: number;
-  tone: "green" | "dark";
+  tone: "green" | "dark" | "muted";
   children?: React.ReactNode;
 }) {
   const dots = 32;
@@ -187,14 +198,18 @@ function DottedRing({
               cx={cx}
               cy={cy}
               r={size > 100 ? 3.2 : 2.2}
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              transition={{ delay: i * 0.012 }}
+              initial={{ opacity: 0, scale: 0.4 }}
+              animate={{ opacity: 1, scale: 1 }}
+              transition={{ delay: on ? i * 0.035 : 0.2 + i * 0.008, duration: 0.25 }}
               className={
                 tone === "dark"
                   ? on
                     ? "fill-black"
                     : "fill-black/25"
+                  : tone === "muted"
+                  ? on
+                    ? "fill-muted-foreground"
+                    : "fill-border"
                   : on
                   ? "fill-wj-green"
                   : "fill-border"
