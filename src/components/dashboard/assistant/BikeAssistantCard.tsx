@@ -342,26 +342,6 @@ export default function BikeAssistantCard() {
               <ArrowUp className="h-4 w-4" />
             </Button>
           </div>
-          <div className="mt-2 flex flex-wrap items-center gap-1.5 px-1 pb-1">
-            {ASSISTANT_SKILLS.map((skill) => {
-              const enabled = config.enabledSkills.includes(skill.id);
-              return (
-                <button
-                  key={skill.id}
-                  type="button"
-                  onClick={() => toggleSkill(skill.id)}
-                  className={cn(
-                    "rounded-full border px-2.5 py-1 text-[11px] transition-colors",
-                    enabled
-                      ? "border-wj-green/40 bg-wj-green/10 text-wj-green"
-                      : "border-border/30 text-muted-foreground hover:text-foreground",
-                  )}
-                >
-                  {skill.name}
-                </button>
-              );
-            })}
-          </div>
         </div>
       </div>
 
