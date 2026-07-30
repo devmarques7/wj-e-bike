@@ -52,22 +52,21 @@ export default function Dashboard() {
           </div>
         </div>
 
-        {/* AI Bike Assistant */}
-        <BikeAssistantCard />
-
-        {/* Revision History + Accessory Carousel */}
-        <div className="grid grid-cols-12 gap-4 lg:gap-6 lg:h-[420px] xl:h-[480px]">
-          {/* Table - 8 columns */}
-          <div className="col-span-12 lg:col-span-8 h-full">
-            {user?.id ? (
-              <AppointmentsTableCard customerUserId={user.id} />
-            ) : null}
+        {/* AI Bike Assistant + Accessory Carousel */}
+        <div className="grid grid-cols-12 gap-4 lg:gap-6">
+          <div className="col-span-12 lg:col-span-8">
+            <BikeAssistantCard />
           </div>
-          
-          {/* Accessory Carousel - 4 columns */}
           <div className="col-span-12 lg:col-span-4">
             <AccessoryCarousel />
           </div>
+        </div>
+
+        {/* Appointments - full width */}
+        <div className="w-full lg:h-[420px] xl:h-[480px]">
+          {user?.id ? (
+            <AppointmentsTableCard customerUserId={user.id} />
+          ) : null}
         </div>
       </div>
     </RoleDashboardLayout>
