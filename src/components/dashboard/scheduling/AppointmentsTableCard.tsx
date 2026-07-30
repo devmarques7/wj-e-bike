@@ -640,6 +640,38 @@ export default function AppointmentsTableCard({
             </Table>
           )}
         </div>
+
+        {!loading && filteredSorted.length > 0 && (
+          <div className="flex items-center justify-between gap-2 px-4 py-2.5 border-t border-border/30">
+            <span className="text-[11px] text-muted-foreground tabular-nums">
+              {page * PAGE_SIZE + 1}–{Math.min((page + 1) * PAGE_SIZE, filteredSorted.length)} /{" "}
+              {filteredSorted.length}
+            </span>
+            <div className="flex items-center gap-1.5">
+              <Button
+                size="sm"
+                variant="outline"
+                className="h-7 px-2 text-[11px] border-border/40"
+                disabled={page === 0}
+                onClick={() => setPage((p) => Math.max(0, p - 1))}
+              >
+                <ChevronLeft className="h-3.5 w-3.5" />
+              </Button>
+              <span className="text-[11px] text-muted-foreground tabular-nums">
+                {page + 1}/{totalPages}
+              </span>
+              <Button
+                size="sm"
+                variant="outline"
+                className="h-7 px-2 text-[11px] border-border/40"
+                disabled={page >= totalPages - 1}
+                onClick={() => setPage((p) => Math.min(totalPages - 1, p + 1))}
+              >
+                <ChevronRight className="h-3.5 w-3.5" />
+              </Button>
+            </div>
+          </div>
+        )}
       </motion.div>
 
       <AppointmentCompletionDrawer
