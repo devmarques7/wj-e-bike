@@ -3,7 +3,7 @@ import { Battery, Gauge, MapPin, Zap, ArrowUpRight } from "lucide-react";
 import { Link } from "react-router-dom";
 import type { GarageBike } from "@/hooks/garage/useGarageBike";
 import type { HealthMetric } from "@/hooks/garage/useGarageBike";
-import bikeFull from "@/assets/bike-full.png";
+import serviceBikeFull from "@/assets/service-bike-full.png";
 
 interface Props {
   bike: GarageBike | null;
@@ -36,9 +36,9 @@ export default function GarageBikeCard({ bike, overall, metrics = [] }: Props) {
       <div className="absolute inset-0 bg-gradient-to-r from-background via-background/80 to-transparent pointer-events-none" />
 
       {/* Layer 3: Bike image on the left */}
-      <div className="absolute bottom-0 left-0 w-[60%] h-[75%] pointer-events-none">
+      <div className="absolute bottom-0 left-0 w-full h-[75%] pointer-events-none">
         <img
-          src={bike?.image_url || bikeFull}
+          src={bike?.image_url || serviceBikeFull}
           alt={bike?.model ? `${bike.model} e-bike` : "WJ e-bike"}
           loading="lazy"
           className="w-full h-full object-contain object-left-bottom opacity-90 drop-shadow-[0_20px_40px_rgba(0,0,0,0.45)]"
