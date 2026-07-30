@@ -13,6 +13,9 @@ import EmptyState from "@/components/dashboard/EmptyState";
 import { supabase } from "@/integrations/supabase/client";
 import StyledEPassQR from "@/components/dashboard/StyledEPassQR";
 import BikePickerDialog, { LinkedBike } from "@/components/dashboard/BikePickerDialog";
+import WalletMemberCard from "@/components/dashboard/WalletMemberCard";
+import WalletCardThemeDialog from "@/components/dashboard/WalletCardThemeDialog";
+import { loadWalletThemes, saveWalletThemes, themeForIndex } from "@/lib/wallet/cardThemes";
 
 type PointEntry = {
   id: string;
@@ -67,6 +70,9 @@ export default function MyWallet() {
   const [history, setHistory] = useState<PointEntry[]>([]);
   const [currentPage, setCurrentPage] = useState(1);
   const [pickerOpen, setPickerOpen] = useState(false);
+  /** Per-card colour themes, persisted locally. */
+  const [cardThemes, setCardThemes] = useState<Record<string, string>>(() => loadWalletThemes());
+  const [editingCardId, setEditingCardId] = useState<string | null>(null);
 
   useEffect(() => {
     if (!user?.id) return;
@@ -222,6 +228,22 @@ export default function MyWallet() {
   const activeBikeId = activeBike?.id || (user as any)?.bikeId || user?.id || "unknown";
   const activeBikeName = activeBike?.model || (user as any)?.bikeName || t("e_pass.no_bike");
   const activeBikeSerial = activeBike?.serial || (user as any)?.bikeId || "—";
+  const cardNumber = `4532 •••• •••• ${(user?.id || "0000").replace(/-/g, "").slice(-4).toUpperCase()}`;
+
+  /** Resolves the theme for a card, falling back to a distinct default per position. */
+  const themeFor = (id: string) => {
+    if (cardThemes[id]) return cardThemes[id];
+    const idx = Math.max(0, orderedBikes.findIndex((b) => b.id === id));
+    return themeForIndex(idx);
+  };
+
+  const applyTheme = (id: string, themeId: string) => {
+    setCardThemes((prev) => {
+      const next = { ...prev, [id]: themeId };
+      saveWalletThemes(next);
+      return next;
+    });
+  };
 
   return (
     <RoleDashboardLayout>
@@ -261,22 +283,22 @@ export default function MyWallet() {
                   onClick={(e) => { e.stopPropagation(); bringToFront(bike.id); }}
                   onMouseEnter={() => setHoveredId(bike.id)}
                   onMouseLeave={() => setHoveredId((prev) => (prev === bike.id ? null : prev))}
-                  className={`absolute inset-x-0 bottom-0 aspect-[1.6/1] sm:aspect-[1.75/1] rounded-3xl overflow-hidden bg-slate-100 border ${tierStyle.border} shadow-xl transition-all duration-500 ease-out origin-bottom text-left hover:shadow-[0_25px_60px_-12px_rgba(5,140,66,0.45)] hover:border-wj-green/60`}
+                  className="absolute inset-x-0 bottom-0 aspect-[1.6/1] sm:aspect-[1.75/1] rounded-3xl overflow-hidden shadow-xl transition-all duration-500 ease-out origin-bottom text-left hover:shadow-[0_25px_60px_-12px_rgba(5,140,66,0.45)]"
                   style={{
                     transform: `translateY(-${peek + lift}px) scale(${scale})`,
                     zIndex: 20 - (depth + 1),
                   }}
                   title={bike.model || bike.serial}
                 >
-                  <div className="px-5 pt-3 pb-2 flex items-start justify-between text-slate-900">
-                    <div className="min-w-0">
-                      <p className="text-[9px] uppercase tracking-[0.2em] text-slate-500 font-medium">{t("e_pass.bike", { defaultValue: "Bike" })}</p>
-                      <p className="text-slate-900 text-sm font-semibold truncate">{bike.model || t("e_pass.no_bike")}</p>
-                    </div>
-                    <div className={`px-2.5 py-0.5 rounded-full border ${tierStyle.border} text-slate-700 text-[9px] font-bold uppercase tracking-wider bg-transparent`}>
-                      {currentPlan?.name ?? "Free"}
-                    </div>
-                  </div>
+                  <WalletMemberCard
+                    themeId={themeFor(bike.id)}
+                    label={t("e_pass.bike", { defaultValue: "Bike" })}
+                    bikeName={bike.model || t("e_pass.no_bike")}
+                    serial={bike.serial || undefined}
+                    planName={currentPlan?.name ?? "Free"}
+                    memberName={user?.name || "Guest"}
+                    cardNumber={cardNumber}
+                  />
                 </button>
               );
             })}
