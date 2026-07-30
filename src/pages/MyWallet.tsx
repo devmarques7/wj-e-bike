@@ -1,5 +1,5 @@
 import { motion } from "framer-motion";
-import { Wrench, Clock, Calendar, Check, Bike } from "lucide-react";
+import { Wrench, Clock, Calendar, Check, Bike, QrCode, HeartPulse, CalendarPlus, LayoutGrid } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useEffect, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
@@ -16,6 +16,12 @@ import BikePickerDialog, { LinkedBike } from "@/components/dashboard/BikePickerD
 import WalletMemberCard, { WalletCardBack } from "@/components/dashboard/WalletMemberCard";
 import WalletCardThemeDialog from "@/components/dashboard/WalletCardThemeDialog";
 import { loadWalletThemes, saveWalletThemes, themeForIndex } from "@/lib/wallet/cardThemes";
+import WalletQuickActions from "@/components/dashboard/wallet/WalletQuickActions";
+import ServiceAllowanceCard from "@/components/dashboard/wallet/ServiceAllowanceCard";
+import BikeHealthCard from "@/components/dashboard/wallet/BikeHealthCard";
+import ScanEPassDialog from "@/components/dashboard/wallet/ScanEPassDialog";
+import { usePlanAllowance } from "@/hooks/wallet/usePlanAllowance";
+import { useGarageBike } from "@/hooks/garage/useGarageBike";
 
 type PointEntry = {
   id: string;
@@ -73,6 +79,7 @@ export default function MyWallet() {
   /** Per-card colour themes, persisted locally. */
   const [cardThemes, setCardThemes] = useState<Record<string, string>>(() => loadWalletThemes());
   const [editingCardId, setEditingCardId] = useState<string | null>(null);
+  const [scanOpen, setScanOpen] = useState(false);
 
   useEffect(() => {
     if (!user?.id) return;
@@ -233,6 +240,11 @@ export default function MyWallet() {
     .padEnd(12, "0")
     .slice(-12)}`;
   const cardNumber = cardDigits.replace(/(.{4})/g, "$1 ").trim();
+
+  /** Plan-covered appointment allowance (used / scheduled / remaining). */
+  const allowance = usePlanAllowance(currentPlan?.slug);
+  /** Bike condition + next revision, reused from the Garage health model. */
+  const { bike: garageBike, health, nextRevision, daysToRevision } = useGarageBike(activeBike?.id ?? null);
 
   /** Resolves the theme for a card, falling back to a distinct default per position. */
   const themeFor = (id: string) => {
@@ -446,6 +458,54 @@ export default function MyWallet() {
           </div>
         </div>
 
+        {/* Quick actions — scan, health, booking, services */}
+        <WalletQuickActions
+          actions={[
+            {
+              key: "scan",
+              label: "Scan E-Pass",
+              hint: "Show QR at the workshop",
+              icon: QrCode,
+              accent: true,
+              onClick: () => setScanOpen(true),
+            },
+            {
+              key: "health",
+              label: "Bike health",
+              hint: `${health.overall}% overall`,
+              icon: HeartPulse,
+              onClick: () => navigate("/dashboard/garage"),
+            },
+            {
+              key: "book",
+              label: "Book service",
+              hint: `${allowance.remaining} left on plan`,
+              icon: CalendarPlus,
+              onClick: () => navigate("/dashboard"),
+            },
+            {
+              key: "plans",
+              label: "All services",
+              hint: "Plans & upgrades",
+              icon: LayoutGrid,
+              onClick: () => navigate("/membership-plans"),
+            },
+          ]}
+        />
+
+        {/* Plan usage + bike condition */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 lg:items-stretch">
+          <ServiceAllowanceCard planName={currentPlan?.name ?? "Free"} allowance={allowance} />
+          <BikeHealthCard
+            bikeName={garageBike?.model || activeBikeName}
+            overall={health.overall}
+            metrics={health.metrics}
+            daysToRevision={daysToRevision}
+            nextRevision={nextRevision}
+            onOpenGarage={() => navigate("/dashboard/garage")}
+          />
+        </div>
+
         {/* KPIs + History table side by side (50/50) */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 lg:items-stretch">
           {/* Left column — KPI cards */}
@@ -467,7 +527,15 @@ export default function MyWallet() {
               </div>
               <div className="min-w-0">
                 <p className="text-[10px] uppercase tracking-widest text-muted-foreground">{t("e_pass.next_maintenance")}</p>
-                <p className="text-sm font-semibold text-foreground truncate">{nextMaintenanceLabel}</p>
+                <p className="text-sm font-semibold text-foreground truncate">
+                  {daysToRevision !== null
+                    ? daysToRevision < 0
+                      ? t("e_pass.overdue")
+                      : daysToRevision === 0
+                      ? t("e_pass.today")
+                      : t("e_pass.in_days", { n: daysToRevision })
+                    : nextMaintenanceLabel}
+                </p>
               </div>
             </div>
           </div>
@@ -606,6 +674,16 @@ export default function MyWallet() {
           setIsFlipped(false);
         }}
       />
+
+      <ScanEPassDialog
+        open={scanOpen}
+        onOpenChange={setScanOpen}
+        bikeId={activeBikeId}
+        bikeName={activeBikeName}
+        memberName={user?.name || "Guest"}
+        planName={currentPlan?.name ?? "Free"}
+      />
+
     </RoleDashboardLayout>
   );
 }
