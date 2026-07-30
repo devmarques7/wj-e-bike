@@ -1,9 +1,26 @@
-import { motion } from "framer-motion";
+import { useEffect, useState } from "react";
+import { motion, AnimatePresence } from "framer-motion";
 import { Battery, Gauge, MapPin, Zap, ArrowUpRight } from "lucide-react";
 import { Link } from "react-router-dom";
 import type { GarageBike } from "@/hooks/garage/useGarageBike";
 import type { HealthMetric } from "@/hooks/garage/useGarageBike";
 import serviceBikeFull from "@/assets/service-bike-full.png";
+import bikeFull from "@/assets/bike-full.png";
+import bikePanel from "@/assets/bike-panel.png";
+import bikeHeadlight from "@/assets/bike-headlight.png";
+import bikeWheel from "@/assets/bike-wheel.png";
+import bikeChain from "@/assets/bike-chain.png";
+import bikeBrakes from "@/assets/bike-brakes.png";
+
+/** Component gallery shared with the dashboard showcase. */
+const gallery = [
+  { image: bikeFull, label: "Full bike" },
+  { image: bikePanel, label: "Smart display" },
+  { image: bikeHeadlight, label: "LED headlight" },
+  { image: bikeWheel, label: "Fat tyres" },
+  { image: bikeChain, label: "Drivetrain" },
+  { image: bikeBrakes, label: "Hydraulic brakes" },
+];
 
 interface Props {
   bike: GarageBike | null;
@@ -13,6 +30,15 @@ interface Props {
 
 /** Identity card of the registered bike: model, serial, key telemetry, E-Pass link. */
 export default function GarageBikeCard({ bike, overall, metrics = [] }: Props) {
+  const [index, setIndex] = useState(0);
+
+  useEffect(() => {
+    const id = setInterval(() => setIndex((i) => (i + 1) % gallery.length), 8000);
+    return () => clearInterval(id);
+  }, []);
+
+  const current = gallery[index];
+
   return (
     <motion.div
       initial={{ opacity: 0, y: 16 }}
@@ -35,14 +61,27 @@ export default function GarageBikeCard({ bike, overall, metrics = [] }: Props) {
       <div className="absolute inset-0 bg-gradient-to-t from-background via-background/60 to-transparent pointer-events-none" />
       <div className="absolute inset-0 bg-gradient-to-r from-background via-background/80 to-transparent pointer-events-none" />
 
-      {/* Layer 3: Bike image on the left */}
+      {/* Layer 3: Bike / component gallery on the left */}
       <div className="absolute bottom-0 left-0 w-full h-[75%] pointer-events-none">
-        <img
-          src={bike?.image_url || serviceBikeFull}
-          alt={bike?.model ? `${bike.model} e-bike` : "WJ e-bike"}
-          loading="lazy"
-          className="w-full h-full object-contain object-left-bottom opacity-90 drop-shadow-[0_20px_40px_rgba(0,0,0,0.45)]"
-        />
+        <AnimatePresence mode="wait">
+          <motion.img
+            key={index}
+            src={index === 0 ? bike?.image_url || gallery[0].image : current.image}
+            alt={
+              index === 0
+                ? bike?.model
+                  ? `${bike.model} e-bike`
+                  : "WJ e-bike"
+                : `${current.label} detail`
+            }
+            loading="lazy"
+            initial={{ opacity: 0, scale: 1.02 }}
+            animate={{ opacity: 0.9, scale: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.6 }}
+            className="w-full h-full object-contain object-left-bottom drop-shadow-[0_20px_40px_rgba(0,0,0,0.45)]"
+          />
+        </AnimatePresence>
       </div>
 
       {/* Layer 4: Content */}
@@ -107,6 +146,25 @@ export default function GarageBikeCard({ bike, overall, metrics = [] }: Props) {
               <ArrowUpRight className="h-4 w-4 text-muted-foreground group-hover:text-wj-green transition-colors" />
             </Link>
           </div>
+        </div>
+
+        {/* Gallery indicators */}
+        <div className="absolute bottom-4 left-5 lg:left-6 flex items-center gap-2 pointer-events-auto">
+          <div className="flex gap-1.5">
+            {gallery.map((g, i) => (
+              <button
+                key={g.label}
+                onClick={() => setIndex(i)}
+                aria-label={g.label}
+                className={`h-1 rounded-full transition-all duration-300 ${
+                  i === index ? "w-6 bg-wj-green" : "w-1.5 bg-muted-foreground/30 hover:bg-muted-foreground/60"
+                }`}
+              />
+            ))}
+          </div>
+          <span className="text-[10px] uppercase tracking-wider text-muted-foreground/70">
+            {current.label}
+          </span>
         </div>
       </div>
     </motion.div>
