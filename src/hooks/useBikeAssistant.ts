@@ -207,7 +207,7 @@ export function useBikeAssistant() {
       if (!type) {
         pushAssistant(
           "I couldn't load the service catalogue right now. Open the booking page and I'll keep your briefing ready.",
-          { action: { type: "navigate", to: "/dashboard/service", label: "Open booking" } },
+          { action: { type: "navigate", to: "/dashboard/garage", label: "Open booking" } },
         );
         return;
       }
@@ -319,7 +319,7 @@ export function useBikeAssistant() {
           setBookingSession(null);
           pushAssistant(
             `Booked — **${dayLabel(session.date)} at ${slot.start}** for ${session.serviceName}. Your repair briefing is attached to the appointment.`,
-            { action: { type: "navigate", to: "/dashboard/service", label: "See my appointment" } },
+            { action: { type: "navigate", to: "/dashboard/garage", label: "See my appointment" } },
           );
         } catch {
           const next = { ...session, phase: "day" as const, date: null };
@@ -361,12 +361,12 @@ export function useBikeAssistant() {
           setBookingSession(null);
           pushAssistant(
             `Scheduling **request** sent (not a confirmed booking yet) — ${session.preferredDate ? dayLabel(session.preferredDate) : "any day"}, ${session.period ?? "any"} time${urgent ? ", urgent" : ""}.\nOur team will fit you in and confirm as soon as a slot opens.`,
-            { action: { type: "navigate", to: "/dashboard/service", label: "See my requests" } },
+            { action: { type: "navigate", to: "/dashboard/garage", label: "See my requests" } },
           );
         } catch {
           setBookingSession(null);
           pushAssistant("I couldn't send the request. Try again from the booking page.", {
-            action: { type: "navigate", to: "/dashboard/service", label: "Open booking" },
+            action: { type: "navigate", to: "/dashboard/garage", label: "Open booking" },
           });
         }
       }

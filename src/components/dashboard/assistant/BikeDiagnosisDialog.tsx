@@ -77,7 +77,7 @@ export default function BikeDiagnosisDialog({ open, onOpenChange, initialSymptom
 
   const goToBooking = () => {
     onOpenChange(false);
-    navigate("/dashboard/service", { state: { briefing } });
+    navigate("/dashboard/garage", { state: { briefing } });
   };
 
   return (

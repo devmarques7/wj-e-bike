@@ -24,7 +24,6 @@ import Returns from "./pages/Returns";
 import Auth from "./pages/Auth";
 import CompleteProfile from "./pages/CompleteProfile";
 import Dashboard from "./pages/Dashboard";
-import ServiceDashboard from "./pages/ServiceDashboard";
 import BikeCatalog from "./pages/dashboard/BikeCatalog";
 import Garage from "./pages/dashboard/Garage";
 import Membership from "./pages/dashboard/Membership";
@@ -99,7 +98,6 @@ const App = () => (
               <Route path="/dashboard/wallet" element={<MyWallet />} />
               <Route path="/dashboard/e-pass" element={<MyWallet />} />
               <Route path="/dashboard/v-id" element={<MyWallet />} />
-              <Route path="/dashboard/service" element={<ServiceDashboard />} />
               <Route path="/dashboard/bike" element={<BikeCatalog />} />
               <Route path="/dashboard/garage" element={<Garage />} />
               <Route path="/dashboard/membership" element={<Membership />} />
