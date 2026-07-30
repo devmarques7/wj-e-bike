@@ -6,6 +6,7 @@ import WalletCard from "@/components/dashboard/WalletCard";
 import ServiceCountdown from "@/components/dashboard/ServiceCountdown";
 import AppointmentsTableCard from "@/components/dashboard/scheduling/AppointmentsTableCard";
 import AccessoryCarousel from "@/components/dashboard/AccessoryCarousel";
+import BikeAssistantCard from "@/components/dashboard/assistant/BikeAssistantCard";
 import { useAuth } from "@/contexts/AuthContext";
 import { Navigate } from "react-router-dom";
 
@@ -50,6 +51,9 @@ export default function Dashboard() {
             <ServiceCountdown />
           </div>
         </div>
+
+        {/* AI Bike Assistant */}
+        <BikeAssistantCard />
 
         {/* Revision History + Accessory Carousel */}
         <div className="grid grid-cols-12 gap-4 lg:gap-6 lg:h-[420px] xl:h-[480px]">
