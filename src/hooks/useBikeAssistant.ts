@@ -31,6 +31,35 @@ function loadConfig(): AssistantConfig {
   }
 }
 
+/** Minimum time the assistant "analyses" before answering (feels deliberate). */
+const MIN_THINKING_MS = 2000;
+
+const THINKING_PHRASES = [
+  "Reading your request...",
+  "Checking your bike data...",
+  "Looking at your plan coverage...",
+  "Matching the best flow for you...",
+  "Reviewing service history...",
+  "Comparing available options...",
+  "Almost there, refining the answer...",
+];
+
+function pickPhrases() {
+  const shuffled = [...THINKING_PHRASES].sort(() => Math.random() - 0.5);
+  return [THINKING_PHRASES[0], ...shuffled.filter((p) => p !== THINKING_PHRASES[0])];
+}
+
+function _unusedLoadConfig(): AssistantConfig {
+  if (typeof window === "undefined") return DEFAULT_ASSISTANT_CONFIG;
+  try {
+    const raw = window.localStorage.getItem(ASSISTANT_CONFIG_STORAGE_KEY);
+    if (!raw) return DEFAULT_ASSISTANT_CONFIG;
+    return { ...DEFAULT_ASSISTANT_CONFIG, ...JSON.parse(raw) } as AssistantConfig;
+  } catch {
+    return DEFAULT_ASSISTANT_CONFIG;
+  }
+}
+
 export function useBikeAssistant() {
   const navigate = useNavigate();
   const { user } = useAuth();
