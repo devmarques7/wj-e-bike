@@ -25,18 +25,18 @@ export default function StaffKPICard({ label, value, change, trend, icon: Icon, 
       )}
     >
       {pending && (
-        <>
-          <span
-            aria-hidden
-            className="pointer-events-none absolute inset-0 rounded-2xl p-[1px] [background:conic-gradient(from_var(--kpi-angle),transparent_0deg,hsl(var(--wj-green))_60deg,transparent_140deg)] [mask:linear-gradient(#000_0_0)_content-box,linear-gradient(#000_0_0)] [mask-composite:exclude] [-webkit-mask-composite:xor] animate-kpi-border"
-          />
-          <span
-            aria-hidden
-            className="pointer-events-none absolute inset-0 rounded-2xl border border-wj-green/20"
-          />
-        </>
+        <span
+          aria-hidden
+          className="pointer-events-none absolute inset-0 z-0 rounded-2xl overflow-hidden"
+        >
+          {/* Rotating light that only ever shows through the 1px rim */}
+          <span className="absolute left-1/2 top-1/2 h-[220%] w-[220%] -translate-x-1/2 -translate-y-1/2 [background:conic-gradient(from_var(--kpi-angle),transparent_0deg,hsl(var(--wj-green))_50deg,transparent_130deg)] animate-kpi-border" />
+          {/* Punches out the centre so the gradient stays a border detail */}
+          <span className="absolute inset-[1px] rounded-[15px] bg-background/80 backdrop-blur-md" />
+          <span className="absolute inset-0 rounded-2xl border border-wj-green/20" />
+        </span>
       )}
-      <div className="flex items-start justify-between">
+      <div className="relative z-10 flex items-start justify-between">
         <div className="flex-1">
           <p className="text-xs text-muted-foreground mb-1">{label}</p>
           <p className="text-2xl lg:text-3xl font-light text-foreground">{value}</p>
