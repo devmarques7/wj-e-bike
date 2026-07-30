@@ -4,7 +4,6 @@ import { useEffect, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useAuth } from "@/contexts/AuthContext";
 import RoleDashboardLayout from "@/components/dashboard/RoleDashboardLayout";
-import EmptyState from "@/components/dashboard/EmptyState";
 import { supabase } from "@/integrations/supabase/client";
 import StyledEPassQR from "@/components/dashboard/StyledEPassQR";
 import BikePickerDialog, { LinkedBike } from "@/components/dashboard/BikePickerDialog";
