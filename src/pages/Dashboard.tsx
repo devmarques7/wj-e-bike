@@ -65,7 +65,7 @@ export default function Dashboard() {
         {/* Appointments - full width */}
         <div className="w-full lg:h-[420px] xl:h-[480px]">
           {user?.id ? (
-            <AppointmentsTableCard customerUserId={user.id} />
+            <AppointmentsTableCard customerUserId={user.id} includeRequests />
           ) : null}
         </div>
       </div>
