@@ -12,6 +12,11 @@ import RichText from "./RichText";
 import { useAuth } from "@/contexts/AuthContext";
 import type { AssistantAction } from "@/lib/ai/intents";
 
+interface BikeAssistantCardProps {
+  className?: string;
+}
+
+
 /** The assistant's priority flows, in the order we want riders to use them. */
 const PRIORITY_ACTIONS = [
   { icon: Stethoscope, label: "Book a revision", prompt: "I want to book a revision for my bike", primary: true },
@@ -41,7 +46,7 @@ function parseOptions(content: string): { text: string; options: string[] } {
   return { text: kept.join("\n").replace(/\n{3,}/g, "\n\n").trim(), options };
 }
 
-export default function BikeAssistantCard() {
+export default function BikeAssistantCard({ className }: BikeAssistantCardProps) {
   const { user } = useAuth();
   const {
     config,
@@ -92,7 +97,8 @@ export default function BikeAssistantCard() {
   const diagnosisActive = Boolean(diagnosis && diagnosis.phase !== "done");
 
   return (
-    <div className="relative overflow-hidden rounded-3xl border border-border/30 bg-background/60 backdrop-blur-md">
+    <div className={cn("relative overflow-hidden rounded-3xl border border-border/30 bg-background/60 backdrop-blur-md h-full flex flex-col", className)}>
+
       {/* Header */}
       <div className="flex items-center justify-between gap-3 border-b border-border/20 px-5 py-4">
         <div className="flex items-center gap-3">
