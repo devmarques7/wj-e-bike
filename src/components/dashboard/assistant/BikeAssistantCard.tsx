@@ -4,7 +4,6 @@ import { ArrowUp, RefreshCw, Settings2, Zap, Stethoscope, Wrench, Package, Tag, 
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { useBikeAssistant } from "@/hooks/useBikeAssistant";
-import { ASSISTANT_SKILLS } from "@/lib/ai/skills";
 import AssistantSettingsDialog from "./AssistantSettingsDialog";
 import { AssistantIcon } from "./assistantIcons";
 import { cn } from "@/lib/utils";
@@ -22,6 +21,26 @@ const PRIORITY_ACTIONS = [
   { icon: Tag, label: "Is it covered by my plan?", prompt: "Is this service covered by my plan?" },
   { icon: Bike, label: "Explore new bikes", prompt: "Which bike should I upgrade to?" },
 ];
+
+/**
+ * Splits an assistant reply into prose + the option lines it offered
+ * (bullets, dashes or numbered items) so they can be rendered as chips.
+ */
+function parseOptions(content: string): { text: string; options: string[] } {
+  const lines = content.split("\n");
+  const options: string[] = [];
+  const kept: string[] = [];
+  for (const line of lines) {
+    const match = line.match(/^\s*(?:[-*•]|\d+[.)])\s+(.{3,140})$/);
+    if (match) {
+      options.push(match[1].trim().replace(/^\*\*|\*\*$/g, ""));
+    } else {
+      kept.push(line);
+    }
+  }
+  if (!options.length) return { text: content, options: [] };
+  return { text: kept.join("\n").replace(/\n{3,}/g, "\n\n").trim(), options };
+}
 
 export default function BikeAssistantCard() {
   const { user } = useAuth();
@@ -162,6 +181,7 @@ export default function BikeAssistantCard() {
                 {messages.map((m) => {
                   const isLast = m.id === lastAssistantId;
                   const isAssistant = m.role === "assistant";
+                  const parsed = isAssistant ? parseOptions(m.content) : { text: m.content, options: [] };
                   return (
                     <div key={m.id} className="relative flex gap-3">
                       {/* Rail */}
@@ -204,8 +224,23 @@ export default function BikeAssistantCard() {
                               : "border border-border/25 bg-background/50 text-foreground",
                           )}
                         >
-                          {m.content}
+                          {parsed.text || m.content}
                         </div>
+                        {isAssistant && parsed.options.length > 0 && (
+                          <div className="flex flex-wrap gap-1.5">
+                            {parsed.options.map((option, i) => (
+                              <button
+                                key={`${m.id}-opt-${i}`}
+                                type="button"
+                                onClick={() => submit(option)}
+                                disabled={busy}
+                                className="rounded-full border border-wj-green/30 bg-wj-green/5 px-3 py-1.5 text-left text-[11px] text-foreground/90 transition-colors hover:border-wj-green/60 hover:bg-wj-green/15 hover:text-wj-green disabled:opacity-50"
+                              >
+                                {option}
+                              </button>
+                            ))}
+                          </div>
+                        )}
                         {isAssistant && (
                           <div className="flex flex-wrap items-center gap-2">
                             {m.source === "local" && (
@@ -306,26 +341,6 @@ export default function BikeAssistantCard() {
             >
               <ArrowUp className="h-4 w-4" />
             </Button>
-          </div>
-          <div className="mt-2 flex flex-wrap items-center gap-1.5 px-1 pb-1">
-            {ASSISTANT_SKILLS.map((skill) => {
-              const enabled = config.enabledSkills.includes(skill.id);
-              return (
-                <button
-                  key={skill.id}
-                  type="button"
-                  onClick={() => toggleSkill(skill.id)}
-                  className={cn(
-                    "rounded-full border px-2.5 py-1 text-[11px] transition-colors",
-                    enabled
-                      ? "border-wj-green/40 bg-wj-green/10 text-wj-green"
-                      : "border-border/30 text-muted-foreground hover:text-foreground",
-                  )}
-                >
-                  {skill.name}
-                </button>
-              );
-            })}
           </div>
         </div>
       </div>
