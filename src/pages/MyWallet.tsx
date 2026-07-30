@@ -23,7 +23,6 @@ import { useGarageBike } from "@/hooks/garage/useGarageBike";
 import ActivityYearGrid from "@/components/dashboard/wallet/ActivityYearGrid";
 import ActivityMonthGrid from "@/components/dashboard/wallet/ActivityMonthGrid";
 import ActivityDayPanel from "@/components/dashboard/wallet/ActivityDayPanel";
-
 import ServiceRecordDialog from "@/components/dashboard/wallet/ServiceRecordDialog";
 import { useActivityYear, type ActivityDay, type ActivityRecord } from "@/hooks/wallet/useActivityYear";
 
