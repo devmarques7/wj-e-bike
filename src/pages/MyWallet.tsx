@@ -458,6 +458,54 @@ export default function MyWallet() {
           </div>
         </div>
 
+        {/* Quick actions — scan, health, booking, services */}
+        <WalletQuickActions
+          actions={[
+            {
+              key: "scan",
+              label: "Scan E-Pass",
+              hint: "Show QR at the workshop",
+              icon: QrCode,
+              accent: true,
+              onClick: () => setScanOpen(true),
+            },
+            {
+              key: "health",
+              label: "Bike health",
+              hint: `${health.overall}% overall`,
+              icon: HeartPulse,
+              onClick: () => navigate("/dashboard/garage"),
+            },
+            {
+              key: "book",
+              label: "Book service",
+              hint: `${allowance.remaining} left on plan`,
+              icon: CalendarPlus,
+              onClick: () => navigate("/dashboard"),
+            },
+            {
+              key: "plans",
+              label: "All services",
+              hint: "Plans & upgrades",
+              icon: LayoutGrid,
+              onClick: () => navigate("/membership-plans"),
+            },
+          ]}
+        />
+
+        {/* Plan usage + bike condition */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 lg:items-stretch">
+          <ServiceAllowanceCard planName={currentPlan?.name ?? "Free"} allowance={allowance} />
+          <BikeHealthCard
+            bikeName={garageBike?.model || activeBikeName}
+            overall={health.overall}
+            metrics={health.metrics}
+            daysToRevision={daysToRevision}
+            nextRevision={nextRevision}
+            onOpenGarage={() => navigate("/dashboard/garage")}
+          />
+        </div>
+
         {/* KPIs + History table side by side (50/50) */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 lg:items-stretch">
           {/* Left column — KPI cards */}
@@ -479,7 +527,15 @@ export default function MyWallet() {
               </div>
               <div className="min-w-0">
                 <p className="text-[10px] uppercase tracking-widest text-muted-foreground">{t("e_pass.next_maintenance")}</p>
-                <p className="text-sm font-semibold text-foreground truncate">{nextMaintenanceLabel}</p>
+                <p className="text-sm font-semibold text-foreground truncate">
+                  {daysToRevision !== null
+                    ? daysToRevision < 0
+                      ? t("e_pass.overdue")
+                      : daysToRevision === 0
+                      ? t("e_pass.today")
+                      : t("e_pass.in_days", { n: daysToRevision })
+                    : nextMaintenanceLabel}
+                </p>
               </div>
             </div>
           </div>
