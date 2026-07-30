@@ -94,11 +94,52 @@ export async function judgeFreeText(
         skills: [],
         assistantName: "Intake analyst",
         tone: "concise",
+        mode: "json",
       },
     });
-    if (error || data?.error) return null;
-    return parseJudge(data?.content ?? "");
+    if (error || data?.error) return localJudge(text, session);
+    return parseJudge(data?.content ?? "") ?? localJudge(text, session);
   } catch {
-    return null;
+    return localJudge(text, session);
   }
+}
+
+/**
+ * Zero-token fallback: if the AI call fails or returns malformed JSON we still
+ * turn the rider's text into usable context instead of dropping it.
+ */
+const STOP_WORDS = new Set(
+  ("a o e de da do que nao não esta está uma um para com meu minha the and is not my for with of to it in on i".split(" ")),
+);
+
+export function localJudge(text: string, session: DiagnosisSession): JudgeResult {
+  const clean = text.trim().replace(/\s+/g, " ");
+  const lower = clean.toLowerCase();
+
+  const keywords = Array.from(
+    new Set(
+      lower
+        .replace(/[^\p{L}\p{N}\s]/gu, " ")
+        .split(" ")
+        .filter((w) => w.length > 3 && !STOP_WORDS.has(w)),
+    ),
+  ).slice(0, 6);
+
+  let symptom: string | null = null;
+  if (session.phase === "symptom") {
+    const match = SYMPTOMS.find((s) =>
+      [...(s.keywords ?? []), s.label]
+        .map((k) => String(k).toLowerCase())
+        .some((k) => k.length > 2 && lower.includes(k)),
+    );
+    symptom = match?.label ?? null;
+  }
+
+  return {
+    reply: "",
+    symptom,
+    answers: {},
+    keywords,
+    notes: clean.slice(0, 220) || null,
+  };
 }

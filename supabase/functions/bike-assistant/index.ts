@@ -426,12 +426,52 @@ Deno.serve(async (req) => {
       tone = "concise",
       // Deterministic layer already answered these — the model only sees a summary.
       localContext = "",
+      // "json" = strict JSON extraction call (diagnosis judge). No tools, no
+      // chatty system prompt, and enough budget so the JSON is never truncated.
+      mode = "chat",
     } = await req.json();
 
     // ---- token economy: only keep the recent turns, trimmed ----
     const trimmed = (messages as any[])
       .slice(-8)
       .map((m) => ({ role: m.role, content: String(m.content ?? "").slice(0, 2000) }));
+
+    if (mode === "json") {
+      const res = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Lovable-API-Key": apiKey,
+          "X-Lovable-AIG-SDK": "fetch",
+        },
+        body: JSON.stringify({
+          model: "google/gemini-3.1-flash-lite",
+          messages: [
+            {
+              role: "system",
+              content:
+                "You are a data extraction engine. Output ONLY a single valid JSON object. No prose, no markdown, no explanation.",
+            },
+            ...trimmed,
+          ],
+          response_format: { type: "json_object" },
+          max_completion_tokens: 2000,
+        }),
+      });
+
+      if (res.status === 429) return json({ error: "rate_limited" }, 429);
+      if (res.status === 402) return json({ error: "credits_exhausted" }, 402);
+      if (!res.ok) {
+        const text = await res.text();
+        return json({ error: "gateway_error", detail: text }, 500);
+      }
+      const data = await res.json();
+      return json({
+        content: data.choices?.[0]?.message?.content ?? "",
+        source: "ai",
+        usage: data.usage ?? null,
+      });
+    }
 
     const authHeader = req.headers.get("Authorization") ?? "";
     const supabase = createClient(
