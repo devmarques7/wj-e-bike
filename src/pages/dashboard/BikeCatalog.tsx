@@ -35,7 +35,12 @@ export default function BikeCatalog() {
   return (
     <RoleDashboardLayout>
       <div className="p-4 lg:p-6 space-y-6">
-        <BikeAdvisorCard onRecommend={(bike) => setRecommended(bike)} />
+        <BikeAdvisorCard
+          onRecommend={(bike, ride) => {
+            setRecommended(bike);
+            setSelectedCategory(ride ?? "all");
+          }}
+        />
 
         {recommended && (
           <motion.section
