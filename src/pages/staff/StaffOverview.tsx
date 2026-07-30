@@ -32,10 +32,10 @@ export default function StaffOverview() {
       : null;
   const shiftHours = Math.floor(elapsedSec / 3600);
   const shiftMins = Math.floor((elapsedSec % 3600) / 60);
-  const shiftLabel =
-    shiftStatus === "idle"
-      ? "Shift not started"
-      : `Today ${shiftHours}h ${shiftMins}m`;
+  const shiftNotStarted = shiftStatus === "idle" || elapsedSec <= 0;
+  const shiftLabel = shiftNotStarted
+    ? "00:00m"
+    : `${String(shiftHours).padStart(2, "0")}:${String(shiftMins).padStart(2, "0")}m`;
 
   const kpiData = [
     {
@@ -71,6 +71,7 @@ export default function StaffOverview() {
         | "down"
         | "neutral",
       icon: Star,
+      pending: shiftNotStarted,
     },
     {
       label: "Avg. Service Time",
