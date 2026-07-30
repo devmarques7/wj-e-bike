@@ -16,7 +16,7 @@ import BikePickerDialog, { LinkedBike } from "@/components/dashboard/BikePickerD
 import WalletMemberCard, { WalletCardBack } from "@/components/dashboard/WalletMemberCard";
 import WalletCardThemeDialog from "@/components/dashboard/WalletCardThemeDialog";
 import { loadWalletThemes, saveWalletThemes, themeForIndex } from "@/lib/wallet/cardThemes";
-import WalletQuickActions from "@/components/dashboard/wallet/WalletQuickActions";
+import WalletActionTiles from "@/components/dashboard/wallet/WalletActionTiles";
 import ServiceAllowanceCard from "@/components/dashboard/wallet/ServiceAllowanceCard";
 import BikeHealthCard from "@/components/dashboard/wallet/BikeHealthCard";
 import ScanEPassDialog from "@/components/dashboard/wallet/ScanEPassDialog";
