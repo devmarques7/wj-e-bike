@@ -426,9 +426,12 @@ export default function MyWallet() {
               <ServiceAllowanceCard
                 planName={currentPlan?.name ?? "Free"}
                 allowance={allowance}
-                planDescription={currentPlan?.description ?? t("e_pass.no_benefits")}
-                features={currentPlan?.features ?? []}
+                revisionDays={daysToRevision}
+                revisionDate={nextRevision}
+                bikeName={garageBike?.model || activeBikeName}
+                upgradeOptions={upgradeOptions}
                 onUpgrade={() => navigate("/membership-plans")}
+                onBook={() => navigate("/dashboard/garage")}
               />
             </div>
 
