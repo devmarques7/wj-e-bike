@@ -568,7 +568,7 @@ export default function MyWallet() {
         onOpenChange={setPickerOpen}
         onRegistered={(bike) => {
           setLinkedBikes((prev) => [bike, ...prev]);
-          setActiveBikeIdx(0);
+          setStackOrder((prev) => [bike.id, ...prev.filter((id) => id !== bike.id)]);
           // Flip card back to front so user sees the new bike
           setIsFlipped(false);
         }}
