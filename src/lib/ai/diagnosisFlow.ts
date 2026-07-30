@@ -204,6 +204,41 @@ export function applyAnswer(session: DiagnosisSession, answer: string): Diagnosi
 }
 
 /** Remove a tag and rewind the flow to that question. */
+export function applyJudged(
+  session: DiagnosisSession,
+  judged: { symptom?: string | null; answers: Record<string, string>; notes?: string | null },
+): { session: DiagnosisSession; applied: string[] } {
+  let next = session;
+  const applied: string[] = [];
+
+  if (next.phase === "mode") return { session: next, applied };
+
+  if (next.phase === "symptom" && judged.symptom) {
+    next = applyAnswer(next, judged.symptom);
+    applied.push(judged.symptom);
+  }
+
+  // Walk the remaining questions while the judge has an answer for them.
+  let guard = 0;
+  while (next.phase === "questions" && guard++ < 20) {
+    const q = questionsOf(next)[next.step];
+    if (!q) break;
+    const raw = judged.answers[q.id];
+    if (!raw) break;
+    const answer = matchOption(raw, q.options) ?? (q.allowFreeText ? raw : null);
+    if (!answer) break;
+    next = applyAnswer(next, answer);
+    applied.push(answer);
+  }
+
+  if (next.phase === "notes" && judged.notes) {
+    next = applyAnswer(next, judged.notes);
+    applied.push(judged.notes);
+  }
+
+  return { session: next, applied };
+}
+
 export function removeTag(session: DiagnosisSession, tagId: string): DiagnosisSession {
   if (tagId === "symptom") {
     return { ...session, symptomId: null, phase: "symptom", step: 0, tags: [] };
