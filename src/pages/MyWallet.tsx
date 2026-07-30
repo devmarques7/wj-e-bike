@@ -275,7 +275,6 @@ export default function MyWallet() {
               const peek = WALLET_FIRST_PEEK + depth * WALLET_STEP; // px peeking above main card
               const lift = hovered ? WALLET_HOVER_LIFT : 0;
               const scale = 1 - (depth + 1) * WALLET_SCALE_STEP;
-              const tierStyle = cardStyles[slug] ?? cardStyles.free;
               return (
                 <button
                   key={bike.id}
