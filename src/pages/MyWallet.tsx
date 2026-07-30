@@ -245,6 +245,24 @@ export default function MyWallet() {
 
   /** Plan-covered appointment allowance (used / scheduled / remaining). */
   const allowance = usePlanAllowance(currentPlan?.slug);
+
+  /** Higher tiers than the current plan, ranked by how much extra coverage they add. */
+  const upgradeOptions = useMemo(() => {
+    const currentTier = currentPlan?.tier_level ?? 0;
+    const currentAllowance = PLAN_SERVICE_ALLOWANCE[currentPlan?.slug ?? "free"] ?? 1;
+    return plans
+      .filter((p) => p.tier_level > currentTier)
+      .sort((a, b) => a.tier_level - b.tier_level)
+      .slice(0, 3)
+      .map((p) => {
+        const target = PLAN_SERVICE_ALLOWANCE[p.slug] ?? currentAllowance;
+        const percent = Math.max(
+          0,
+          Math.round(((target - currentAllowance) / Math.max(1, currentAllowance)) * 100),
+        );
+        return { slug: p.slug, name: p.name, percent };
+      });
+  }, [plans, currentPlan]);
   /** Bike condition + next revision, reused from the Garage health model. */
   const { bike: garageBike, health, nextRevision, daysToRevision } = useGarageBike(activeBike?.id ?? null);
 
