@@ -37,6 +37,7 @@ export function useBikeAssistant() {
   const [config, setConfig] = useState<AssistantConfig>(loadConfig);
   const [messages, setMessages] = useState<AssistantMessage[]>([]);
   const [status, setStatus] = useState<"idle" | "thinking" | "answering">("idle");
+  const [thinkingPhrase, setThinkingPhrase] = useState<string>("");
   const [error, setError] = useState<string | null>(null);
   const [savedCalls, setSavedCalls] = useState(0);
   const abortRef = useRef<AbortController | null>(null);
