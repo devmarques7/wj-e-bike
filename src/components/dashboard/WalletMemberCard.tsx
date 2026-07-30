@@ -43,21 +43,12 @@ export default function WalletMemberCard({
 
   return (
     <div
-      className={cn("relative w-full h-full overflow-hidden rounded-3xl", className)}
+      className={cn("relative w-full h-full overflow-hidden rounded-3xl flex", className)}
       style={{ background: theme.background }}
     >
-      {/* Oversized wordmark, mirrored like the reference layout */}
-      <span
-        aria-hidden
-        className="pointer-events-none absolute right-4 top-1/2 -translate-y-1/2 text-[5.5rem] sm:text-[7rem] font-black leading-none tracking-tighter select-none"
-        style={{ color: theme.ink, opacity: 0.12 }}
-      >
-        WJ
-      </span>
-
-      {/* Dark chip panel, bottom-left */}
+      {/* Dark chip panel — full height, left side */}
       <div
-        className="absolute left-0 bottom-0 h-[52%] w-[42%] rounded-tr-3xl flex items-end gap-3 p-4"
+        className="relative h-full w-[34%] shrink-0 flex items-end gap-3 p-4"
         style={{ background: theme.panel }}
       >
         <span
@@ -75,17 +66,28 @@ export default function WalletMemberCard({
         </div>
       </div>
 
-      {/* Header */}
-      <div className="relative z-10 p-4 sm:p-5 flex items-start justify-between gap-3">
+      {/* Colour side */}
+      <div className="relative flex-1 min-w-0 flex flex-col">
+        {/* Oversized wordmark */}
+        <span
+          aria-hidden
+          className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-[5rem] sm:text-[6.5rem] font-black leading-none tracking-tighter select-none"
+          style={{ color: theme.ink, opacity: 0.12 }}
+        >
+          WJ
+        </span>
+
+        {/* Header */}
+        <div className="relative z-10 p-4 sm:p-5 flex items-start justify-between gap-3">
         <div className="min-w-0">
           <p className="text-[9px] uppercase tracking-[0.22em] font-medium" style={{ color: theme.inkMuted }}>
             {label}
           </p>
-          <h3 className="text-sm sm:text-base font-bold tracking-tight truncate max-w-[190px]" style={{ color: theme.ink }}>
+          <h3 className="text-sm sm:text-base font-bold tracking-tight truncate max-w-[150px]" style={{ color: theme.ink }}>
             {bikeName || "WJ Vision"}
           </h3>
           {serial && (
-            <p className="text-[9px] font-mono tracking-wider truncate max-w-[190px]" style={{ color: theme.inkMuted }}>
+            <p className="text-[9px] font-mono tracking-wider truncate max-w-[150px]" style={{ color: theme.inkMuted }}>
               {serial}
             </p>
           )}
@@ -116,10 +118,10 @@ export default function WalletMemberCard({
             </button>
           )}
         </div>
-      </div>
+        </div>
 
-      {/* Bottom-right details */}
-      <div className="absolute right-4 sm:right-5 bottom-4 sm:bottom-5 z-10 text-right space-y-2">
+        {/* Bottom-right details */}
+        <div className="mt-auto relative z-10 px-4 sm:px-5 pb-4 sm:pb-5 text-right space-y-2">
         {cardNumber && (
           <p className="text-[11px] sm:text-xs font-mono tracking-[0.18em]" style={{ color: theme.ink }}>
             {cardNumber}
@@ -145,6 +147,7 @@ export default function WalletMemberCard({
             </p>
           </div>
         )}
+        </div>
       </div>
     </div>
   );
