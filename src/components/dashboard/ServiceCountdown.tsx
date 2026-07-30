@@ -57,7 +57,12 @@ function resolveCycle(bike: Bike) {
   return { last, next, fromPurchase: !bike.last_service_at };
 }
 
-export default function ServiceCountdown() {
+interface ServiceCountdownProps {
+  /** Bike selected by the page-level BikeTabs selector. */
+  bikeId?: string | null;
+}
+
+export default function ServiceCountdown({ bikeId }: ServiceCountdownProps = {}) {
   const navigate = useNavigate();
   const { user } = useAuth();
   const videoRef = useRef<HTMLVideoElement>(null);
@@ -110,6 +115,13 @@ export default function ServiceCountdown() {
   useEffect(() => {
     loadBikes();
   }, [loadBikes]);
+
+  // Follow the bike selected at page level.
+  useEffect(() => {
+    if (!bikeId) return;
+    const idx = bikes.findIndex((b) => b.id === bikeId);
+    if (idx >= 0) setActiveIndex(idx);
+  }, [bikeId, bikes]);
 
   // Video loop handling
   useEffect(() => {
@@ -229,7 +241,7 @@ export default function ServiceCountdown() {
         <div className="absolute inset-0 bg-gradient-to-r from-background via-background/80 to-transparent pointer-events-none" />
 
         {/* Card switcher header (when >1 bike) */}
-        {bikes.length > 1 && (
+        {!bikeId && bikes.length > 1 && (
           <div className="absolute top-3 right-3 z-20 flex gap-1.5">
             {bikes.map((b, i) => (
               <button

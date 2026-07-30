@@ -17,7 +17,12 @@ import { Button } from "@/components/ui/button";
 import { toast } from "@/hooks/use-toast";
 import { ShaderBackground } from "@/components/ui/verdant-swirl";
 
-export default function ServiceRequestCard() {
+interface ServiceRequestCardProps {
+  /** Bike selected by the page-level BikeTabs selector. */
+  bike?: { id: string; model: string; serial: string | null } | null;
+}
+
+export default function ServiceRequestCard({ bike }: ServiceRequestCardProps = {}) {
   const navigate = useNavigate();
   const { user } = useAuth();
   const [isCompleted, setIsCompleted] = useState(false);
@@ -38,7 +43,7 @@ export default function ServiceRequestCard() {
   // When the user has no linked bike, the card becomes a "FAQ shortcut":
   // same visual as the urgent slider, but the swipe just routes to the
   // urgent-service FAQ page (no appointment is created).
-  const faqMode = !user?.bikeId;
+  const faqMode = !bike && !user?.bikeId;
   
   const x = useMotionValue(0);
   // Track width is measured so the thumb can always travel to the very end.
@@ -207,7 +212,9 @@ export default function ServiceRequestCard() {
         priority: "emergency",
         priority_score: 100,
         booked_via: "portal",
-        notes: "Urgent service requested from dashboard",
+        notes: bike
+          ? `Urgent service requested from dashboard · ${bike.model}${bike.serial ? ` (${bike.serial})` : ""}`
+          : "Urgent service requested from dashboard",
       } as any);
       if (error) throw error;
       setIsCompleted(true);
