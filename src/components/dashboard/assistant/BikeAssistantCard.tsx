@@ -17,6 +17,7 @@ export default function BikeAssistantCard() {
     useBikeAssistant();
   const [value, setValue] = useState("");
   const [settingsOpen, setSettingsOpen] = useState(false);
+  const [inputFocused, setInputFocused] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
 
