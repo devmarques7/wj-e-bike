@@ -6,6 +6,7 @@ import {
   Loader2,
   ChevronDown,
   ChevronRight,
+  ChevronLeft,
   ArrowUpDown,
   Layers,
 } from "lucide-react";
