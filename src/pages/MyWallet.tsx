@@ -37,7 +37,6 @@ type PlanInfo = {
 const WALLET_FIRST_PEEK = 42; // px the closest back card peeks above the featured card
 const WALLET_STEP = 26; // px between each ascending step
 const WALLET_GHOST_EXTRA = 30; // extra room for the "stack a new card" slot on top
-const WALLET_INSET = 12; // px each side per depth level (width taper)
 
 const cardStyles: Record<string, { gradient: string; border: string; text: string }> = {
   free:  { gradient: "from-emerald-400 to-emerald-600", border: "border-emerald-400", text: "text-emerald-300" },
