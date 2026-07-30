@@ -507,38 +507,6 @@ export default function MyWallet() {
         </div>
 
         {/* History table */}
-          <div className="flex flex-col gap-3">
-            {/* Total points */}
-            <div className="rounded-3xl border border-border/40 bg-card/30 backdrop-blur-md p-4 flex items-center gap-3 min-w-0">
-              <div className="w-10 h-10 rounded-xl bg-wj-green/10 flex items-center justify-center shrink-0">
-                <Bike className="h-5 w-5 text-wj-green" />
-              </div>
-              <div className="min-w-0">
-                <p className="text-[10px] uppercase tracking-widest text-muted-foreground">{t("e_pass.total_points")}</p>
-                <p className="text-sm font-semibold text-foreground truncate">{totalPoints}</p>
-              </div>
-            </div>
-            {/* Next maintenance */}
-            <div className="rounded-3xl border border-border/40 bg-card/30 backdrop-blur-md p-4 flex items-center gap-3 min-w-0">
-              <div className="w-10 h-10 rounded-xl bg-wj-green/10 flex items-center justify-center shrink-0">
-                <Clock className="h-5 w-5 text-wj-green" />
-              </div>
-              <div className="min-w-0">
-                <p className="text-[10px] uppercase tracking-widest text-muted-foreground">{t("e_pass.next_maintenance")}</p>
-                <p className="text-sm font-semibold text-foreground truncate">
-                  {daysToRevision !== null
-                    ? daysToRevision < 0
-                      ? t("e_pass.overdue")
-                      : daysToRevision === 0
-                      ? t("e_pass.today")
-                      : t("e_pass.in_days", { n: daysToRevision })
-                    : nextMaintenanceLabel}
-                </p>
-              </div>
-            </div>
-          </div>
-
-          {/* Right column — History table container */}
           <div className="w-full h-full">
             <div className="h-full rounded-3xl border border-border/50 bg-card overflow-hidden flex flex-col">
               <div className="p-6 border-b border-border/50">
