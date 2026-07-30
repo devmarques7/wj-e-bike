@@ -262,7 +262,7 @@ export default function MyWallet() {
                   className={`absolute inset-x-0 bottom-0 aspect-[1.6/1] sm:aspect-[1.75/1] rounded-3xl overflow-hidden bg-slate-100 border ${tierStyle.border} shadow-xl transition-all duration-500 ease-out origin-bottom text-left hover:shadow-[0_25px_60px_-12px_rgba(5,140,66,0.45)] hover:border-wj-green/60`}
                   style={{
                     transform: `translateY(-${peek + lift}px) scale(${scale})`,
-                    zIndex: hovered ? 30 : 20 - (depth + 1),
+                    zIndex: 20 - (depth + 1),
                   }}
                   title={bike.model || bike.serial}
                 >
@@ -281,7 +281,7 @@ export default function MyWallet() {
 
             {/* Featured card — always in front */}
             <div
-              className="relative z-20 aspect-[1.6/1] sm:aspect-[1.75/1] cursor-pointer transition-all duration-300 origin-top hover:-translate-y-2 hover:shadow-[0_25px_60px_-12px_rgba(5,140,66,0.45)]"
+              className="relative z-30 aspect-[1.6/1] sm:aspect-[1.75/1] cursor-pointer transition-all duration-300 origin-top hover:-translate-y-2 hover:shadow-[0_25px_60px_-12px_rgba(5,140,66,0.45)]"
               style={{ perspective: "1200px" }}
               onClick={() => setIsFlipped((v) => !v)}
               role="button"
