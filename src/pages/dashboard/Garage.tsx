@@ -7,6 +7,7 @@ import AppointmentsTableCard from "@/components/dashboard/scheduling/Appointment
 import GarageBikeCard from "@/components/dashboard/garage/GarageBikeCard";
 import BikeHealthGrid from "@/components/dashboard/garage/BikeHealthGrid";
 import ServiceCountdown from "@/components/dashboard/ServiceCountdown";
+import BikeTabs from "@/components/dashboard/BikeTabs";
 import { useAuth } from "@/contexts/AuthContext";
 import { useGarageBike } from "@/hooks/garage/useGarageBike";
 
@@ -36,22 +37,8 @@ export default function Garage() {
               Everything about your registered bike — health, revisions and history
             </p>
           </div>
-          {bikeTabs.length > 1 && (
-            <div className="flex flex-wrap gap-2">
-              {bikeTabs.map((b) => (
-                <button
-                  key={b.id}
-                  onClick={() => selectBike(b.id)}
-                  className={`rounded-full border px-3 py-1.5 text-xs transition-colors ${
-                    bike?.id === b.id
-                      ? "border-wj-green/50 bg-wj-green/10 text-foreground"
-                      : "border-border/40 text-muted-foreground hover:text-foreground"
-                  }`}
-                >
-                  {b.model}
-                </button>
-              ))}
-            </div>
+          {bikeTabs.length > 0 && (
+            <BikeTabs bikes={bikeTabs} activeId={bike?.id} onSelect={selectBike} />
           )}
         </motion.div>
 
@@ -60,7 +47,7 @@ export default function Garage() {
             <GarageBikeCard bike={bike} overall={health.overall} metrics={health.metrics} />
           </div>
           <div className="col-span-12 lg:col-span-4">
-            <ServiceCountdown />
+            <ServiceCountdown bikeId={bike?.id} />
           </div>
 
           <div className="col-span-12 lg:col-span-8 flex flex-col gap-4 lg:gap-6">

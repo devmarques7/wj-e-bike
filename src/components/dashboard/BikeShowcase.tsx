@@ -85,7 +85,12 @@ const preloadImages = () => {
   });
 };
 
-export default function BikeShowcase() {
+interface BikeShowcaseProps {
+  /** Bike selected by the page-level BikeTabs selector. */
+  bikeId?: string | null;
+}
+
+export default function BikeShowcase({ bikeId }: BikeShowcaseProps = {}) {
   const { user } = useAuth();
   const [currentIndex, setCurrentIndex] = useState(0);
   const [imagesLoaded, setImagesLoaded] = useState(false);
@@ -137,6 +142,9 @@ export default function BikeShowcase() {
   // A bike is considered present if (a) a real customer has a customer_bikes row,
   // or (b) a demo/mock user has bikeId set on their profile.
   const registeredBike = registeredBikes[activeBikeIndex] ?? null;
+  const scopedBike = bikeId
+    ? registeredBikes.find((b) => b.id === bikeId) ?? registeredBike
+    : registeredBike;
   const hasBike = isRealUser ? registeredBikes.length > 0 : !!user?.bikeId;
 
   const [emblaRef, emblaApi] = useEmblaCarousel({
@@ -288,7 +296,7 @@ export default function BikeShowcase() {
           >
             Garage
           </Link>
-          {isRealUser && registeredBikes.length > 1 && (
+          {isRealUser && !bikeId && registeredBikes.length > 1 && (
             <div className="flex items-center gap-1 px-2 py-1 rounded-full bg-background/30 backdrop-blur-sm border border-border/40">
               {registeredBikes.map((b, i) => (
                 <button
@@ -384,7 +392,7 @@ export default function BikeShowcase() {
         <div className="mt-6 pt-4 border-t border-border/30 flex items-center justify-between pointer-events-auto">
           <div>
             <p className="text-xs text-muted-foreground font-mono">
-              {registeredBike?.serial || registeredBike?.model || user?.bikeId || "V8-2024-NL-00156"}
+              {scopedBike?.serial || scopedBike?.model || user?.bikeId || "V8-2024-NL-00156"}
             </p>
           </div>
 
