@@ -495,7 +495,7 @@ export default function MyWallet() {
 
         {/* Year activity map + folder history */}
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
-          <div className="lg:col-span-7">
+          <div className="lg:col-span-12">
             {selectedDay ? (
               <ActivityDayPanel
                 day={selectedDay}
