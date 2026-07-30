@@ -15,6 +15,7 @@ import {
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { toast } from "@/hooks/use-toast";
+import { ShaderBackground } from "@/components/ui/verdant-swirl";
 
 export default function ServiceRequestCard() {
   const navigate = useNavigate();
@@ -31,7 +32,8 @@ export default function ServiceRequestCard() {
   const [confirmOpen, setConfirmOpen] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const videoRef = useRef<HTMLVideoElement>(null);
-  const constraintsRef = useRef(null);
+  const constraintsRef = useRef<HTMLDivElement>(null);
+  const [trackWidth, setTrackWidth] = useState(240);
 
   // When the user has no linked bike, the card becomes a "FAQ shortcut":
   // same visual as the urgent slider, but the swipe just routes to the
@@ -39,18 +41,27 @@ export default function ServiceRequestCard() {
   const faqMode = !user?.bikeId;
   
   const x = useMotionValue(0);
-  const sliderWidth = 240;
-  const thumbWidth = 56;
-  const maxDrag = sliderWidth - thumbWidth - 8;
-  
+  // Track width is measured so the thumb can always travel to the very end.
+  const maxDrag = Math.max(0, trackWidth - 48 - 8);
+
+  useEffect(() => {
+    const el = constraintsRef.current;
+    if (!el) return;
+    const update = () => setTrackWidth(el.getBoundingClientRect().width);
+    update();
+    const ro = new ResizeObserver(update);
+    ro.observe(el);
+    return () => ro.disconnect();
+  }, []);
+
+  const progress = useTransform(x, (v) => (maxDrag > 0 ? v / maxDrag : 0));
   const backgroundColor = useTransform(
-    x,
-    [0, maxDrag],
+    progress,
+    [0, 1],
     ["rgba(5, 140, 66, 0.1)", "rgba(5, 140, 66, 0.3)"]
   );
-  
-  const textOpacity = useTransform(x, [0, maxDrag * 0.5], [1, 0]);
-  const checkOpacity = useTransform(x, [maxDrag * 0.7, maxDrag], [0, 1]);
+  const textOpacity = useTransform(progress, [0, 0.5], [1, 0]);
+  const checkOpacity = useTransform(progress, [0.7, 1], [0, 1]);
 
   // Resolve user's plan and check if urgent service is included.
   // Heuristic: tier_level >= 2 (Plus/Black) OR features mention urgent/priority/unlimited/same-day/concierge.
@@ -272,19 +283,9 @@ export default function ServiceRequestCard() {
         transition={{ delay: 0.1 }}
         className="relative h-full rounded-3xl overflow-hidden bg-background"
       >
-        {/* Video Background */}
-        <motion.video
-          ref={videoRef}
-          autoPlay
-          muted
-          playsInline
-          animate={{ opacity: videoOpacity }}
-          transition={{ duration: 0.8, ease: "easeInOut" }}
-          className="absolute inset-0 w-full h-full object-cover"
-        >
-          <source src="/videos/member-pass-bg.mp4" type="video/mp4" />
-        </motion.video>
-        
+        {/* Shader Background */}
+        <ShaderBackground className="absolute inset-0 w-full h-full block" />
+
         {/* Overlay */}
         <div className="absolute inset-0 bg-gradient-to-br from-black/70 via-black/50 to-black/70" />
         
