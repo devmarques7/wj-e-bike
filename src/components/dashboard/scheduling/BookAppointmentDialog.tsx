@@ -332,12 +332,17 @@ export default function BookAppointmentDialog({
         _mechanic_id: null,
       });
       if (error) throw error;
-      const rows = (data ?? []) as Array<{
+      const allRows = (data ?? []) as Array<{
         start_time: string;
         end_time: string;
         mechanic_id: string;
         mechanic_name: string | null;
       }>;
+      // Never offer slots already in the past (or too close) for the rider's
+      // own local clock — minimum 30 min of notice.
+      const rows = allRows.filter((r) =>
+        isSlotSelectable(date, String(r.start_time).slice(0, 5)),
+      );
       const mechMap = new Map<string, string>();
       rows.forEach((r) => {
         if (!mechMap.has(r.mechanic_id))
