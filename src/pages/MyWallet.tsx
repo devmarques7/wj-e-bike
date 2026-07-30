@@ -440,8 +440,8 @@ export default function MyWallet() {
           </div>
           </div>
 
-          {/* Right column — Plan details + actions */}
-          <div className="h-full flex flex-col gap-4">
+          {/* Right column — Plan details */}
+          <div className="h-full flex flex-col">
             {/* Current plan details */}
             <div className="flex-1 rounded-3xl border border-border/50 bg-card p-5 lg:p-6 flex flex-col">
               <div className="flex items-start justify-between gap-4">
@@ -477,29 +477,29 @@ export default function MyWallet() {
                 <p className="mt-4 text-xs text-muted-foreground">{t("e_pass.no_benefits")}</p>
               )}
             </div>
+          </div>
+        </div>
 
-            {/* Quick actions */}
-            <div className="flex flex-col md:flex-row gap-3 flex-1 min-h-0">
-              {/* Total points */}
-              <div className="flex-1 rounded-3xl border border-border/40 bg-card/30 backdrop-blur-md p-4 flex items-center gap-3 min-w-0">
-                <div className="w-10 h-10 rounded-xl bg-wj-green/10 flex items-center justify-center shrink-0">
-                  <Bike className="h-5 w-5 text-wj-green" />
-                </div>
-                <div className="min-w-0">
-                  <p className="text-[10px] uppercase tracking-widest text-muted-foreground">{t("e_pass.total_points")}</p>
-                  <p className="text-sm font-semibold text-foreground truncate">{totalPoints}</p>
-                </div>
-              </div>
-              {/* Next maintenance */}
-              <div className="flex-1 rounded-3xl border border-border/40 bg-card/30 backdrop-blur-md p-4 flex items-center gap-3 min-w-0">
-                <div className="w-10 h-10 rounded-xl bg-wj-green/10 flex items-center justify-center shrink-0">
-                  <Clock className="h-5 w-5 text-wj-green" />
-                </div>
-                <div className="min-w-0">
-                  <p className="text-[10px] uppercase tracking-widest text-muted-foreground">{t("e_pass.next_maintenance")}</p>
-                  <p className="text-sm font-semibold text-foreground truncate">{nextMaintenanceLabel}</p>
-                </div>
-              </div>
+        {/* KPI cards above the history table */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+          {/* Total points */}
+          <div className="rounded-3xl border border-border/40 bg-card/30 backdrop-blur-md p-4 flex items-center gap-3 min-w-0">
+            <div className="w-10 h-10 rounded-xl bg-wj-green/10 flex items-center justify-center shrink-0">
+              <Bike className="h-5 w-5 text-wj-green" />
+            </div>
+            <div className="min-w-0">
+              <p className="text-[10px] uppercase tracking-widest text-muted-foreground">{t("e_pass.total_points")}</p>
+              <p className="text-sm font-semibold text-foreground truncate">{totalPoints}</p>
+            </div>
+          </div>
+          {/* Next maintenance */}
+          <div className="rounded-3xl border border-border/40 bg-card/30 backdrop-blur-md p-4 flex items-center gap-3 min-w-0">
+            <div className="w-10 h-10 rounded-xl bg-wj-green/10 flex items-center justify-center shrink-0">
+              <Clock className="h-5 w-5 text-wj-green" />
+            </div>
+            <div className="min-w-0">
+              <p className="text-[10px] uppercase tracking-widest text-muted-foreground">{t("e_pass.next_maintenance")}</p>
+              <p className="text-sm font-semibold text-foreground truncate">{nextMaintenanceLabel}</p>
             </div>
           </div>
         </div>
