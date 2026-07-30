@@ -82,7 +82,7 @@ export default function BikeAssistantCard() {
                 />
               </div>
               <h3 className="text-xl font-semibold text-foreground">
-                {config.name}, <span className="text-wj-green">what would you like to know?</span>
+                Hey, my name is <span className="text-wj-green">{config.name}</span>. How can I help you today?
               </h3>
               <p className="mx-auto mt-2 max-w-md text-sm text-muted-foreground">
                 Ask about your bike, services, prices, plans or the catalog — {config.name} reads
