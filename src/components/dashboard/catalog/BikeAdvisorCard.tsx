@@ -151,54 +151,63 @@ export default function BikeAdvisorCard({ onRecommend }: Props) {
         </div>
 
         <div className="flex-1 min-w-0">
-          <AnimatePresence mode="wait">
-            {thinking ? (
-              <motion.p
-                key="thinking"
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                exit={{ opacity: 0 }}
-                className="text-lg text-foreground/80"
-              >
-                Matching your riding profile with the collection...
-              </motion.p>
-            ) : result ? (
-              <motion.div
-                key="result"
-                initial={{ opacity: 0, y: 8 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0 }}
-                className="space-y-3"
-              >
-                <h2 className="text-xl lg:text-2xl font-semibold text-foreground">
-                  Your best match is the {result.name}.
-                </h2>
-                <p className="text-sm text-muted-foreground max-w-2xl">
-                  {result.tagline} — {result.specs.range} range, {result.specs.speed} top speed and{" "}
-                  {result.specs.weight} frame. It fits your {ride ?? "riding"} profile
-                  {needs.length > 0 && ` and your focus on ${needs.join(", ")}`}.
-                </p>
-                <Button variant="ghost" size="sm" onClick={reset} className="gap-2">
-                  <RotateCcw className="w-4 h-4" /> Start over
-                </Button>
-              </motion.div>
-            ) : (
-              <motion.div
-                key="quiz"
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                exit={{ opacity: 0 }}
-                className="space-y-5"
-              >
-                <h2 className="text-xl lg:text-2xl font-semibold text-foreground">
+          <div className="space-y-5">
+            <AnimatePresence mode="wait">
+              {thinking ? (
+                <motion.h2
+                  key="thinking"
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  exit={{ opacity: 0 }}
+                  className="text-xl lg:text-2xl font-semibold text-foreground/80"
+                >
+                  Matching your riding profile with the collection...
+                </motion.h2>
+              ) : result ? (
+                <motion.div
+                  key="result"
+                  initial={{ opacity: 0, y: 8 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0 }}
+                  className="space-y-2"
+                >
+                  <h2 className="text-xl lg:text-2xl font-semibold text-foreground">
+                    Your best match is the {result.name}.
+                  </h2>
+                  <p className="text-sm text-muted-foreground max-w-2xl">
+                    {result.tagline} — {result.specs.range} range, {result.specs.speed} top speed
+                    and {result.specs.weight} frame. Keep adjusting below and the list updates
+                    instantly.
+                  </p>
+                </motion.div>
+              ) : (
+                <motion.h2
+                  key="quiz"
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  exit={{ opacity: 0 }}
+                  className="text-xl lg:text-2xl font-semibold text-foreground"
+                >
                   Hey, my name is {config.name}. What kind of bike are you looking for?
-                </h2>
+                </motion.h2>
+              )}
+            </AnimatePresence>
+
+            <div className="relative">
+              <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+              <Input
+                value={description}
+                onChange={(e) => handleDescription(e.target.value)}
+                placeholder="Describe what you need — e.g. “a light bike to commute to work fast”"
+                className="pl-11 h-12 rounded-full bg-muted/50 border-border/50"
+              />
+            </div>
 
                 <div className="flex flex-wrap gap-2">
                   {RIDE_OPTIONS.map((option) => (
                     <button
                       key={option.id}
-                      onClick={() => setRide(option.id)}
+                      onClick={() => setRide(ride === option.id ? null : option.id)}
                       className={`rounded-full border px-4 py-2 text-sm transition-colors ${
                         ride === option.id
                           ? "border-wj-green bg-wj-green/15 text-foreground"
@@ -236,12 +245,12 @@ export default function BikeAdvisorCard({ onRecommend }: Props) {
                   </div>
                 </div>
 
-                <Button onClick={analyse} disabled={!ride && needs.length === 0}>
-                  Find my bike
-                </Button>
-              </motion.div>
+            {(ride || needs.length > 0 || description) && (
+              <Button variant="ghost" size="sm" onClick={reset} className="gap-2">
+                <RotateCcw className="w-4 h-4" /> Start over
+              </Button>
             )}
-          </AnimatePresence>
+          </div>
         </div>
       </div>
     </div>
