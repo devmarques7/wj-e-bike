@@ -35,6 +35,27 @@ export const toDateKey = (d: Date) => {
   return tz.toISOString().slice(0, 10);
 };
 
+/**
+ * Minimum notice (in minutes) between "now" on the rider's own device and the
+ * start of a bookable slot. Prevents offering 10:00 when it's already 09:58.
+ */
+export const SLOT_LEAD_MINUTES = 30;
+
+/** Local Date for a slot, built in the user's own timezone. */
+export const slotDateTime = (dateKey: string, start: string) => {
+  const [h, m] = start.split(":").map(Number);
+  const d = new Date(`${dateKey}T00:00:00`);
+  d.setHours(h || 0, m || 0, 0, 0);
+  return d;
+};
+
+/** True when the slot is still far enough in the future to be booked. */
+export const isSlotSelectable = (
+  dateKey: string,
+  start: string,
+  leadMinutes: number = SLOT_LEAD_MINUTES,
+) => slotDateTime(dateKey, start).getTime() >= Date.now() + leadMinutes * 60000;
+
 export const dayLabel = (dateKey: string) =>
   new Date(`${dateKey}T12:00:00`).toLocaleDateString("en-GB", {
     weekday: "short",
@@ -80,6 +101,7 @@ export async function fetchDaySlots(
   if (error) return [];
   const byStart = new Map<string, AvailableSlot>();
   for (const row of (data ?? []) as any[]) {
+    if (!isSlotSelectable(dateKey, String(row.start_time).slice(0, 5))) continue;
     if (!byStart.has(row.start_time)) {
       byStart.set(row.start_time, {
         start: row.start_time,
