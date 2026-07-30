@@ -409,13 +409,13 @@ export default function MyWallet() {
             </div>
 
             {/* Bike switcher dots */}
-            {linkedBikes.length > 1 && (
+            {orderedBikes.length > 1 && (
               <div className="flex justify-center gap-2 mt-4">
-                {linkedBikes.map((b, i) => (
+                {orderedBikes.map((b, i) => (
                   <button
                     key={b.id}
-                    onClick={(e) => { e.stopPropagation(); setActiveBikeIdx(i); }}
-                    className={`h-2 rounded-full transition-all ${i === activeBikeIdx ? "w-6 bg-wj-green" : "w-2 bg-border hover:bg-muted-foreground/40"}`}
+                    onClick={(e) => { e.stopPropagation(); bringToFront(b.id); }}
+                    className={`h-2 rounded-full transition-all ${i === 0 ? "w-6 bg-wj-green" : "w-2 bg-border hover:bg-muted-foreground/40"}`}
                     aria-label={b.model || `Bike ${i + 1}`}
                   />
                 ))}
