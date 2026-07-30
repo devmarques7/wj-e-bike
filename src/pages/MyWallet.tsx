@@ -241,6 +241,11 @@ export default function MyWallet() {
     .slice(-12)}`;
   const cardNumber = cardDigits.replace(/(.{4})/g, "$1 ").trim();
 
+  /** Plan-covered appointment allowance (used / scheduled / remaining). */
+  const allowance = usePlanAllowance(currentPlan?.slug);
+  /** Bike condition + next revision, reused from the Garage health model. */
+  const { bike: garageBike, health, nextRevision, daysToRevision } = useGarageBike(activeBike?.id ?? null);
+
   /** Resolves the theme for a card, falling back to a distinct default per position. */
   const themeFor = (id: string) => {
     if (cardThemes[id]) return cardThemes[id];
