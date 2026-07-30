@@ -281,7 +281,7 @@ export default function MyWallet() {
 
             {/* Featured card — always in front */}
             <div
-              className="relative z-20 aspect-[1.6/1] sm:aspect-[1.75/1] cursor-pointer transition-all duration-300 origin-top hover:-translate-y-2 hover:shadow-[0_25px_60px_-12px_rgba(5,140,66,0.45)]"
+              className="relative z-30 aspect-[1.6/1] sm:aspect-[1.75/1] cursor-pointer transition-all duration-300 origin-top hover:-translate-y-2 hover:shadow-[0_25px_60px_-12px_rgba(5,140,66,0.45)]"
               style={{ perspective: "1200px" }}
               onClick={() => setIsFlipped((v) => !v)}
               role="button"
