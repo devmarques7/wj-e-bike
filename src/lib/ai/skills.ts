@@ -6,6 +6,7 @@ import {
   CalendarClock,
   Heart,
   Sparkles,
+  Zap,
   type LucideIcon,
 } from "lucide-react";
 
@@ -16,7 +17,8 @@ export type AssistantSkillId =
   | "products"
   | "bike_catalog"
   | "appointments"
-  | "favorites";
+  | "favorites"
+  | "actions";
 
 export interface AssistantSkill {
   id: AssistantSkillId;
@@ -99,6 +101,23 @@ export const ASSISTANT_SKILLS: AssistantSkill[] = [
     tools: ["get_favorites"],
     samplePrompts: ["Any recommendations for me?"],
     defaultEnabled: false,
+  },
+  {
+    id: "actions",
+    name: "Actions (CRUD)",
+    description:
+      "Lets the assistant act: check free slots, book, reschedule or cancel appointments, register a bike and request an E-Pass card — always after your confirmation.",
+    icon: Zap,
+    tools: [
+      "list_service_slots",
+      "create_appointment",
+      "reschedule_appointment",
+      "cancel_appointment",
+      "register_bike",
+      "request_epass_card",
+    ],
+    samplePrompts: ["Book a maintenance for next Tuesday morning"],
+    defaultEnabled: true,
   },
 ];
 
