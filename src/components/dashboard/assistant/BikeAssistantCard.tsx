@@ -12,6 +12,11 @@ import RichText from "./RichText";
 import { useAuth } from "@/contexts/AuthContext";
 import type { AssistantAction } from "@/lib/ai/intents";
 
+interface BikeAssistantCardProps {
+  className?: string;
+}
+
+
 /** The assistant's priority flows, in the order we want riders to use them. */
 const PRIORITY_ACTIONS = [
   { icon: Stethoscope, label: "Book a revision", prompt: "I want to book a revision for my bike", primary: true },
