@@ -156,3 +156,75 @@ export default function WalletMemberCard({
     </div>
   );
 }
+export interface WalletCardBackProps {
+  themeId?: string | null;
+  /** QR node rendered inside the dark panel (right side). */
+  qr?: ReactNode;
+  planName?: string;
+  label?: string;
+  rows?: { label: string; value: string }[];
+  className?: string;
+}
+
+/**
+ * Back face of the E-Pass card. Same geometry as the front, but mirrored:
+ * the dark panel sits on the right (it becomes the left panel once flipped back).
+ */
+export function WalletCardBack({
+  themeId,
+  qr,
+  planName,
+  label = "E-Pass",
+  rows = [],
+  className,
+}: WalletCardBackProps) {
+  const theme = getWalletTheme(themeId);
+
+  return (
+    <div
+      className={cn("relative w-full h-full overflow-hidden rounded-3xl flex flex-row-reverse", className)}
+      style={{ background: theme.background }}
+    >
+      {/* Dark panel — full height, right side (mirrors the front) */}
+      <div
+        className="relative h-full w-[42%] shrink-0 flex items-center justify-center gap-2 p-3"
+        style={{ background: theme.panel }}
+      >
+        <span
+          className="text-[8px] uppercase tracking-[0.25em] font-medium [writing-mode:vertical-rl]"
+          style={{ color: theme.panelInk, opacity: 0.7 }}
+        >
+          {planName || "Member"}
+        </span>
+        <div className="flex-1 max-w-[150px] aspect-square flex items-center justify-center overflow-hidden">
+          {qr}
+        </div>
+      </div>
+
+      {/* Colour side — details */}
+      <div className="relative flex-1 min-w-0 flex flex-col p-4 sm:p-5">
+        <div>
+          <p className="text-[9px] uppercase tracking-[0.22em] font-medium" style={{ color: theme.inkMuted }}>
+            {label}
+          </p>
+          <span className="text-xl font-black tracking-tight" style={{ color: theme.ink }}>
+            WJ
+          </span>
+        </div>
+
+        <div className="mt-auto space-y-2">
+          {rows.map((row) => (
+            <div key={row.label} className="min-w-0">
+              <p className="text-[8px] uppercase tracking-widest" style={{ color: theme.inkMuted }}>
+                {row.label}
+              </p>
+              <p className="text-[11px] sm:text-xs font-semibold truncate" style={{ color: theme.ink }}>
+                {row.value}
+              </p>
+            </div>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+}
