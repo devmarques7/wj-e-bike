@@ -811,6 +811,62 @@ export type Database = {
         }
         Relationships: []
       }
+      epass_card_requests: {
+        Row: {
+          bike_id: string | null
+          bike_model: string | null
+          bike_serial: string | null
+          card_number: string
+          created_at: string
+          id: string
+          review_notes: string | null
+          reviewed_at: string | null
+          reviewed_by: string | null
+          status: string
+          tier: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          bike_id?: string | null
+          bike_model?: string | null
+          bike_serial?: string | null
+          card_number: string
+          created_at?: string
+          id?: string
+          review_notes?: string | null
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          status?: string
+          tier?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          bike_id?: string | null
+          bike_model?: string | null
+          bike_serial?: string | null
+          card_number?: string
+          created_at?: string
+          id?: string
+          review_notes?: string | null
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          status?: string
+          tier?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "epass_card_requests_bike_id_fkey"
+            columns: ["bike_id"]
+            isOneToOne: false
+            referencedRelation: "customer_bikes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       inventory: {
         Row: {
           id: string

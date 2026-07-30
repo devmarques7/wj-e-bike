@@ -32,6 +32,7 @@ import { Fragment } from "react";
 import AdminDashboardLayout from "@/components/dashboard/AdminDashboardLayout";
 import AdminKPICard from "@/components/dashboard/AdminKPICard";
 import KPICarousel from "@/components/dashboard/KPICarousel";
+import EPassCardRequestsCard from "@/components/dashboard/EPassCardRequestsCard";
 import { useAuth } from "@/contexts/AuthContext";
 import { Navigate } from "react-router-dom";
 import { Badge } from "@/components/ui/badge";
@@ -434,6 +435,8 @@ export default function AdminMembers() {
             <AdminKPICard key={kpi.label} {...kpi} index={index} />
           ))}
         </KPICarousel>
+
+        <EPassCardRequestsCard />
 
         {/* Main Content */}
         <div className="grid grid-cols-12 gap-4 lg:gap-6 items-stretch">
