@@ -18,7 +18,6 @@ import WalletCardThemeDialog from "@/components/dashboard/WalletCardThemeDialog"
 import { loadWalletThemes, saveWalletThemes, themeForIndex } from "@/lib/wallet/cardThemes";
 import WalletActionTiles from "@/components/dashboard/wallet/WalletActionTiles";
 import ServiceAllowanceCard from "@/components/dashboard/wallet/ServiceAllowanceCard";
-import BikeHealthCard from "@/components/dashboard/wallet/BikeHealthCard";
 import ScanEPassDialog from "@/components/dashboard/wallet/ScanEPassDialog";
 import { usePlanAllowance, PLAN_SERVICE_ALLOWANCE } from "@/hooks/wallet/usePlanAllowance";
 import { useGarageBike } from "@/hooks/garage/useGarageBike";
@@ -480,19 +479,6 @@ export default function MyWallet() {
           </div>
         </div>
 
-        {/* Plan usage + bike condition */}
-        <div className="grid grid-cols-1 gap-6 lg:items-stretch">
-          <BikeHealthCard
-            bikeName={garageBike?.model || activeBikeName}
-            overall={health.overall}
-            metrics={health.metrics}
-            daysToRevision={daysToRevision}
-            nextRevision={nextRevision}
-            onOpenGarage={() => navigate("/dashboard/garage")}
-          />
-        </div>
-
-        {/* History table */}
         <div className="w-full h-full">
           <div className="h-full rounded-3xl border border-border/50 bg-card overflow-hidden flex flex-col">
             <div className="p-6 border-b border-border/50">
