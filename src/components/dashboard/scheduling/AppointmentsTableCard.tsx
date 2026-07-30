@@ -275,8 +275,23 @@ export default function AppointmentsTableCard({
     return arr;
   }, [appointments, requestRows, statusFilter, sortAsc, mineOnlyMechanicId]);
 
+  /* Pagination: at most 5 rows per page; the viewport shows ~3 and scrolls. */
+  const PAGE_SIZE = 5;
+  const [page, setPage] = useState(0);
+  const totalPages = Math.max(1, Math.ceil(filteredSorted.length / PAGE_SIZE));
+  useEffect(() => {
+    setPage((p) => Math.min(p, totalPages - 1));
+  }, [totalPages]);
+  useEffect(() => {
+    setPage(0);
+  }, [statusFilter, groupBy, sortAsc]);
+  const pagedRows = useMemo(
+    () => filteredSorted.slice(page * PAGE_SIZE, page * PAGE_SIZE + PAGE_SIZE),
+    [filteredSorted, page],
+  );
+
   const groupedAppointments = useMemo(() => {
-    if (groupBy === "none") return [{ key: "all", label: "", items: filteredSorted }];
+    if (groupBy === "none") return [{ key: "all", label: "", items: pagedRows }];
     const map = new Map<string, { key: string; label: string; items: ApptRow[] }>();
     const labelFor = (a: ApptRow): { key: string; label: string } => {
       switch (groupBy) {
@@ -298,14 +313,14 @@ export default function AppointmentsTableCard({
           return { key: "all", label: "" };
       }
     };
-    for (const a of filteredSorted) {
+    for (const a of pagedRows) {
       const { key, label } = labelFor(a);
       const g = map.get(key) ?? { key, label, items: [] };
       g.items.push(a);
       map.set(key, g);
     }
     return Array.from(map.values());
-  }, [filteredSorted, groupBy, t]);
+  }, [pagedRows, groupBy, t]);
 
   const toggleGroup = (key: string) =>
     setCollapsedGroups((prev) => ({ ...prev, [key]: !prev[key] }));
