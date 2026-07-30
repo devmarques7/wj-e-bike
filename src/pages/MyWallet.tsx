@@ -73,6 +73,7 @@ export default function MyWallet() {
   const [stackOrder, setStackOrder] = useState<string[]>([]);
   const [hoveredId, setHoveredId] = useState<string | null>(null);
   const [currentPlan, setCurrentPlan] = useState<PlanInfo | null>(null);
+  const [plans, setPlans] = useState<PlanInfo[]>([]);
   const [history, setHistory] = useState<PointEntry[]>([]);
   const [currentPage, setCurrentPage] = useState(1);
   const [pickerOpen, setPickerOpen] = useState(false);
@@ -167,6 +168,7 @@ export default function MyWallet() {
 
       if (cancelled) return;
       setCurrentPlan(cur);
+      setPlans(planList);
       setHistory(entries);
       setLinkedBikes(bikes);
       setStackOrder(bikes.map((b) => b.id));
