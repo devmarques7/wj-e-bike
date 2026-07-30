@@ -246,15 +246,18 @@ export default function MyWallet() {
             {(() => {
               const otherCount = Math.max(0, linkedBikes.length - 1);
               const ghostTop = WALLET_FIRST_PEEK + otherCount * WALLET_STEP + WALLET_GHOST_EXTRA;
-              const ghostInset = (otherCount + 1) * WALLET_INSET;
+              const ghostScale = 1 - (otherCount + 1) * 0.035;
               return (
                 <button
                   type="button"
                   onClick={() => setPickerOpen(true)}
                   disabled={!canLinkAnother}
                   title={canLinkAnother ? t("e_pass.add_bike_hint") : t("e_pass.no_other_bike")}
-                  className="absolute bottom-0 rounded-3xl border-2 border-dashed border-slate-300 bg-slate-100 flex flex-col items-center justify-start gap-1.5 text-slate-600 transition-all duration-300 origin-bottom pt-3 hover:-translate-y-2 hover:border-wj-green/60 hover:shadow-[0_25px_60px_-12px_rgba(5,140,66,0.45)] active:translate-y-[-2px] disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:translate-y-0 disabled:hover:border-slate-300 disabled:hover:shadow-none disabled:hover:bg-slate-100"
-                  style={{ top: `-${ghostTop}px`, left: ghostInset, right: ghostInset, zIndex: 5 }}
+                  className="absolute inset-x-0 bottom-0 aspect-[1.6/1] sm:aspect-[1.75/1] rounded-3xl border-2 border-dashed border-slate-300 bg-slate-100 flex flex-col items-center justify-start gap-1.5 text-slate-600 transition-all duration-300 origin-bottom pt-3 hover:border-wj-green/60 hover:shadow-[0_25px_60px_-12px_rgba(5,140,66,0.45)] disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:border-slate-300 disabled:hover:shadow-none disabled:hover:bg-slate-100"
+                  style={{
+                    transform: `translateY(-${ghostTop}px) scale(${ghostScale})`,
+                    zIndex: 5,
+                  }}
                 >
                   <div className="p-2 rounded-full bg-wj-green/10 border border-wj-green/30 transition-colors">
                     <Plus className="h-5 w-5" />
