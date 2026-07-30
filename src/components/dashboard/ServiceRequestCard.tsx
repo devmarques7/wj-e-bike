@@ -204,9 +204,9 @@ export default function ServiceRequestCard() {
         scheduled_start_time: startTime,
         duration_minutes: 60,
         status: "pending",
-        priority: "urgent",
+        priority: "emergency",
         priority_score: 100,
-        booked_via: "urgent_request",
+        booked_via: "portal",
         notes: "Urgent service requested from dashboard",
       } as any);
       if (error) throw error;
