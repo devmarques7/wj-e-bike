@@ -322,8 +322,16 @@ export async function resolveLocalIntent(
     return skillOff("appointments", ctx) ?? (await myAppointments(ctx));
   }
 
-  if (has(t, "plan", "plano", "membership", "assinatura", "subscription", "tier")) {
-    return skillOff("pricing", ctx) ?? (await plans());
+  if (has(t, "plan", "plano", "membership", "assinatura", "subscription", "tier", "cover", "covered", "coberto", "cobertura")) {
+    const res = skillOff("pricing", ctx) ?? (await plans());
+    if (has(t, "cover", "covered", "coberto", "cobertura", "upgrade")) {
+      return {
+        ...res,
+        content: `${res.content}\n\nIf your current tier doesn't cover the service you need, upgrading usually costs less than paying it out of pocket.`,
+        action: { type: "navigate", to: "/dashboard/membership", label: "Compare & upgrade" },
+      };
+    }
+    return res;
   }
 
   if (has(t, "service", "serviço", "servico", "maintenance", "manutenção", "manutencao", "revision", "revisão")) {
