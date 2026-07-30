@@ -3,9 +3,11 @@ import { Wrench, Clock, Calendar, Plus, Check, Bike } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useEffect, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
+import { cn } from "@/lib/utils";
 import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { Pagination, PaginationContent, PaginationItem, PaginationLink, PaginationNext, PaginationPrevious } from "@/components/ui/pagination";
 import RoleDashboardLayout from "@/components/dashboard/RoleDashboardLayout";
 import EmptyState from "@/components/dashboard/EmptyState";
 import { supabase } from "@/integrations/supabase/client";
@@ -49,6 +51,9 @@ const cardStyles: Record<string, { gradient: string; border: string; text: strin
   black: { gradient: "from-amber-400 to-amber-600", border: "border-amber-400", text: "text-amber-300" },
 };
 
+/** Maximum rows rendered per page in the service history table. */
+const HISTORY_PAGE_SIZE = 10;
+
 export default function MyWallet() {
   const { user } = useAuth();
   const { t } = useTranslation();
@@ -61,6 +66,7 @@ export default function MyWallet() {
   const [hoveredId, setHoveredId] = useState<string | null>(null);
   const [currentPlan, setCurrentPlan] = useState<PlanInfo | null>(null);
   const [history, setHistory] = useState<PointEntry[]>([]);
+  const [currentPage, setCurrentPage] = useState(1);
   const [pickerOpen, setPickerOpen] = useState(false);
 
   useEffect(() => {
@@ -159,6 +165,16 @@ export default function MyWallet() {
   }, [user?.id]);
 
   const totalPoints = useMemo(() => history.reduce((s, h) => s + h.points, 0), [history]);
+
+  const totalPages = useMemo(() => Math.max(1, Math.ceil(history.length / HISTORY_PAGE_SIZE)), [history]);
+  const paginatedHistory = useMemo(() => {
+    const start = (currentPage - 1) * HISTORY_PAGE_SIZE;
+    return history.slice(start, start + HISTORY_PAGE_SIZE);
+  }, [history, currentPage]);
+
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [history.length]);
 
   // Next maintenance: 3 months from last completed appointment
   const nextMaintenance = useMemo(() => {
@@ -523,40 +539,73 @@ export default function MyWallet() {
                   className="h-full"
                 />
               ) : (
-                <Table>
-                  <TableHeader>
-                    <TableRow className="border-border/50 hover:bg-transparent">
-                      <TableHead className="text-muted-foreground">{t("e_pass.history.date")}</TableHead>
-                      <TableHead className="text-muted-foreground">{t("e_pass.history.service")}</TableHead>
-                      <TableHead className="text-muted-foreground text-right">{t("e_pass.history.points")}</TableHead>
-                      <TableHead className="text-muted-foreground text-right">{t("e_pass.history.status")}</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {history.map((item, index) => (
-                      <motion.tr
-                        key={item.id}
-                        initial={{ opacity: 0, y: 10 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        transition={{ delay: Math.min(index * 0.02, 0.4) }}
-                        className="border-border/30 hover:bg-muted/30"
-                      >
-                        <TableCell className="text-sm text-muted-foreground">
-                          {new Date(item.date).toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric" })}
-                        </TableCell>
-                        <TableCell className="text-sm font-medium text-foreground">{item.service}</TableCell>
-                        <TableCell className="text-right">
-                          <span className="text-wj-green font-semibold">+{item.points}</span>
-                        </TableCell>
-                        <TableCell className="text-right">
-                          <span className="px-2 py-0.5 rounded-full bg-wj-green/10 text-wj-green text-xs font-medium capitalize">
-                            {item.status}
-                          </span>
-                        </TableCell>
-                      </motion.tr>
-                    ))}
-                  </TableBody>
-                </Table>
+                <>
+                  <Table>
+                    <TableHeader>
+                      <TableRow className="border-border/50 hover:bg-transparent">
+                        <TableHead className="text-muted-foreground">{t("e_pass.history.date")}</TableHead>
+                        <TableHead className="text-muted-foreground">{t("e_pass.history.service")}</TableHead>
+                        <TableHead className="text-muted-foreground text-right">{t("e_pass.history.points")}</TableHead>
+                        <TableHead className="text-muted-foreground text-right">{t("e_pass.history.status")}</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {paginatedHistory.map((item, index) => (
+                        <motion.tr
+                          key={item.id}
+                          initial={{ opacity: 0, y: 10 }}
+                          animate={{ opacity: 1, y: 0 }}
+                          transition={{ delay: Math.min(index * 0.02, 0.4) }}
+                          className="border-border/30 hover:bg-muted/30"
+                        >
+                          <TableCell className="text-sm text-muted-foreground">
+                            {new Date(item.date).toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric" })}
+                          </TableCell>
+                          <TableCell className="text-sm font-medium text-foreground">{item.service}</TableCell>
+                          <TableCell className="text-right">
+                            <span className="text-wj-green font-semibold">+{item.points}</span>
+                          </TableCell>
+                          <TableCell className="text-right">
+                            <span className="px-2 py-0.5 rounded-full bg-wj-green/10 text-wj-green text-xs font-medium capitalize">
+                              {item.status}
+                            </span>
+                          </TableCell>
+                        </motion.tr>
+                      ))}
+                    </TableBody>
+                  </Table>
+
+                  {totalPages > 1 && (
+                    <div className="sticky bottom-0 border-t border-border/50 bg-card/95 backdrop-blur p-3">
+                      <Pagination>
+                        <PaginationContent>
+                          <PaginationItem>
+                            <PaginationPrevious
+                              onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
+                              className={cn(currentPage === 1 && "pointer-events-none opacity-40")}
+                            />
+                          </PaginationItem>
+                          {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
+                            <PaginationItem key={page}>
+                              <PaginationLink
+                                isActive={page === currentPage}
+                                onClick={() => setCurrentPage(page)}
+                              >
+                                {page}
+                              </PaginationLink>
+                            </PaginationItem>
+                          ))}
+                          <PaginationItem>
+                            <PaginationNext
+                              onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
+                              className={cn(currentPage === totalPages && "pointer-events-none opacity-40")}
+                            />
+                          </PaginationItem>
+                        </PaginationContent>
+                      </Pagination>
+                    </div>
+                  )}
+                </>
               )}
             </div>
           </div>
