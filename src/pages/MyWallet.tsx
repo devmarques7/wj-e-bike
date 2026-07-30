@@ -612,7 +612,6 @@ export default function MyWallet() {
             </div>
           </div>
         </div>
-        </div>
       </div>
 
       <WalletCardThemeDialog
