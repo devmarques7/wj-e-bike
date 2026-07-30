@@ -80,8 +80,8 @@ export default function Garage() {
           </div>
 
         </div>
-
       </div>
     </RoleDashboardLayout>
+
   );
 }
