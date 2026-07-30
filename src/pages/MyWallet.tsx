@@ -211,9 +211,11 @@ export default function MyWallet() {
   const bringToFront = (id: string) => {
     if (activeBike?.id === id) return;
     const ids = orderedBikes.map((b) => b.id);
+    if (!ids.includes(id)) return;
     const oldFront = ids[0];
     const rest = ids.filter((x) => x !== id && x !== oldFront);
-    setStackOrder([id, ...rest, oldFront]);
+    setStackOrder(oldFront ? [id, ...rest, oldFront] : [id, ...rest]);
+    setHoveredId(null);
     setIsFlipped(false);
   };
 
@@ -280,9 +282,13 @@ export default function MyWallet() {
             })}
 
             {/* Featured card — always in front */}
-            <div
-              className="relative z-30 aspect-[1.6/1] sm:aspect-[1.75/1] cursor-pointer transition-all duration-300 origin-top hover:-translate-y-2 hover:shadow-[0_25px_60px_-12px_rgba(5,140,66,0.45)]"
-              style={{ perspective: "1200px" }}
+            <motion.div
+              key={activeBikeId}
+              initial={{ y: 18, scale: 0.97, opacity: 0.4 }}
+              animate={{ y: 0, scale: 1, opacity: 1 }}
+              transition={{ duration: 0.45, ease: [0.22, 1, 0.36, 1] }}
+              className="relative z-30 aspect-[1.6/1] sm:aspect-[1.75/1] cursor-pointer origin-top hover:-translate-y-2 hover:shadow-[0_25px_60px_-12px_rgba(5,140,66,0.45)]"
+              style={{ perspective: "1200px", zIndex: 30 }}
               onClick={() => setIsFlipped((v) => !v)}
               role="button"
               aria-label={t("e_pass.tap_to_flip")}
@@ -313,7 +319,10 @@ export default function MyWallet() {
                     <div className="flex items-start justify-between">
                       <div>
                         <p className="text-[9px] sm:text-[10px] uppercase tracking-[0.2em] text-muted-foreground font-medium">{t("e_pass.member_card")}</p>
-                        <h3 className="text-base sm:text-lg font-bold text-foreground tracking-tight">WJ Vision</h3>
+                        <h3 className="text-base sm:text-lg font-bold text-foreground tracking-tight truncate max-w-[180px]">
+                          {activeBikeName !== t("e_pass.no_bike") ? activeBikeName : "WJ Vision"}
+                        </h3>
+                        <p className="text-[9px] text-muted-foreground font-mono tracking-wider mt-0.5 truncate max-w-[180px]">{activeBikeSerial}</p>
                       </div>
                       <div className={`px-3 py-1 rounded-full bg-gradient-to-r ${styles.gradient} text-[10px] sm:text-xs font-bold uppercase tracking-wider text-white`}>
                         {currentPlan?.name ?? "Free"}
@@ -395,7 +404,7 @@ export default function MyWallet() {
                   </div>
                 </div>
               </div>
-            </div>
+            </motion.div>
 
             {/* Bike switcher dots */}
             {orderedBikes.length > 1 && (
