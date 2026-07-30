@@ -1,4 +1,5 @@
-import { Check } from "lucide-react";
+import { Check, Crown, ArrowRight } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 import {
   Dialog,
   DialogContent,
@@ -32,6 +33,7 @@ export default function WalletCardThemeDialog({
   onSelect,
   preview,
 }: WalletCardThemeDialogProps) {
+  const navigate = useNavigate();
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-md">
@@ -41,6 +43,28 @@ export default function WalletCardThemeDialog({
             Pick a colour for this card. The layout stays exactly the same.
           </DialogDescription>
         </DialogHeader>
+
+        <button
+          type="button"
+          onClick={() => {
+            onOpenChange(false);
+            navigate("/dashboard/membership");
+          }}
+          className="group flex w-full items-center gap-3 rounded-2xl border border-primary/30 bg-primary/10 px-4 py-3 text-left transition-colors hover:bg-primary/20"
+        >
+          <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-primary/20">
+            <Crown className="h-4 w-4 text-primary" />
+          </span>
+          <span className="min-w-0 flex-1">
+            <span className="block text-sm font-semibold text-foreground">
+              Upgrade to the next plan
+            </span>
+            <span className="block text-xs text-muted-foreground">
+              Unlock exclusive card finishes and more services.
+            </span>
+          </span>
+          <ArrowRight className="h-4 w-4 shrink-0 text-primary transition-transform group-hover:translate-x-0.5" />
+        </button>
 
         <div className="aspect-[1.75/1] w-full rounded-3xl overflow-hidden shadow-xl">
           <WalletMemberCard themeId={themeId} {...preview} />
