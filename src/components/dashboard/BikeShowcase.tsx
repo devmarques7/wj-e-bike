@@ -1,3 +1,4 @@
+import { Link } from "react-router-dom";
 import { useState, useEffect, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import useEmblaCarousel from "embla-carousel-react";
@@ -281,6 +282,12 @@ export default function BikeShowcase() {
           <p className="text-[11px] text-muted-foreground/70 font-light">Your ride at a glance</p>
         </div>
         <div className="flex items-center gap-2">
+          <Link
+            to="/dashboard/garage"
+            className="px-2.5 py-1 rounded-full text-[11px] bg-background/30 backdrop-blur-sm border border-border/40 text-muted-foreground hover:text-foreground hover:border-wj-green/40 transition-colors"
+          >
+            Garage
+          </Link>
           {isRealUser && registeredBikes.length > 1 && (
             <div className="flex items-center gap-1 px-2 py-1 rounded-full bg-background/30 backdrop-blur-sm border border-border/40">
               {registeredBikes.map((b, i) => (
