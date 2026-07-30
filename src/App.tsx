@@ -29,6 +29,7 @@ import UrgentService from "./pages/UrgentService";
 import MyWallet from "./pages/MyWallet";
 import EPassPage from "./pages/EPassPage";
 import Profile from "./pages/Profile";
+import Chat from "./pages/Chat";
 import NotFound from "./pages/NotFound";
 import GlobalBreadcrumbs from "@/components/GlobalBreadcrumbs";
 
@@ -87,6 +88,7 @@ const App = () => (
               <Route path="/auth" element={<Auth />} />
               <Route path="/complete-profile" element={<CompleteProfile />} />
               <Route path="/profile" element={<Profile />} />
+              <Route path="/chat" element={<Chat />} />
               
               {/* Member Dashboard Routes */}
               <Route path="/dashboard" element={<Dashboard />} />
