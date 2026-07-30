@@ -1,5 +1,5 @@
 import { motion } from "framer-motion";
-import { Wrench, Clock, Calendar, Check, Bike } from "lucide-react";
+import { Wrench, Clock, Calendar, Check, Bike, QrCode, HeartPulse, CalendarPlus, LayoutGrid } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useEffect, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
@@ -16,6 +16,12 @@ import BikePickerDialog, { LinkedBike } from "@/components/dashboard/BikePickerD
 import WalletMemberCard, { WalletCardBack } from "@/components/dashboard/WalletMemberCard";
 import WalletCardThemeDialog from "@/components/dashboard/WalletCardThemeDialog";
 import { loadWalletThemes, saveWalletThemes, themeForIndex } from "@/lib/wallet/cardThemes";
+import WalletQuickActions from "@/components/dashboard/wallet/WalletQuickActions";
+import ServiceAllowanceCard from "@/components/dashboard/wallet/ServiceAllowanceCard";
+import BikeHealthCard from "@/components/dashboard/wallet/BikeHealthCard";
+import ScanEPassDialog from "@/components/dashboard/wallet/ScanEPassDialog";
+import { usePlanAllowance } from "@/hooks/wallet/usePlanAllowance";
+import { useGarageBike } from "@/hooks/garage/useGarageBike";
 
 type PointEntry = {
   id: string;
@@ -73,6 +79,7 @@ export default function MyWallet() {
   /** Per-card colour themes, persisted locally. */
   const [cardThemes, setCardThemes] = useState<Record<string, string>>(() => loadWalletThemes());
   const [editingCardId, setEditingCardId] = useState<string | null>(null);
+  const [scanOpen, setScanOpen] = useState(false);
 
   useEffect(() => {
     if (!user?.id) return;
