@@ -455,17 +455,19 @@ export default function MyWallet() {
                 <p className="mt-4 text-xs text-muted-foreground">{t("e_pass.no_benefits")}</p>
               )}
             </div>
+
+            {/* Shortcuts — scan / add card rail + wide tiles */}
+            <div className="mt-6">
+              <WalletActionTiles
+                onScan={() => setScanOpen(true)}
+                onAddCard={() => setPickerOpen(true)}
+                onTips={() => navigate("/dashboard/garage")}
+                onPlans={() => navigate("/membership-plans")}
+                onAllBikes={() => navigate("/dashboard/bike")}
+              />
+            </div>
           </div>
         </div>
-
-        {/* Shortcuts — scan / add card rail + wide tiles */}
-        <WalletActionTiles
-          onScan={() => setScanOpen(true)}
-          onAddCard={() => setPickerOpen(true)}
-          onTips={() => navigate("/dashboard/garage")}
-          onPlans={() => navigate("/membership-plans")}
-          onAllBikes={() => navigate("/dashboard/bike")}
-        />
 
         {/* Plan usage + bike condition */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 lg:items-stretch">
