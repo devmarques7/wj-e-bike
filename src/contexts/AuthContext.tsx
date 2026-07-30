@@ -31,120 +31,19 @@ interface AuthContextType {
     remember?: boolean
   ) => Promise<{ success: boolean; code?: string; message?: string }>;
   logout: () => Promise<void>;
-  setMockUser: (role: UserRole, tier?: MemberTier, remember?: boolean) => void;
   updateAvatar: (url: string) => void;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
-const STORAGE_KEY = "wj_auth_user";
-const EXPIRY_KEY = "wj_auth_expiry";
-const DEMO_KEY = "wj_auth_demo";
-const SESSION_MS = 24 * 60 * 60 * 1000; // 1 day
-const REMEMBER_MS = 30 * 24 * 60 * 60 * 1000; // 30 days
-
-function readStoredUser(): User | null {
-  try {
-    if (localStorage.getItem(DEMO_KEY) !== "1") return null;
-    const expiry = localStorage.getItem(EXPIRY_KEY);
-    if (!expiry || Date.now() > Number(expiry)) {
-      localStorage.removeItem(STORAGE_KEY);
-      localStorage.removeItem(EXPIRY_KEY);
-      localStorage.removeItem(DEMO_KEY);
-      return null;
-    }
-    const raw = localStorage.getItem(STORAGE_KEY);
-    return raw ? (JSON.parse(raw) as User) : null;
-  } catch {
-    return null;
-  }
-}
-
-function persistUser(user: User | null, remember: boolean) {
-  if (!user) {
-    localStorage.removeItem(STORAGE_KEY);
-    localStorage.removeItem(EXPIRY_KEY);
-    localStorage.removeItem(DEMO_KEY);
-    return;
-  }
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(user));
-  localStorage.setItem(
-    EXPIRY_KEY,
-    String(Date.now() + (remember ? REMEMBER_MS : SESSION_MS))
-  );
-  if (user.isDemo) localStorage.setItem(DEMO_KEY, "1");
-}
-
-// Mock users for demonstration
-const mockUsers: Record<string, User> = {
-  "admin@wjvision.com": {
-    id: "admin-001",
-    name: "Admin User",
-    email: "admin@wjvision.com",
-    role: "admin",
-    avatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=admin",
-  },
-  "staff@wjvision.com": {
-    id: "staff-001",
-    name: "Marco Hendriks",
-    email: "staff@wjvision.com",
-    role: "staff",
-    avatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=marco",
-  },
-  "light@wjvision.com": {
-    id: "member-light-001",
-    name: "Emma van der Berg",
-    email: "light@wjvision.com",
-    role: "customer",
-    tier: "light",
-    bikeId: "V8-2024-NL-00421",
-    bikeName: "WJ V8 Urban",
-    purchaseDate: "2024-01-15",
-    estimatedDailyKm: 12,
-    totalKm: 1840,
-    avatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=emma",
-  },
-  "plus@wjvision.com": {
-    id: "member-plus-001",
-    name: "Lucas de Vries",
-    email: "plus@wjvision.com",
-    role: "customer",
-    tier: "plus",
-    bikeId: "V8-2024-NL-00892",
-    bikeName: "WJ V8 Sport",
-    purchaseDate: "2023-10-22",
-    estimatedDailyKm: 18,
-    totalKm: 4250,
-    avatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=lucas",
-  },
-  "black@wjvision.com": {
-    id: "member-black-001",
-    name: "Sophie Jansen",
-    email: "black@wjvision.com",
-    role: "customer",
-    tier: "black",
-    bikeId: "V8-2024-NL-00156",
-    bikeName: "WJ V8 Prestige",
-    purchaseDate: "2023-06-10",
-    estimatedDailyKm: 25,
-    totalKm: 8920,
-    avatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=sophie",
-  },
-};
-
 export function AuthProvider({ children }: { children: ReactNode }) {
-  const [user, setUser] = useState<User | null>(() => readStoredUser());
+  const [user, setUser] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState<boolean>(true);
 
   // Build a real user from a Supabase session by reading profile + user_roles
   const hydrateFromSession = async (session: Session | null) => {
     if (!session?.user) {
-      // Don't blow away an active demo session
-      if (localStorage.getItem(DEMO_KEY) === "1") {
-        setUser(readStoredUser());
-      } else {
-        setUser(null);
-      }
+      setUser(null);
       setIsLoading(false);
       return;
     }
@@ -196,9 +95,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     supabase.auth.getSession().then(({ data: { session } }) => {
       if (session) {
         hydrateFromSession(session);
-      } else if (localStorage.getItem(DEMO_KEY) === "1") {
-        setUser(readStoredUser());
-        setIsLoading(false);
       } else {
         setIsLoading(false);
       }
@@ -224,7 +120,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         message: error?.message,
       };
     }
-    localStorage.removeItem(DEMO_KEY);
     return { success: true };
   };
 
@@ -236,7 +131,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       // ignore — still clear local state below
     }
     setUser(null);
-    persistUser(null, false);
     // Wipe any lingering Supabase tokens from session/local storage
     try {
       const wipe = (storage: Storage) => {
@@ -257,35 +151,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const updateAvatar = (url: string) => {
     setUser((prev) => {
       if (!prev) return prev;
-      const next = { ...prev, avatar: url };
-      // Only persist demo users to localStorage; real users come from Supabase
-      if (prev.isDemo) {
-        try {
-          localStorage.setItem(STORAGE_KEY, JSON.stringify(next));
-        } catch {
-          // ignore
-        }
-      }
-      return next;
+      return { ...prev, avatar: url };
     });
-  };
-
-  const setMockUser = (
-    role: UserRole,
-    tier?: MemberTier,
-    remember: boolean = false
-  ) => {
-    let next: User | null = null;
-    if (role === "admin") {
-      next = mockUsers["admin@wjvision.com"];
-    } else if (role === "staff") {
-      next = mockUsers["staff@wjvision.com"];
-    } else if (role === "customer" && tier) {
-      next = mockUsers[`${tier}@wjvision.com`];
-    }
-    if (next) next = { ...next, isDemo: true };
-    setUser(next);
-    persistUser(next, remember);
   };
 
   return (
@@ -296,7 +163,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         isLoading,
         login,
         logout,
-        setMockUser,
         updateAvatar,
       }}
     >
