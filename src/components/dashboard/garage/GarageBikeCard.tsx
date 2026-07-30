@@ -2,14 +2,17 @@ import { motion } from "framer-motion";
 import { Battery, Gauge, MapPin, Zap, ArrowUpRight } from "lucide-react";
 import { Link } from "react-router-dom";
 import type { GarageBike } from "@/hooks/garage/useGarageBike";
+import type { HealthMetric } from "@/hooks/garage/useGarageBike";
+import AnimatedFatbike from "./AnimatedFatbike";
 
 interface Props {
   bike: GarageBike | null;
   overall: number;
+  metrics?: HealthMetric[];
 }
 
 /** Identity card of the registered bike: model, serial, key telemetry, E-Pass link. */
-export default function GarageBikeCard({ bike, overall }: Props) {
+export default function GarageBikeCard({ bike, overall, metrics = [] }: Props) {
   return (
     <motion.div
       initial={{ opacity: 0, y: 16 }}
@@ -37,17 +40,11 @@ export default function GarageBikeCard({ bike, overall }: Props) {
       </div>
 
       <div className="mt-5 grid grid-cols-12 gap-4">
-        <div className="col-span-12 sm:col-span-7 rounded-2xl bg-muted/30 border border-border/20 p-4 flex items-center justify-center min-h-[180px] overflow-hidden">
-          {bike?.image_url ? (
-            <img
-              src={bike.image_url}
-              alt={`${bike.model} registered e-bike`}
-              className="max-h-[180px] w-auto object-contain"
-              loading="lazy"
-            />
-          ) : (
-            <span className="text-xs text-muted-foreground">No bike image yet</span>
-          )}
+        <div className="col-span-12 sm:col-span-7 relative rounded-2xl bg-muted/30 border border-border/20 p-4 min-h-[200px] overflow-hidden">
+          <AnimatedFatbike metrics={metrics} />
+          <span className="absolute left-4 top-3 text-[10px] uppercase tracking-wider text-muted-foreground/70">
+            Hover components for live wear
+          </span>
         </div>
 
         <div className="col-span-12 sm:col-span-5 flex flex-col gap-3">
