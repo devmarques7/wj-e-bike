@@ -181,6 +181,7 @@ export default function BikeAssistantCard() {
                 {messages.map((m) => {
                   const isLast = m.id === lastAssistantId;
                   const isAssistant = m.role === "assistant";
+                  const parsed = isAssistant ? parseOptions(m.content) : { text: m.content, options: [] };
                   return (
                     <div key={m.id} className="relative flex gap-3">
                       {/* Rail */}
@@ -223,8 +224,23 @@ export default function BikeAssistantCard() {
                               : "border border-border/25 bg-background/50 text-foreground",
                           )}
                         >
-                          {m.content}
+                          {parsed.text || m.content}
                         </div>
+                        {isAssistant && parsed.options.length > 0 && (
+                          <div className="flex flex-wrap gap-1.5">
+                            {parsed.options.map((option, i) => (
+                              <button
+                                key={`${m.id}-opt-${i}`}
+                                type="button"
+                                onClick={() => submit(option)}
+                                disabled={busy}
+                                className="rounded-full border border-wj-green/30 bg-wj-green/5 px-3 py-1.5 text-left text-[11px] text-foreground/90 transition-colors hover:border-wj-green/60 hover:bg-wj-green/15 hover:text-wj-green disabled:opacity-50"
+                              >
+                                {option}
+                              </button>
+                            ))}
+                          </div>
+                        )}
                         {isAssistant && (
                           <div className="flex flex-wrap items-center gap-2">
                             {m.source === "local" && (
