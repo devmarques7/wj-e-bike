@@ -97,7 +97,7 @@ export default function BikeAssistantCard({ className }: BikeAssistantCardProps)
   const diagnosisActive = Boolean(diagnosis && diagnosis.phase !== "done");
 
   return (
-    <div className={cn("relative overflow-hidden rounded-3xl border border-border/30 bg-background/60 backdrop-blur-md h-full flex flex-col", className)}>
+    <div className={cn("relative overflow-hidden rounded-3xl border border-border/30 bg-background/60 backdrop-blur-md h-full max-h-[720px] flex flex-col", className)}>
 
       {/* Header */}
       <div className="flex items-center justify-between gap-3 border-b border-border/20 px-5 py-4">
@@ -133,7 +133,7 @@ export default function BikeAssistantCard({ className }: BikeAssistantCardProps)
         <div
           ref={scrollRef}
           className={cn(
-            "relative z-10 flex-1 min-h-0 overflow-y-auto",
+            "relative z-10 flex-1 min-h-0 overflow-y-auto overscroll-contain scroll-smooth",
             messages.length > 0 &&
               "rounded-2xl border border-border/25 bg-muted/30 p-4 backdrop-blur-sm",
           )}
