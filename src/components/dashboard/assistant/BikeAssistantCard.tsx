@@ -77,11 +77,12 @@ export default function BikeAssistantCard() {
         <div ref={scrollRef} className="relative z-10 max-h-[320px] overflow-y-auto">
           {messages.length === 0 ? (
             <div className="text-center">
-              <motion.div
-                animate={{ scale: [1, 1.05, 1], rotate: [0, 8, 0] }}
-                transition={{ duration: 6, repeat: Infinity, ease: "easeInOut" }}
-                className="mx-auto mb-5 h-20 w-20 rounded-full bg-gradient-to-br from-wj-green via-wj-green/60 to-emerald-300/40 blur-[2px]"
-              />
+              <div className="mx-auto mb-5 flex justify-center">
+                <AgentOrb
+                  size={96}
+                  state={status === "thinking" ? "thinking" : busy ? "speaking" : "idle"}
+                />
+              </div>
               <h3 className="text-xl font-semibold text-foreground">
                 Hi {firstName}, <span className="text-wj-green">what would you like to know?</span>
               </h3>
