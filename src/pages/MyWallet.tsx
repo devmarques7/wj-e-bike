@@ -228,7 +228,11 @@ export default function MyWallet() {
   const activeBikeId = activeBike?.id || (user as any)?.bikeId || user?.id || "unknown";
   const activeBikeName = activeBike?.model || (user as any)?.bikeName || t("e_pass.no_bike");
   const activeBikeSerial = activeBike?.serial || (user as any)?.bikeId || "—";
-  const cardNumber = `4532 •••• •••• ${(user?.id || "0000").replace(/-/g, "").slice(-4).toUpperCase()}`;
+  const cardDigits = `4532${(user?.id || "0000")
+    .replace(/\D/g, "")
+    .padEnd(12, "0")
+    .slice(-12)}`;
+  const cardNumber = cardDigits.replace(/(.{4})/g, "$1 ").trim();
 
   /** Resolves the theme for a card, falling back to a distinct default per position. */
   const themeFor = (id: string) => {
