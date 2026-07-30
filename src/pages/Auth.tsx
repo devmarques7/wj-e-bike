@@ -20,13 +20,13 @@ const Auth = () => {
   const [fullName, setFullName] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
-  const [mode, setMode] = useState<"login" | "demo" | "register">("login");
+  const [mode, setMode] = useState<"login" | "register">("login");
   const [rememberMe, setRememberMe] = useState(false);
   const [phone, setPhone] = useState<string | null>(null);
   const [phoneValid, setPhoneValid] = useState(false);
   const [phoneVerified, setPhoneVerified] = useState(false);
   
-  const { login, setMockUser, user, isLoading: authLoading } = useAuth();
+  const { login, user, isLoading: authLoading } = useAuth();
   const { theme } = useTheme();
   const navigate = useNavigate();
   const { toast } = useToast();
@@ -34,7 +34,7 @@ const Auth = () => {
   // Once AuthContext has a hydrated real (non-demo) user after a login,
   // redirect to the correct dashboard for their role.
   useEffect(() => {
-    if (authLoading || !user || user.isDemo) return;
+    if (authLoading || !user) return;
     if (user.mustCompleteProfile) {
       navigate("/complete-profile", { replace: true });
     } else if (user.role === "admin") {
@@ -150,24 +150,6 @@ const Auth = () => {
     setIsLoading(false);
   };
 
-  const handleDemoLogin = (type: "admin" | "staff" | "light" | "plus" | "black") => {
-    if (type === "admin") {
-      setMockUser("admin");
-      navigate("/dashboard/admin");
-    } else if (type === "staff") {
-      setMockUser("staff");
-      navigate("/dashboard/staff");
-    } else {
-      setMockUser("customer", type);
-      navigate("/dashboard");
-    }
-    
-    toast({
-      title: "Demo mode activated",
-      description: `Logged in as ${type === "admin" ? "Admin" : type === "staff" ? "Staff Mechanic" : `${type.charAt(0).toUpperCase() + type.slice(1)} Member`}`,
-    });
-  };
-
   return (
     <div className="min-h-screen bg-background flex">
       {/* Left Panel - Form */}
@@ -223,26 +205,7 @@ const Auth = () => {
                 <ArrowLeft className="h-4 w-4" />
                 Back to Sign In
               </Button>
-            ) : (
-              <>
-                <Button
-                  variant={mode === "login" ? "default" : "ghost"}
-                  size="sm"
-                  onClick={() => setMode("login")}
-                  className={mode === "login" ? "gradient-wj" : ""}
-                >
-                  Sign In
-                </Button>
-                <Button
-                  variant={mode === "demo" ? "default" : "ghost"}
-                  size="sm"
-                  onClick={() => setMode("demo")}
-                  className={mode === "demo" ? "gradient-wj" : ""}
-                >
-                  Demo Access
-                </Button>
-              </>
-            )}
+            ) : null}
           </motion.div>
 
           <AnimatePresence mode="wait">
@@ -297,7 +260,7 @@ const Auth = () => {
                 </Button>
                 <p className="text-xs text-center text-muted-foreground">By creating an account, you agree to our Terms of Service and Privacy Policy.</p>
               </motion.form>
-            ) : mode === "login" ? (
+            ) : (
               <motion.form
                 key="login"
                 initial={{ opacity: 0, x: -20 }}
@@ -339,53 +302,6 @@ const Auth = () => {
                   {isLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : (<>Sign In<ArrowRight className="h-4 w-4 ml-2" /></>)}
                 </Button>
               </motion.form>
-            ) : (
-              <motion.div
-                key="demo"
-                initial={{ opacity: 0, x: 20 }}
-                animate={{ opacity: 1, x: 0 }}
-                exit={{ opacity: 0, x: -20 }}
-                transition={{ duration: 0.3 }}
-                className="space-y-4"
-              >
-                <p className="text-sm text-muted-foreground mb-6">Select a demo account to explore the dashboard:</p>
-                <motion.button whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }} onClick={() => handleDemoLogin("admin")} className="w-full p-4 rounded-xl border border-border/50 bg-muted/30 hover:bg-muted/50 hover:border-wj-green/50 transition-all group text-left">
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <p className="font-medium text-foreground group-hover:text-wj-green transition-colors">Admin Dashboard</p>
-                      <p className="text-sm text-muted-foreground">Access the WJ Command Center</p>
-                    </div>
-                    <div className="px-3 py-1 rounded-full bg-secondary text-secondary-foreground text-xs font-medium">ADMIN</div>
-                  </div>
-                </motion.button>
-                <motion.button whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }} onClick={() => handleDemoLogin("staff")} className="w-full p-4 rounded-xl border border-border/50 bg-muted/30 hover:bg-muted/50 hover:border-wj-green/50 transition-all group text-left">
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <p className="font-medium text-foreground group-hover:text-wj-green transition-colors">Staff Mechanic</p>
-                      <p className="text-sm text-muted-foreground">Access workshop tasks & schedule</p>
-                    </div>
-                    <div className="px-3 py-1 rounded-full bg-wj-green/20 text-wj-green text-xs font-medium">STAFF</div>
-                  </div>
-                </motion.button>
-                <div className="pt-4 border-t border-border/30">
-                  <p className="text-xs font-medium text-muted-foreground/60 uppercase tracking-wider mb-3">Member Tiers</p>
-                  {[
-                    { tier: "light" as const, label: "Light", desc: "Basic member access" },
-                    { tier: "plus" as const, label: "Plus", desc: "Enhanced service features" },
-                    { tier: "black" as const, label: "Black", desc: "VIP Valet & Concierge" },
-                  ].map((item, index) => (
-                    <motion.button key={item.tier} whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: index * 0.1 }} onClick={() => handleDemoLogin(item.tier)} className="w-full p-4 rounded-xl border border-border/50 bg-muted/30 hover:bg-muted/50 hover:border-wj-green/50 transition-all group text-left mb-3">
-                      <div className="flex items-center justify-between">
-                        <div>
-                          <p className="font-medium text-foreground group-hover:text-wj-green transition-colors">{item.label} Member</p>
-                          <p className="text-sm text-muted-foreground">{item.desc}</p>
-                        </div>
-                        <div className={`px-3 py-1 rounded-full text-xs font-medium ${item.tier === "black" ? "bg-foreground text-background" : item.tier === "plus" ? "bg-wj-green/20 text-wj-green" : "bg-muted text-muted-foreground"}`}>{item.label.toUpperCase()}</div>
-                      </div>
-                    </motion.button>
-                  ))}
-                </div>
-              </motion.div>
             )}
           </AnimatePresence>
 
