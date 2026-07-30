@@ -2,6 +2,7 @@ import { Pencil } from "lucide-react";
 import type { ReactNode } from "react";
 import { cn } from "@/lib/utils";
 import { getWalletTheme } from "@/lib/wallet/cardThemes";
+import { CardWaveBackground } from "./CardWaveBackground";
 
 export interface WalletMemberCardProps {
   /** Mirrors the layout (dark panel moves to the right) — used for the card back. */
@@ -72,6 +73,8 @@ export default function WalletMemberCard({
 
       {/* Colour side */}
       <div className="relative flex-1 min-w-0 flex flex-col">
+        <CardWaveBackground color={theme.ink} opacity={0.08} />
+
         {/* Oversized wordmark */}
         <span
           aria-hidden
@@ -203,6 +206,8 @@ export function WalletCardBack({
 
       {/* Colour side — details */}
       <div className="relative flex-1 min-w-0 flex flex-col p-4 sm:p-5">
+        <CardWaveBackground color={theme.ink} opacity={0.08} />
+
         <div>
           <p className="text-[9px] uppercase tracking-[0.22em] font-medium" style={{ color: theme.inkMuted }}>
             {label}
