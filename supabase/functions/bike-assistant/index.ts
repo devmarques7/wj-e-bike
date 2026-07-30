@@ -419,8 +419,19 @@ Deno.serve(async (req) => {
     const apiKey = Deno.env.get("LOVABLE_API_KEY");
     if (!apiKey) return json({ error: "missing_api_key" }, 500);
 
-    const { messages = [], skills = [], assistantName = "E-IA", tone = "concise" } =
-      await req.json();
+    const {
+      messages = [],
+      skills = [],
+      assistantName = "E-IA",
+      tone = "concise",
+      // Deterministic layer already answered these — the model only sees a summary.
+      localContext = "",
+    } = await req.json();
+
+    // ---- token economy: only keep the recent turns, trimmed ----
+    const trimmed = (messages as any[])
+      .slice(-8)
+      .map((m) => ({ role: m.role, content: String(m.content ?? "").slice(0, 2000) }));
 
     const authHeader = req.headers.get("Authorization") ?? "";
     const supabase = createClient(
@@ -436,15 +447,18 @@ Deno.serve(async (req) => {
       .map((t) => TOOL_DEFS[t])
       .filter(Boolean);
 
-    const system = `You are ${assistantName}, the WJ e-bike assistant inside the customer dashboard.
-Tone: ${tone}. Answer in the language the user writes in.
-Always use the available tools to ground answers in real data — never invent prices, dates or model names.
-Prices are in EUR. Keep answers short, structured and actionable; suggest a next step when relevant.
-If a needed skill is not available, say which skill the user should enable.`;
+    const system = `You are ${assistantName}, the WJ e-bike assistant in the customer dashboard.
+Tone: ${tone}. Reply in the user's language. Prices in EUR.
+Ground every fact in tool data — never invent prices, dates, models or ids.
+Be brief: max ~120 words, bullet lists, one clear next step.
+Call at most one tool per turn unless strictly required, and never re-fetch data already present in this conversation.
+Write actions (create/reschedule/cancel/register/request) require an explicit user confirmation in the previous message; if it is missing, ask one short confirmation question instead of calling the tool.
+If the needed skill is off, say which skill to enable.${localContext ? `\nKnown context: ${String(localContext).slice(0, 800)}` : ""}`;
 
-    const convo: any[] = [{ role: "system", content: system }, ...messages];
+    const convo: any[] = [{ role: "system", content: system }, ...trimmed];
 
-    for (let step = 0; step < 6; step++) {
+    let toolCallCount = 0;
+    for (let step = 0; step < 4; step++) {
       const res = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
         method: "POST",
         headers: {
@@ -455,6 +469,7 @@ If a needed skill is not available, say which skill the user should enable.`;
         body: JSON.stringify({
           model: "google/gemini-3.6-flash",
           messages: convo,
+          max_completion_tokens: 700,
           ...(activeTools.length ? { tools: activeTools } : {}),
         }),
       });
@@ -472,21 +487,30 @@ If a needed skill is not available, say which skill the user should enable.`;
 
       const toolCalls = message.tool_calls ?? [];
       if (!toolCalls.length) {
-        return json({ content: message.content ?? "", usedTools: convo.filter((m) => m.role === "tool").map((m) => m.name) });
+        return json({
+          content: message.content ?? "",
+          source: "ai",
+          usedTools: convo.filter((m) => m.role === "tool").map((m) => m.name),
+          usage: data.usage ?? null,
+        });
       }
 
       convo.push(message);
       for (const call of toolCalls) {
+        toolCallCount++;
         let args: any = {};
         try {
           args = JSON.parse(call.function?.arguments || "{}");
         } catch (_) { /* ignore */ }
-        const result = await runTool(call.function.name, args, supabase, userId);
+        const result =
+          toolCallCount > 6
+            ? { error: "tool_budget_exceeded" }
+            : await runTool(call.function.name, args, supabase, userId);
         convo.push({
           role: "tool",
           tool_call_id: call.id,
           name: call.function.name,
-          content: JSON.stringify(result).slice(0, 12000),
+          content: JSON.stringify(result).slice(0, 6000),
         });
       }
     }
