@@ -237,7 +237,9 @@ export default function MyWallet() {
   /** Resolves the theme for a card, falling back to a distinct default per position. */
   const themeFor = (id: string) => {
     if (cardThemes[id]) return cardThemes[id];
-    const idx = Math.max(0, orderedBikes.findIndex((b) => b.id === id));
+    // Stable fallback: based on the bike's original position, never on stack order,
+    // so a card keeps its colour when moved to the front.
+    const idx = Math.max(0, linkedBikes.findIndex((b) => b.id === id));
     return themeForIndex(idx);
   };
 
