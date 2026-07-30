@@ -1,104 +1,209 @@
-import { CalendarCheck, Check } from "lucide-react";
+import { CalendarCheck, CalendarClock, ArrowUpRight, Plus, Sparkles } from "lucide-react";
 import { motion } from "framer-motion";
-import { Button } from "@/components/ui/button";
 import type { PlanAllowance } from "@/hooks/wallet/usePlanAllowance";
+
+export interface UpgradeOption {
+  slug: string;
+  name: string;
+  /** How much more the plan offers compared to the current one (0-100). */
+  percent: number;
+}
 
 interface ServiceAllowanceCardProps {
   planName: string;
   allowance: PlanAllowance;
-  planDescription?: string;
-  features?: string[];
+  /** Days remaining until the next revision of the registered E-Pass bike. */
+  revisionDays?: number | null;
+  revisionDate?: Date | string | null;
+  bikeName?: string;
+  upgradeOptions?: UpgradeOption[];
   onUpgrade?: () => void;
+  onBook?: () => void;
 }
 
 /**
- * Validates the plan-covered appointments: how many the plan includes, how many
- * were already done, how many are booked and how many are still available.
+ * Wallet "plan + revision" panel.
+ * Left rail: plan counters (bookings allowed / still available) and the upgrade
+ * opportunities. Right rail: dotted countdown to the next bike revision.
  */
 export default function ServiceAllowanceCard({
   planName,
   allowance,
-  planDescription,
-  features,
+  revisionDays,
+  revisionDate,
+  bikeName,
+  upgradeOptions = [],
   onUpgrade,
+  onBook,
 }: ServiceAllowanceCardProps) {
-  const { total, used, scheduled, remaining } = allowance;
-  const segments = Array.from({ length: Math.max(total, used + scheduled) }, (_, i) => {
-    if (i < used) return "used" as const;
-    if (i < used + scheduled) return "scheduled" as const;
-    return "free" as const;
-  });
+  const { total, scheduled, remaining } = allowance;
+
+  const days = typeof revisionDays === "number" ? Math.max(revisionDays, 0) : null;
+  const ringProgress = days === null ? 0 : Math.max(0, Math.min(1, 1 - days / 90));
+
+  const dateLabel = revisionDate
+    ? new Date(revisionDate).toLocaleDateString(undefined, {
+        month: "short",
+        day: "numeric",
+        hour: "2-digit",
+        minute: "2-digit",
+      })
+    : "Not scheduled";
 
   return (
-    <div className="rounded-3xl border border-border/50 bg-card p-5 lg:p-6 h-full flex flex-col">
-      <div className="flex items-start gap-3">
-        <div className="w-10 h-10 rounded-xl bg-wj-green/10 flex items-center justify-center shrink-0">
-          <CalendarCheck className="h-5 w-5 text-wj-green" />
-        </div>
-        <div className="min-w-0 flex-1">
-          <p className="text-[10px] uppercase tracking-widest text-muted-foreground">Plan services</p>
-          <h3 className="text-sm font-semibold text-foreground truncate">
-            {planName} · {total} / 12 months
-          </h3>
-          {planDescription && (
-            <p className="text-xs text-muted-foreground mt-1 line-clamp-2">{planDescription}</p>
-          )}
-        </div>
-        {onUpgrade && (
-          <Button
-            size="sm"
-            onClick={onUpgrade}
-            className="rounded-full gradient-wj text-white hover:opacity-90 text-xs font-semibold px-4 py-1 h-7 shrink-0"
-          >
-            Upgrade
-          </Button>
-        )}
-      </div>
-
-      <div className="mt-5 flex gap-1.5">
-        {segments.map((s, i) => (
-          <motion.span
-            key={i}
-            initial={{ scaleX: 0 }}
-            animate={{ scaleX: 1 }}
-            transition={{ delay: i * 0.05, duration: 0.4 }}
-            className={[
-              "h-2 flex-1 rounded-full origin-left",
-              s === "used"
-                ? "bg-wj-green"
-                : s === "scheduled"
-                ? "bg-wj-green/40"
-                : "bg-border/60",
-            ].join(" ")}
+    <div className="grid grid-cols-1 sm:grid-cols-[minmax(0,1fr)_minmax(160px,0.62fr)] gap-3 h-full">
+      {/* ---------- Left rail ---------- */}
+      <div className="flex flex-col gap-3 min-w-0">
+        <div className="rounded-3xl border border-border/50 bg-card p-4 sm:p-5">
+          <StatRow
+            value={total}
+            icon={<CalendarCheck className="h-5 w-5" />}
+            label={`${planName} · services / 12 months`}
+            action={<Plus className="h-4 w-4" />}
+            onAction={onBook}
           />
-        ))}
+          <div className="my-3 border-t border-dashed border-border/60" />
+          <StatRow
+            value={remaining}
+            icon={<CalendarClock className="h-5 w-5" />}
+            label={`${scheduled} scheduled · ${remaining} still bookable`}
+            action={<ArrowUpRight className="h-4 w-4" />}
+            onAction={onUpgrade}
+          />
+        </div>
+
+        <div className="rounded-3xl border border-border/50 bg-card p-4 sm:p-5 flex-1">
+          <p className="text-[10px] uppercase tracking-widest text-muted-foreground mb-3">
+            Upgrade potential
+          </p>
+          <div className="grid grid-cols-3 gap-2">
+            {(upgradeOptions.length
+              ? upgradeOptions
+              : [{ slug: "max", name: "Top plan", percent: 100 }]
+            )
+              .slice(0, 3)
+              .map((opt) => (
+                <button
+                  key={opt.slug}
+                  onClick={onUpgrade}
+                  className="flex flex-col items-center gap-1.5 group"
+                >
+                  <DottedRing size={68} progress={opt.percent / 100} tone="green">
+                    <Sparkles className="h-4 w-4 text-foreground/70 group-hover:text-wj-green transition-colors" />
+                  </DottedRing>
+                  <span className="text-xs text-muted-foreground truncate max-w-full">
+                    {opt.name}
+                  </span>
+                  <span className="text-[11px] font-semibold text-wj-green">+{opt.percent}%</span>
+                </button>
+              ))}
+          </div>
+        </div>
       </div>
 
-      <div className="mt-5 grid grid-cols-3 gap-3 mt-auto pt-5">
-        <Metric label="Completed" value={used} />
-        <Metric label="Scheduled" value={scheduled} />
-        <Metric label="Remaining" value={remaining} highlight />
+      {/* ---------- Right rail — revision countdown ---------- */}
+      <div className="rounded-3xl bg-wj-green p-4 sm:p-5 flex flex-col items-center justify-between text-black min-h-[260px]">
+        <div className="flex-1 flex items-center justify-center w-full">
+          <DottedRing size={148} progress={ringProgress} tone="dark">
+            <div className="text-center">
+              <p className="text-3xl font-semibold leading-none">{days ?? "—"}</p>
+              <p className="text-xs opacity-70 mt-1">Days</p>
+            </div>
+          </DottedRing>
+        </div>
+        <div className="w-full mt-4">
+          <p className="text-sm font-semibold truncate">{bikeName || "Your bike"}</p>
+          <p className="text-xs opacity-70 truncate">{dateLabel}</p>
+          <button
+            onClick={onBook}
+            className="mt-3 w-full rounded-full bg-black text-white text-sm font-medium py-2.5 hover:opacity-90 transition-opacity"
+          >
+            Manage
+          </button>
+        </div>
       </div>
-
-      {features && features.length > 0 && (
-        <ul className="mt-5 space-y-2 max-h-40 overflow-y-auto pr-1">
-          {features.map((f, i) => (
-            <li key={i} className="flex items-start gap-2 text-sm text-foreground/90">
-              <Check className="h-4 w-4 text-wj-green shrink-0 mt-0.5" />
-              <span className="leading-snug">{f}</span>
-            </li>
-          ))}
-        </ul>
-      )}
     </div>
   );
 }
 
-function Metric({ label, value, highlight }: { label: string; value: number; highlight?: boolean }) {
+function StatRow({
+  value,
+  icon,
+  label,
+  action,
+  onAction,
+}: {
+  value: number;
+  icon: React.ReactNode;
+  label: string;
+  action: React.ReactNode;
+  onAction?: () => void;
+}) {
   return (
-    <div className="rounded-2xl border border-border/40 bg-card/40 px-3 py-2">
-      <p className="text-[10px] uppercase tracking-widest text-muted-foreground">{label}</p>
-      <p className={`text-lg font-semibold ${highlight ? "text-wj-green" : "text-foreground"}`}>{value}</p>
+    <div className="flex items-center gap-3">
+      <div className="min-w-0 flex-1 flex items-center gap-2">
+        <span className="text-3xl sm:text-4xl font-light text-foreground leading-none">{value}</span>
+        <span className="text-muted-foreground shrink-0">{icon}</span>
+      </div>
+      <div className="hidden md:block min-w-0 flex-1">
+        <p className="text-xs text-muted-foreground truncate">{label}</p>
+      </div>
+      <button
+        onClick={onAction}
+        className="h-9 w-9 rounded-full border border-border/60 flex items-center justify-center text-wj-green hover:bg-wj-green/10 transition-colors shrink-0"
+      >
+        {action}
+      </button>
+    </div>
+  );
+}
+
+/** Circular ring built from dots, filled proportionally to `progress`. */
+function DottedRing({
+  size,
+  progress,
+  tone,
+  children,
+}: {
+  size: number;
+  progress: number;
+  tone: "green" | "dark";
+  children?: React.ReactNode;
+}) {
+  const dots = 32;
+  const radius = size / 2 - 5;
+  const active = Math.round(progress * dots);
+  return (
+    <div className="relative" style={{ width: size, height: size }}>
+      <svg width={size} height={size} className="block">
+        {Array.from({ length: dots }).map((_, i) => {
+          const angle = (i / dots) * Math.PI * 2 - Math.PI / 2;
+          const cx = size / 2 + radius * Math.cos(angle);
+          const cy = size / 2 + radius * Math.sin(angle);
+          const on = i < active;
+          return (
+            <motion.circle
+              key={i}
+              cx={cx}
+              cy={cy}
+              r={size > 100 ? 3.2 : 2.2}
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ delay: i * 0.012 }}
+              className={
+                tone === "dark"
+                  ? on
+                    ? "fill-black"
+                    : "fill-black/25"
+                  : on
+                  ? "fill-wj-green"
+                  : "fill-border"
+              }
+            />
+          );
+        })}
+      </svg>
+      <div className="absolute inset-0 flex items-center justify-center">{children}</div>
     </div>
   );
 }
