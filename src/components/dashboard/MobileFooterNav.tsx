@@ -25,7 +25,6 @@ interface NavItem {
 const menuNavItems: NavItem[] = [
   { icon: CreditCard, label: "V-ID", href: "/dashboard" },
   { icon: Bike, label: "Bike", href: "/dashboard/bike" },
-  { icon: Calendar, label: "Service", href: "/dashboard/garage" },
   { icon: Wrench, label: "Care", href: "/dashboard/maintenance" },
   { icon: Heart, label: "Favorites", href: "/dashboard/favorites" },
   { icon: Crown, label: "VIP", href: "/dashboard/concierge", tier: ["black"] },

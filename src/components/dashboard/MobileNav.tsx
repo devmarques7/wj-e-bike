@@ -28,7 +28,6 @@ interface NavItem {
 const memberNavItems: NavItem[] = [
   { icon: Home, label: "Overview", href: "/dashboard" },
   { icon: Bike, label: "My Bike", href: "/dashboard/bike" },
-  { icon: Calendar, label: "Book Service", href: "/dashboard/garage" },
   { icon: Wrench, label: "Maintenance", href: "/dashboard/maintenance" },
   { icon: Heart, label: "Favorites", href: "/dashboard/favorites" },
   { icon: Crown, label: "VIP Concierge", href: "/dashboard/concierge", tier: ["black"] },
