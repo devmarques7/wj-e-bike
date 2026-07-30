@@ -507,111 +507,111 @@ export default function MyWallet() {
         </div>
 
         {/* History table */}
-          <div className="w-full h-full">
-            <div className="h-full rounded-3xl border border-border/50 bg-card overflow-hidden flex flex-col">
-              <div className="p-6 border-b border-border/50">
-                <div className="flex items-center justify-between gap-4">
-                  <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 rounded-xl bg-wj-green/10 flex items-center justify-center">
-                      <Wrench className="h-5 w-5 text-wj-green" />
-                    </div>
-                    <div>
-                      <h3 className="text-lg font-semibold text-foreground">{t("e_pass.transactions")}</h3>
-                      <p className="text-xs text-muted-foreground">{t("e_pass.transactions_sub")}</p>
-                    </div>
+        <div className="w-full h-full">
+          <div className="h-full rounded-3xl border border-border/50 bg-card overflow-hidden flex flex-col">
+            <div className="p-6 border-b border-border/50">
+              <div className="flex items-center justify-between gap-4">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-xl bg-wj-green/10 flex items-center justify-center">
+                    <Wrench className="h-5 w-5 text-wj-green" />
                   </div>
-                  <Button
-                    onClick={() => navigate("/dashboard")}
-                    className="flex gradient-wj text-white hover:opacity-90"
-                    size="sm"
-                  >
-                    <Calendar className="h-4 w-4 mr-2" />
-                    <span className="hidden sm:inline">{t("e_pass.schedule_now")}</span>
-                    <span className="sm:hidden">{t("e_pass.schedule_now_short")}</span>
-                  </Button>
+                  <div>
+                    <h3 className="text-lg font-semibold text-foreground">{t("e_pass.transactions")}</h3>
+                    <p className="text-xs text-muted-foreground">{t("e_pass.transactions_sub")}</p>
+                  </div>
                 </div>
-              </div>
-
-              <div className="flex-1 min-h-[240px] overflow-y-auto">
-                {history.length === 0 ? (
-                  <EmptyState
-                    icon={Calendar}
-                    title={loading ? t("e_pass.history.loading_title") : t("e_pass.history.empty_title")}
-                    description={loading ? t("e_pass.history.loading_desc") : t("e_pass.history.empty_desc")}
-                    className="h-full"
-                  />
-                ) : (
-                  <>
-                    <Table>
-                      <TableHeader>
-                        <TableRow className="border-border/50 hover:bg-transparent">
-                          <TableHead className="text-muted-foreground">{t("e_pass.history.date")}</TableHead>
-                          <TableHead className="text-muted-foreground">{t("e_pass.history.service")}</TableHead>
-                          <TableHead className="text-muted-foreground text-right">{t("e_pass.history.points")}</TableHead>
-                          <TableHead className="text-muted-foreground text-right">{t("e_pass.history.status")}</TableHead>
-                        </TableRow>
-                      </TableHeader>
-                      <TableBody>
-                        {paginatedHistory.map((item, index) => (
-                          <motion.tr
-                            key={item.id}
-                            initial={{ opacity: 0, y: 10 }}
-                            animate={{ opacity: 1, y: 0 }}
-                            transition={{ delay: Math.min(index * 0.02, 0.4) }}
-                            className="border-border/30 hover:bg-muted/30"
-                          >
-                            <TableCell className="text-sm text-muted-foreground">
-                              {new Date(item.date).toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric" })}
-                            </TableCell>
-                            <TableCell className="text-sm font-medium text-foreground">{item.service}</TableCell>
-                            <TableCell className="text-right">
-                              <span className="text-wj-green font-semibold">+{item.points}</span>
-                            </TableCell>
-                            <TableCell className="text-right">
-                              <span className="px-2 py-0.5 rounded-full bg-wj-green/10 text-wj-green text-xs font-medium capitalize">
-                                {item.status}
-                              </span>
-                            </TableCell>
-                          </motion.tr>
-                        ))}
-                      </TableBody>
-                    </Table>
-
-                    {totalPages > 1 && (
-                      <div className="sticky bottom-0 border-t border-border/50 bg-card/95 backdrop-blur p-3">
-                        <Pagination>
-                          <PaginationContent>
-                            <PaginationItem>
-                              <PaginationPrevious
-                                onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
-                                className={cn(currentPage === 1 && "pointer-events-none opacity-40")}
-                              />
-                            </PaginationItem>
-                            {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
-                              <PaginationItem key={page}>
-                                <PaginationLink
-                                  isActive={page === currentPage}
-                                  onClick={() => setCurrentPage(page)}
-                                >
-                                  {page}
-                                </PaginationLink>
-                              </PaginationItem>
-                            ))}
-                            <PaginationItem>
-                              <PaginationNext
-                                onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
-                                className={cn(currentPage === totalPages && "pointer-events-none opacity-40")}
-                              />
-                            </PaginationItem>
-                          </PaginationContent>
-                        </Pagination>
-                      </div>
-                    )}
-                  </>
-                )}
+                <Button
+                  onClick={() => navigate("/dashboard")}
+                  className="flex gradient-wj text-white hover:opacity-90"
+                  size="sm"
+                >
+                  <Calendar className="h-4 w-4 mr-2" />
+                  <span className="hidden sm:inline">{t("e_pass.schedule_now")}</span>
+                  <span className="sm:hidden">{t("e_pass.schedule_now_short")}</span>
+                </Button>
               </div>
             </div>
+
+            <div className="flex-1 min-h-[240px] overflow-y-auto">
+              {history.length === 0 ? (
+                <EmptyState
+                  icon={Calendar}
+                  title={loading ? t("e_pass.history.loading_title") : t("e_pass.history.empty_title")}
+                  description={loading ? t("e_pass.history.loading_desc") : t("e_pass.history.empty_desc")}
+                  className="h-full"
+                />
+              ) : (
+                <>
+                  <Table>
+                    <TableHeader>
+                      <TableRow className="border-border/50 hover:bg-transparent">
+                        <TableHead className="text-muted-foreground">{t("e_pass.history.date")}</TableHead>
+                        <TableHead className="text-muted-foreground">{t("e_pass.history.service")}</TableHead>
+                        <TableHead className="text-muted-foreground text-right">{t("e_pass.history.points")}</TableHead>
+                        <TableHead className="text-muted-foreground text-right">{t("e_pass.history.status")}</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {paginatedHistory.map((item, index) => (
+                        <motion.tr
+                          key={item.id}
+                          initial={{ opacity: 0, y: 10 }}
+                          animate={{ opacity: 1, y: 0 }}
+                          transition={{ delay: Math.min(index * 0.02, 0.4) }}
+                          className="border-border/30 hover:bg-muted/30"
+                        >
+                          <TableCell className="text-sm text-muted-foreground">
+                            {new Date(item.date).toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric" })}
+                          </TableCell>
+                          <TableCell className="text-sm font-medium text-foreground">{item.service}</TableCell>
+                          <TableCell className="text-right">
+                            <span className="text-wj-green font-semibold">+{item.points}</span>
+                          </TableCell>
+                          <TableCell className="text-right">
+                            <span className="px-2 py-0.5 rounded-full bg-wj-green/10 text-wj-green text-xs font-medium capitalize">
+                              {item.status}
+                            </span>
+                          </TableCell>
+                        </motion.tr>
+                      ))}
+                    </TableBody>
+                  </Table>
+
+                  {totalPages > 1 && (
+                    <div className="sticky bottom-0 border-t border-border/50 bg-card/95 backdrop-blur p-3">
+                      <Pagination>
+                        <PaginationContent>
+                          <PaginationItem>
+                            <PaginationPrevious
+                              onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
+                              className={cn(currentPage === 1 && "pointer-events-none opacity-40")}
+                            />
+                          </PaginationItem>
+                          {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
+                            <PaginationItem key={page}>
+                              <PaginationLink
+                                isActive={page === currentPage}
+                                onClick={() => setCurrentPage(page)}
+                              >
+                                {page}
+                              </PaginationLink>
+                            </PaginationItem>
+                          ))}
+                          <PaginationItem>
+                            <PaginationNext
+                              onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
+                              className={cn(currentPage === totalPages && "pointer-events-none opacity-40")}
+                            />
+                          </PaginationItem>
+                        </PaginationContent>
+                      </Pagination>
+                    </div>
+                  )}
+                </>
+              )}
+            </div>
           </div>
+        </div>
         </div>
       </div>
 
