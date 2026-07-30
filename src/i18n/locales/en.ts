@@ -622,6 +622,7 @@ const en = {
     status: {
       completed: "Completed", confirmed: "Confirmed", in_progress: "In progress",
       pending: "Pending", rescheduled: "Rescheduled", canceled: "Canceled", no_show: "No-show",
+      requested: "Requested", overdue: "Overdue",
     },
     status_tip: { last_change: "Last change", started: "Started", ended: "Completed" },
     rel: { no_record: "No record", just_now: "just now", min: "{{n}} min ago", hour: "{{n}}h ago", day: "{{n}}d ago" },

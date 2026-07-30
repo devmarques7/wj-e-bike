@@ -164,13 +164,48 @@ export default function AppointmentsTableCard({
     (async () => {
       let q = supabase
         .from("appointment_waitlist")
-        .select("id, user_id, service_type_id, preferred_date_from, preferred_time_from, status, created_at")
+        .select(
+          "id, user_id, service_type_id, subscription_id, preferred_date_from, preferred_time_from, status, created_at",
+        )
         .order("created_at", { ascending: false });
       if (customerUserId) q = q.eq("user_id", customerUserId);
       const { data } = await q;
       if (cancelled) return;
+      const rows = (data ?? []) as any[];
+      const userIds = [...new Set(rows.map((r) => r.user_id).filter(Boolean))];
+      const subIds = [...new Set(rows.map((r) => r.subscription_id).filter(Boolean))];
+
+      // Resolve the same labels a real appointment shows: customer, service, plan.
+      const [profRes, subRes] = await Promise.all([
+        userIds.length
+          ? supabase.from("profiles").select("user_id, full_name, email").in("user_id", userIds)
+          : Promise.resolve({ data: [] as any[] }),
+        userIds.length
+          ? supabase
+              .from("subscriptions")
+              .select("id, user_id, status, plan_versions(plans(name, color_hex, tier_level))")
+              .in("user_id", userIds)
+          : Promise.resolve({ data: [] as any[] }),
+      ]);
+      if (cancelled) return;
+      const profMap = new Map(
+        ((profRes.data ?? []) as any[]).map((p) => [p.user_id, p]),
+      );
+      const subById = new Map(((subRes.data ?? []) as any[]).map((s) => [s.id, s]));
+      const subByUser = new Map<string, any>();
+      for (const s of (subRes.data ?? []) as any[]) {
+        if (!subByUser.has(s.user_id) || ["active", "trialing"].includes(s.status))
+          subByUser.set(s.user_id, s);
+      }
+      const svcMap = new Map(serviceTypes.map((s: any) => [s.id, s]));
+
       setRequestRows(
-        (data ?? []).map((r: any) => ({
+        rows.map((r: any) => {
+          const prof = profMap.get(r.user_id);
+          const sub = (r.subscription_id && subById.get(r.subscription_id)) || subByUser.get(r.user_id);
+          const plan = sub?.plan_versions?.plans ?? null;
+          const svc: any = svcMap.get(r.service_type_id);
+          return {
           id: r.id,
           user_id: r.user_id,
           service_type_id: r.service_type_id,
@@ -178,7 +213,7 @@ export default function AppointmentsTableCard({
           scheduled_date: r.preferred_date_from,
           scheduled_start_time: (r.preferred_time_from ?? "00:00:00") as string,
           scheduled_end_time: null,
-          duration_minutes: null,
+          duration_minutes: svc?.duration_minutes ?? null,
           status: (r.status === "booked"
             ? "completed"
             : r.status === "expired"
@@ -186,26 +221,27 @@ export default function AppointmentsTableCard({
               : "requested") as any,
           priority: "normal",
           priority_score: 0,
-          customer_name: null,
-          customer_email: null,
+          customer_name: prof?.full_name ?? prof?.email ?? null,
+          customer_email: prof?.email ?? null,
           mechanic_name: null,
-          service_name: null,
-          service_color: null,
-          plan_name: null,
-          plan_color: null,
-          plan_tier: null,
+          service_name: svc?.name ?? null,
+          service_color: svc?.color ?? null,
+          plan_name: plan?.name ?? null,
+          plan_color: plan?.color_hex ?? null,
+          plan_tier: plan?.tier_level ?? null,
           updated_at: r.created_at,
           work_started_at: null,
           work_ended_at: null,
           isRequest: true,
           requestStatus: r.status,
-        })),
+          } as ApptRow;
+        }),
       );
     })();
     return () => {
       cancelled = true;
     };
-  }, [includeRequests, customerUserId, appointments.length]);
+  }, [includeRequests, customerUserId, appointments.length, serviceTypes]);
 
   const activeAppointment =
     appointments.find((a) => a.status === "in_progress" && a.work_started_at) ?? null;
