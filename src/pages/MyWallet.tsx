@@ -237,7 +237,9 @@ export default function MyWallet() {
   /** Resolves the theme for a card, falling back to a distinct default per position. */
   const themeFor = (id: string) => {
     if (cardThemes[id]) return cardThemes[id];
-    const idx = Math.max(0, orderedBikes.findIndex((b) => b.id === id));
+    // Stable fallback: based on the bike's original position, never on stack order,
+    // so a card keeps its colour when moved to the front.
+    const idx = Math.max(0, linkedBikes.findIndex((b) => b.id === id));
     return themeForIndex(idx);
   };
 
@@ -280,17 +282,18 @@ export default function MyWallet() {
               const lift = hovered ? WALLET_HOVER_LIFT : 0;
               const scale = 1 - (depth + 1) * WALLET_SCALE_STEP;
               return (
-                <button
+                <motion.button
                   key={bike.id}
+                  layout
                   type="button"
                   onClick={(e) => { e.stopPropagation(); bringToFront(bike.id); }}
                   onMouseEnter={() => setHoveredId(bike.id)}
                   onMouseLeave={() => setHoveredId((prev) => (prev === bike.id ? null : prev))}
-                  className="absolute inset-x-0 bottom-0 aspect-[1.6/1] sm:aspect-[1.75/1] rounded-3xl overflow-hidden shadow-xl transition-all duration-500 ease-out origin-bottom text-left hover:shadow-[0_25px_60px_-12px_rgba(5,140,66,0.45)]"
-                  style={{
-                    transform: `translateY(-${peek + lift}px) scale(${scale})`,
-                    zIndex: 20 - (depth + 1),
-                  }}
+                  className="absolute inset-x-0 bottom-0 aspect-[1.6/1] sm:aspect-[1.75/1] rounded-3xl overflow-hidden shadow-xl origin-bottom text-left hover:shadow-[0_25px_60px_-12px_rgba(5,140,66,0.45)]"
+                  initial={false}
+                  animate={{ y: -(peek + lift), scale }}
+                  transition={{ duration: 0.45, ease: [0.22, 1, 0.36, 1] }}
+                  style={{ zIndex: 20 - (depth + 1) }}
                   title={bike.model || bike.serial}
                 >
                   <WalletMemberCard
@@ -302,16 +305,16 @@ export default function MyWallet() {
                     memberName={user?.name || "Guest"}
                     cardNumber={cardNumber}
                   />
-                </button>
+                </motion.button>
               );
             })}
 
             {/* Featured card — always in front */}
             <motion.div
               key={activeBikeId}
-              initial={{ y: 18, scale: 0.97, opacity: 0.4 }}
+              initial={{ y: -34, scale: 0.95, opacity: 0.55 }}
               animate={{ y: 0, scale: 1, opacity: 1 }}
-              transition={{ duration: 0.45, ease: [0.22, 1, 0.36, 1] }}
+              transition={{ duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
               className="relative z-30 aspect-[1.6/1] sm:aspect-[1.75/1] cursor-pointer origin-top hover:-translate-y-2 hover:shadow-[0_25px_60px_-12px_rgba(5,140,66,0.45)]"
               style={{ perspective: "1200px", zIndex: 30 }}
               onClick={() => setIsFlipped((v) => !v)}
