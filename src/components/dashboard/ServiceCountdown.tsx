@@ -139,20 +139,20 @@ export default function ServiceCountdown() {
 
   const handleSaveSetup = async () => {
     if (!editingBike) return;
-    if (!formPurchased || !formLastService) {
-      toast.error("Purchase date and last service date are required.");
+    if (!formPurchased && !formLastService) {
+      toast.error("Add the purchase date or the last service date.");
       return;
     }
     setSaving(true);
-    const last = new Date(formLastService);
+    const last = new Date(formLastService || formPurchased);
     const next = addDays(last, SERVICE_CYCLE_DAYS);
     const count = Math.max(0, parseInt(formServicesCount || "0", 10) || 0);
 
     const { error } = await supabase
       .from("customer_bikes")
       .update({
-        purchased_at: formPurchased,
-        last_service_at: formLastService,
+        purchased_at: formPurchased || null,
+        last_service_at: formLastService || null,
         next_service_at: toISODate(next),
         services_completed: count,
       })
