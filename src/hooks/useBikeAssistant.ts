@@ -105,6 +105,19 @@ export function useBikeAssistant() {
       setMessages(history);
       setStatus("thinking");
 
+      const phrases = pickPhrases();
+      setThinkingPhrase(phrases[0]);
+      let phraseIndex = 0;
+      const phraseTimer = window.setInterval(() => {
+        phraseIndex = (phraseIndex + 1) % phrases.length;
+        setThinkingPhrase(phrases[phraseIndex]);
+      }, 900);
+      const startedAt = Date.now();
+      const waitMinimum = async () => {
+        const remaining = MIN_THINKING_MS - (Date.now() - startedAt);
+        if (remaining > 0) await new Promise((r) => setTimeout(r, remaining));
+      };
+
       /* ---------- 1. Deterministic layer: no AI credits ---------- */
       try {
         const local = await resolveLocalIntent(prompt, {
@@ -113,6 +126,9 @@ export function useBikeAssistant() {
           assistantName: config.name,
         });
         if (local?.content) {
+          await waitMinimum();
+          window.clearInterval(phraseTimer);
+          setThinkingPhrase("");
           setMessages((prev) => [
             ...prev,
             {
@@ -140,11 +156,6 @@ export function useBikeAssistant() {
       );
 
       try {
-        if (config.thinkingMs > 0) {
-          await new Promise((r) => setTimeout(r, config.thinkingMs));
-        }
-        setStatus("answering");
-
         const { data, error: fnError } = await supabase.functions.invoke("bike-assistant", {
           body: {
             messages: history.map(({ role, content }) => ({ role, content })),
@@ -157,6 +168,8 @@ export function useBikeAssistant() {
         if (fnError) throw fnError;
         if (data?.error) throw new Error(data.error);
 
+        await waitMinimum();
+        setStatus("answering");
         setMessages((prev) => [
           ...prev,
           {
@@ -167,6 +180,7 @@ export function useBikeAssistant() {
           },
         ]);
       } catch (e: any) {
+        await waitMinimum();
         const message =
           e?.name === "AbortError"
             ? `No answer within ${config.maxResponseSeconds}s. Try again.`
@@ -178,6 +192,8 @@ export function useBikeAssistant() {
         setError(message);
       } finally {
         window.clearTimeout(timeout);
+        window.clearInterval(phraseTimer);
+        setThinkingPhrase("");
         abortRef.current = null;
         setStatus("idle");
       }
