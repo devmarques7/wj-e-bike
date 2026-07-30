@@ -123,7 +123,7 @@ export default function WalletMemberCard({
         {/* Bottom-right details */}
         <div className="mt-auto relative z-10 px-4 sm:px-5 pb-4 sm:pb-5 text-right space-y-2">
         {cardNumber && (
-          <p className="text-[11px] sm:text-xs font-mono tracking-[0.18em]" style={{ color: theme.ink }}>
+          <p className="text-base sm:text-lg font-mono font-semibold tracking-[0.08em] whitespace-nowrap" style={{ color: theme.ink }}>
             {cardNumber}
           </p>
         )}
