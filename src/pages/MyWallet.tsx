@@ -20,7 +20,7 @@ import WalletActionTiles from "@/components/dashboard/wallet/WalletActionTiles";
 import ServiceAllowanceCard from "@/components/dashboard/wallet/ServiceAllowanceCard";
 import BikeHealthCard from "@/components/dashboard/wallet/BikeHealthCard";
 import ScanEPassDialog from "@/components/dashboard/wallet/ScanEPassDialog";
-import { usePlanAllowance } from "@/hooks/wallet/usePlanAllowance";
+import { usePlanAllowance, PLAN_SERVICE_ALLOWANCE } from "@/hooks/wallet/usePlanAllowance";
 import { useGarageBike } from "@/hooks/garage/useGarageBike";
 
 type PointEntry = {
