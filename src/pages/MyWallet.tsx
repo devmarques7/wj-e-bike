@@ -215,18 +215,21 @@ export default function MyWallet() {
                 .filter((idx) => idx !== activeBikeIdx);
               const depth = stackOrder.indexOf(i); // 0 = closest to main
               const peek = WALLET_FIRST_PEEK + depth * WALLET_STEP; // px peeking above main card
-              const inset = (depth + 1) * WALLET_INSET; // narrower the further back it sits
+              const scale = 1 - (depth + 1) * 0.035; // taper: same box, smaller scale the further back
               const tierStyle = cardStyles[slug] ?? cardStyles.free;
               return (
                 <button
                   key={bike.id}
                   type="button"
                   onClick={(e) => { e.stopPropagation(); setActiveBikeIdx(i); setIsFlipped(false); }}
-                  className={`absolute bottom-0 rounded-3xl overflow-hidden bg-slate-100 border ${tierStyle.border} shadow-xl transition-all duration-300 origin-bottom text-left hover:-translate-y-2 hover:shadow-[0_25px_60px_-12px_rgba(5,140,66,0.45)] hover:border-wj-green/60`}
-                  style={{ top: `-${peek}px`, left: inset, right: inset, zIndex: 20 - (depth + 1) }}
+                  className={`absolute inset-x-0 bottom-0 aspect-[1.6/1] sm:aspect-[1.75/1] rounded-3xl overflow-hidden bg-slate-100 border ${tierStyle.border} shadow-xl transition-all duration-300 origin-bottom text-left hover:shadow-[0_25px_60px_-12px_rgba(5,140,66,0.45)] hover:border-wj-green/60`}
+                  style={{
+                    transform: `translateY(-${peek}px) scale(${scale})`,
+                    zIndex: 20 - (depth + 1),
+                  }}
                   title={bike.model || bike.serial}
                 >
-                  <div className="h-full px-5 pt-3 pb-2 flex items-start justify-between text-slate-900">
+                  <div className="px-5 pt-3 pb-2 flex items-start justify-between text-slate-900">
                     <div className="min-w-0">
                       <p className="text-[9px] uppercase tracking-[0.2em] text-slate-500 font-medium">{t("e_pass.bike", { defaultValue: "Bike" })}</p>
                       <p className="text-slate-900 text-sm font-semibold truncate">{bike.model || t("e_pass.no_bike")}</p>
