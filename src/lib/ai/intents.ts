@@ -1,5 +1,6 @@
 import { supabase } from "@/integrations/supabase/client";
 import type { AssistantSkillId } from "./skills";
+import { matchSymptom, type SymptomId } from "./diagnosis";
 
 /**
  * Deterministic (zero-token) intent layer.
@@ -12,6 +13,7 @@ import type { AssistantSkillId } from "./skills";
 
 export type AssistantAction =
   | { type: "navigate"; to: string; label: string }
+  | { type: "diagnose"; label: string; symptom?: SymptomId }
   | { type: "external"; href: string; label: string };
 
 export interface LocalAnswer {
