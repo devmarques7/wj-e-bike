@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { ArrowUp, RefreshCw, Settings2, Zap, Stethoscope, Wrench, Package, Tag, Bike, X } from "lucide-react";
+import { ArrowUp, RefreshCw, Settings2, Zap, Stethoscope, Wrench, Package, Tag, Bike, X, ChevronDown } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { useBikeAssistant } from "@/hooks/useBikeAssistant";
@@ -8,6 +8,7 @@ import AssistantSettingsDialog from "./AssistantSettingsDialog";
 import { AssistantIcon } from "./assistantIcons";
 import { cn } from "@/lib/utils";
 import AgentOrb from "@/components/agent/AgentOrb";
+import RichText from "./RichText";
 import { useAuth } from "@/contexts/AuthContext";
 import type { AssistantAction } from "@/lib/ai/intents";
 
@@ -63,6 +64,7 @@ export default function BikeAssistantCard() {
   const [value, setValue] = useState("");
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [inputFocused, setInputFocused] = useState(false);
+  const [openAnalysis, setOpenAnalysis] = useState<Record<string, boolean>>({});
   const scrollRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
 
@@ -127,7 +129,7 @@ export default function BikeAssistantCard() {
           className={cn(
             "relative z-10 overflow-y-auto",
             messages.length > 0 &&
-              "max-h-[440px] rounded-2xl border border-border/25 bg-black/45 p-4 backdrop-blur-sm",
+              "max-h-[440px] rounded-2xl border border-border/25 bg-muted/30 p-4 backdrop-blur-sm",
             messages.length === 0 && "max-h-[320px]",
           )}
         >
@@ -211,16 +213,41 @@ export default function BikeAssistantCard() {
                           !isAssistant && "opacity-70",
                         )}
                       >
-                        <div
-                          className={cn(
-                            "whitespace-pre-wrap rounded-2xl px-4 py-2.5 text-sm",
-                            m.role === "user"
-                              ? "border border-wj-green/25 bg-wj-green/15 text-foreground"
-                              : "border border-border/25 bg-background/50 text-foreground",
-                          )}
-                        >
-                          {parsed.text || m.content}
-                        </div>
+                        {isAssistant && m.analysis ? (
+                          <div className="rounded-2xl border border-border/25 bg-background/40">
+                            <button
+                              type="button"
+                              onClick={() =>
+                                setOpenAnalysis((prev) => ({ ...prev, [m.id]: !prev[m.id] }))
+                              }
+                              className="flex w-full items-center justify-between gap-2 px-4 py-2.5 text-left text-sm text-muted-foreground transition-colors hover:text-foreground"
+                            >
+                              <span>Analysis of your description</span>
+                              <ChevronDown
+                                className={cn(
+                                  "h-4 w-4 shrink-0 transition-transform",
+                                  openAnalysis[m.id] && "rotate-180",
+                                )}
+                              />
+                            </button>
+                            {openAnalysis[m.id] && (
+                              <div className="whitespace-pre-wrap border-t border-border/20 px-4 py-2.5 text-sm text-foreground">
+                                <RichText text={parsed.text || m.content} />
+                              </div>
+                            )}
+                          </div>
+                        ) : (
+                          <div
+                            className={cn(
+                              "whitespace-pre-wrap text-sm",
+                              m.role === "user"
+                                ? "px-1 py-1 text-foreground/80"
+                                : "rounded-2xl border border-border/25 bg-background/40 px-4 py-2.5 text-foreground",
+                            )}
+                          >
+                            <RichText text={parsed.text || m.content} />
+                          </div>
+                        )}
                         {isAssistant && chips.length > 0 && (
                           <div className="flex flex-wrap gap-1.5">
                             {chips.map((option, i) => (
