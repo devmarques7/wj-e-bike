@@ -32,8 +32,14 @@ type PlanInfo = {
 };
 
 
+// Apple Wallet stack geometry — every card shares the same bottom baseline and
+// steps upward, getting narrower the further back it sits.
+const WALLET_FIRST_PEEK = 42; // px the closest back card peeks above the featured card
+const WALLET_STEP = 26; // px between each ascending step
+const WALLET_GHOST_EXTRA = 30; // extra room for the "stack a new card" slot on top
+const WALLET_INSET = 12; // px each side per depth level (width taper)
+
 const cardStyles: Record<string, { gradient: string; border: string; text: string }> = {
-*** END ***
   free:  { gradient: "from-emerald-400 to-emerald-600", border: "border-emerald-400", text: "text-emerald-300" },
   light: { gradient: "from-zinc-400 to-zinc-600", border: "border-zinc-400", text: "text-zinc-300" },
   plus:  { gradient: "from-blue-400 to-blue-600", border: "border-blue-400", text: "text-blue-300" },
