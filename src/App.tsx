@@ -26,6 +26,7 @@ import CompleteProfile from "./pages/CompleteProfile";
 import Dashboard from "./pages/Dashboard";
 import ServiceDashboard from "./pages/ServiceDashboard";
 import BikeCatalog from "./pages/dashboard/BikeCatalog";
+import Garage from "./pages/dashboard/Garage";
 import Membership from "./pages/dashboard/Membership";
 import Favorites from "./pages/dashboard/Favorites";
 import UrgentService from "./pages/UrgentService";
