@@ -93,9 +93,9 @@ const getStatusBadge = (status: string, t: (k: string) => string) => {
 };
 
 /** An appointment row that may actually be a pending scheduling REQUEST. */
-type TableRow = AppointmentRow & { isRequest?: boolean; requestStatus?: string };
+type ApptRow = AppointmentRow & { isRequest?: boolean; requestStatus?: string };
 
-const isOverdue = (a: TableRow) =>
+const isOverdue = (a: ApptRow) =>
   !a.isRequest &&
   ["pending", "confirmed", "rescheduled"].includes(a.status) &&
   a.scheduled_date < new Date().toISOString().slice(0, 10);
@@ -154,7 +154,7 @@ export default function AppointmentsTableCard({
   } = useSchedulingData({ customerUserId });
 
   /* Scheduling requests (waitlist) — shown alongside real appointments. */
-  const [requestRows, setRequestRows] = useState<TableRow[]>([]);
+  const [requestRows, setRequestRows] = useState<ApptRow[]>([]);
   useEffect(() => {
     if (!includeRequests) {
       setRequestRows([]);
@@ -211,7 +211,7 @@ export default function AppointmentsTableCard({
     appointments.find((a) => a.status === "in_progress" && a.work_started_at) ?? null;
 
   const filteredSorted = useMemo(() => {
-    const matchStatus = (a: TableRow) => {
+    const matchStatus = (a: ApptRow) => {
       const s = a.status as string;
       if (statusFilter === "all") return true;
       if (statusFilter === "requested") return s === "requested";
@@ -223,7 +223,7 @@ export default function AppointmentsTableCard({
       if (statusFilter === "canceled") return ["canceled", "no_show"].includes(s);
       return true;
     };
-    const arr = ([...appointments, ...requestRows] as TableRow[])
+    const arr = ([...appointments, ...requestRows] as ApptRow[])
       .filter((a) => (mineOnlyMechanicId ? a.assigned_mechanic_id === mineOnlyMechanicId : true))
       .filter(matchStatus);
     arr.sort((a, b) => {
@@ -235,8 +235,8 @@ export default function AppointmentsTableCard({
 
   const groupedAppointments = useMemo(() => {
     if (groupBy === "none") return [{ key: "all", label: "", items: filteredSorted }];
-    const map = new Map<string, { key: string; label: string; items: AppointmentRow[] }>();
-    const labelFor = (a: AppointmentRow): { key: string; label: string } => {
+    const map = new Map<string, { key: string; label: string; items: ApptRow[] }>();
+    const labelFor = (a: ApptRow): { key: string; label: string } => {
       switch (groupBy) {
         case "status":
           return { key: a.status, label: t(`workshop.status.${a.status}`, a.status) };
