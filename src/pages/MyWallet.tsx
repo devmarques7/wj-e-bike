@@ -1,5 +1,5 @@
 import { motion } from "framer-motion";
-import { Wrench, Clock, Calendar, Plus, Check, Bike } from "lucide-react";
+import { Wrench, Clock, Calendar, Check, Bike } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useEffect, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
@@ -38,7 +38,6 @@ type PlanInfo = {
 // steps upward, getting narrower the further back it sits.
 const WALLET_FIRST_PEEK = 42; // px the closest back card peeks above the featured card
 const WALLET_STEP = 26; // px between each ascending step
-const WALLET_GHOST_EXTRA = 30; // extra room for the "stack a new card" slot on top
 /** Uniform taper applied per depth so every card keeps the exact same box. */
 const WALLET_SCALE_STEP = 0.03;
 /** Extra lift applied on hover (Apple Wallet "peek" gesture). */
@@ -221,7 +220,6 @@ export default function MyWallet() {
   const activeBikeId = activeBike?.id || (user as any)?.bikeId || user?.id || "unknown";
   const activeBikeName = activeBike?.model || (user as any)?.bikeName || t("e_pass.no_bike");
   const activeBikeSerial = activeBike?.serial || (user as any)?.bikeId || "—";
-  const canLinkAnother = linkedBikes.length < 5;
 
   return (
     <RoleDashboardLayout>
