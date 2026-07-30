@@ -192,3 +192,19 @@
     text-wrap: balance;
   }
 }
+
+@property --kpi-angle {
+  syntax: "<angle>";
+  initial-value: 0deg;
+  inherits: false;
+}
+
+@keyframes kpi-border-spin {
+  to {
+    --kpi-angle: 360deg;
+  }
+}
+
+.animate-kpi-border {
+  animation: kpi-border-spin 3s linear infinite;
+}
