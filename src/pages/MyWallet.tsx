@@ -50,6 +50,9 @@ const cardStyles: Record<string, { gradient: string; border: string; text: strin
   black: { gradient: "from-amber-400 to-amber-600", border: "border-amber-400", text: "text-amber-300" },
 };
 
+/** Maximum rows rendered per page in the service history table. */
+const HISTORY_PAGE_SIZE = 10;
+
 export default function MyWallet() {
   const { user } = useAuth();
   const { t } = useTranslation();
