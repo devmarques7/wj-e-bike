@@ -35,6 +35,7 @@ import {
 } from "@/components/ui/combobox";
 import { cn } from "@/lib/utils";
 import { supabase } from "@/integrations/supabase/client";
+import { isSlotSelectable } from "@/lib/scheduling/availability";
 import { toast } from "sonner";
 import type { ServiceType } from "@/hooks/scheduling/useSchedulingData";
 
