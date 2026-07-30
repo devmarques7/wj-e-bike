@@ -5,7 +5,7 @@
  * names) and, when nothing fits, turns the conversation into a scheduling
  * REQUEST that an admin will try to fit in.
  */
-import type { DayAvailability, RequestPeriod } from "@/lib/scheduling/availability";
+import { dayLabel, toDateKey, type DayAvailability, type RequestPeriod } from "@/lib/scheduling/availability";
 
 export type BookingPhase =
   | "day"
@@ -30,6 +30,23 @@ export interface BookingSession {
 export const NO_FIT_OPTION = "None of these work for me";
 export const BACK_TO_DAYS = "Show other days";
 export const ANY_DAY_OPTION = "Any day";
+
+/** Next `count` calendar days offered for a scheduling request. */
+export function upcomingDays(count = 7) {
+  return Array.from({ length: count }, (_, i) => {
+    const d = new Date();
+    d.setDate(d.getDate() + i + 1);
+    const date = toDateKey(d);
+    return { date, label: dayLabel(date) };
+  });
+}
+
+export function matchUpcomingDay(answer: string): string | null {
+  const a = answer.toLowerCase();
+  if (a.includes("any")) return null;
+  const hit = upcomingDays().find((d) => a.includes(d.label.toLowerCase()) || a.includes(d.date));
+  return hit?.date ?? null;
+}
 
 export const PERIOD_OPTIONS = ["Morning", "Afternoon", "Any time"];
 export const URGENCY_OPTIONS = ["Yes, it's urgent", "No, normal priority"];
@@ -98,7 +115,7 @@ export function bookingPrompt(session: BookingSession): { content: string; optio
     case "request_day":
       return {
         content: "Any preferred day?",
-        options: [ANY_DAY_OPTION],
+        options: [ANY_DAY_OPTION, ...upcomingDays().map((d) => d.label)],
       };
     case "request_urgency":
       return { content: "Is it urgent?", options: URGENCY_OPTIONS };
