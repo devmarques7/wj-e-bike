@@ -7,6 +7,7 @@ import AppointmentsTableCard from "@/components/dashboard/scheduling/Appointment
 import GarageBikeCard from "@/components/dashboard/garage/GarageBikeCard";
 import BikeHealthGrid from "@/components/dashboard/garage/BikeHealthGrid";
 import RevisionCycleCard from "@/components/dashboard/garage/RevisionCycleCard";
+import ServiceCountdown from "@/components/dashboard/ServiceCountdown";
 import { useAuth } from "@/contexts/AuthContext";
 import { useGarageBike } from "@/hooks/garage/useGarageBike";
 import { useMyMembership } from "@/hooks/plans/useMyMembership";
@@ -119,6 +120,10 @@ export default function Garage() {
             <GarageBikeCard bike={bike} overall={health.overall} />
           </div>
           <div className="col-span-12 lg:col-span-4">
+            <ServiceCountdown />
+          </div>
+
+          <div className="col-span-12">
             <RevisionCycleCard
               nextRevision={nextRevision}
               daysToRevision={daysToRevision}
