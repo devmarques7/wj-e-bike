@@ -506,9 +506,7 @@ export default function MyWallet() {
           />
         </div>
 
-        {/* KPIs + History table side by side (50/50) */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 lg:items-stretch">
-          {/* Left column — KPI cards */}
+        {/* History table */}
           <div className="flex flex-col gap-3">
             {/* Total points */}
             <div className="rounded-3xl border border-border/40 bg-card/30 backdrop-blur-md p-4 flex items-center gap-3 min-w-0">
