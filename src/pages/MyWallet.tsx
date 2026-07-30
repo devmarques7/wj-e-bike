@@ -684,16 +684,6 @@ export default function MyWallet() {
         planName={currentPlan?.name ?? "Free"}
       />
 
-      <BikePickerDialogRemoved
-        open={pickerOpen}
-        onOpenChange={setPickerOpen}
-        onRegistered={(bike) => {
-          setLinkedBikes((prev) => [bike, ...prev]);
-          setStackOrder((prev) => [bike.id, ...prev.filter((id) => id !== bike.id)]);
-          // Flip card back to front so user sees the new bike
-          setIsFlipped(false);
-        }}
-      />
     </RoleDashboardLayout>
   );
 }
