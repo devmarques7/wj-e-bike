@@ -99,7 +99,7 @@ export function useStaffOverviewStats(userId: string | undefined) {
             .limit(20),
           supabase
             .from("staff_shifts")
-            .select("worked_minutes, clock_in, status")
+            .select("worked_minutes, break_minutes, clock_in, status")
             .eq("user_id", userId)
             .gte("shift_date", ymd(weekStart))
             .lte("shift_date", ymd(weekEnd)),
@@ -141,12 +141,12 @@ export function useStaffOverviewStats(userId: string | undefined) {
       const now = Date.now();
       let workedMin = 0;
       for (const s of shifts.data ?? []) {
-        workedMin += s.worked_minutes ?? 0;
         if (s.status === "active" && s.clock_in) {
-          workedMin += Math.max(
-            0,
-            Math.floor((now - new Date(s.clock_in).getTime()) / 60000),
-          );
+          // clock_in is the first entry of the day: gross time minus paused time.
+          const gross = Math.floor((now - new Date(s.clock_in).getTime()) / 60000);
+          workedMin += Math.max(0, gross - (s.break_minutes ?? 0));
+        } else {
+          workedMin += s.worked_minutes ?? 0;
         }
       }
       const weeklyHours = Math.round((workedMin / 60) * 10) / 10;
