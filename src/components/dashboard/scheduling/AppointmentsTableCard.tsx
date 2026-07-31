@@ -184,7 +184,7 @@ export default function AppointmentsTableCard({
 
   /* Global dispatch role: balances today's unassigned jobs automatically and
      lets a mechanic claim whatever could not be placed. */
-  const { running: dispatching, dispatch, claimTask, canClaim } = useAutoDispatch({
+  const { running: dispatching, dispatch, claimTask, claimRequest, canClaim } = useAutoDispatch({
     enabled: !isCustomer,
     onChanged: refetch,
   });
@@ -615,13 +615,24 @@ export default function AppointmentsTableCard({
                           <TableCell className="text-xs text-muted-foreground align-middle">
                             {apt.mechanic_name ? (
                               apt.mechanic_name
-                            ) : !apt.isRequest && canClaim && !effectiveReadOnly ? (
+                            ) : canClaim && !effectiveReadOnly && apt.status !== "completed" && apt.status !== "canceled" ? (
                               <Button
                                 size="sm"
                                 variant="outline"
                                 className="h-6 px-2 text-[10px] gap-1 border-wj-green/40 text-wj-green hover:bg-wj-green/10"
                                 onClick={(e) => {
                                   e.stopPropagation();
+                                  if (apt.isRequest) {
+                                    void claimRequest({
+                                      id: apt.id,
+                                      user_id: apt.user_id,
+                                      service_type_id: apt.service_type_id,
+                                      scheduled_date: apt.scheduled_date,
+                                      scheduled_start_time: apt.scheduled_start_time,
+                                      duration_minutes: apt.duration_minutes,
+                                    });
+                                    return;
+                                  }
                                   void claimTask({
                                     id: apt.id,
                                     scheduled_date: apt.scheduled_date,
