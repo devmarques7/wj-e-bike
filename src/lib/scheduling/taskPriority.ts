@@ -41,6 +41,7 @@ export interface TaskLike {
   status: string;
   scheduled_date: string;
   scheduled_start_time: string;
+  duration_minutes?: number | null;
   assigned_mechanic_id?: string | null;
   priority?: string | null;
   priority_score?: number | null;
@@ -52,19 +53,45 @@ export const todayKey = () => {
   return new Date(d.getTime() - d.getTimezoneOffset() * 60000).toISOString().slice(0, 10);
 };
 
-export const isTaskOverdue = (a: TaskLike) =>
-  !a.isRequest &&
-  ["pending", "confirmed", "rescheduled"].includes(a.status) &&
-  a.scheduled_date < todayKey();
+/** Grace period (minutes) after the slot end before a task is called late. */
+export const OVERDUE_GRACE_MIN = 30;
+const DEFAULT_DURATION_MIN = 45;
+
+/** Local Date for the moment a task should have been finished. */
+export function taskEndsAt(a: TaskLike): Date {
+  const [h, m] = (a.scheduled_start_time ?? "00:00").slice(0, 5).split(":").map(Number);
+  const d = new Date(`${a.scheduled_date}T00:00:00`);
+  d.setMinutes(
+    (h || 0) * 60 + (m || 0) + (a.duration_minutes ?? DEFAULT_DURATION_MIN),
+  );
+  return d;
+}
+
+/**
+ * A task is overdue when its scheduled window (plus grace) has passed and it
+ * was never started or closed — including requests for a time already gone.
+ */
+export const isTaskOverdue = (a: TaskLike, now: Date = new Date()) => {
+  const openStatuses = a.isRequest
+    ? ["requested", "pending", "waiting"]
+    : ["pending", "confirmed", "rescheduled"];
+  if (!openStatuses.includes(a.status)) return false;
+  return taskEndsAt(a).getTime() + OVERDUE_GRACE_MIN * 60000 < now.getTime();
+};
+
+/** Overdue for longer than a full day → the reaper cancels it. */
+export const isStaleOverdue = (a: TaskLike, now: Date = new Date()) =>
+  isTaskOverdue(a, now) &&
+  taskEndsAt(a).getTime() + 24 * 60 * 60000 < now.getTime();
 
 /** Resolve the single bucket a row belongs to. */
 export function taskBucket(a: TaskLike): TaskBucket {
   const s = a.status;
-  if (s === "requested") return "requested";
   if (s === "in_progress") return "ongoing";
   if (s === "completed") return "completed";
   if (["canceled", "no_show"].includes(s)) return "canceled";
   if (isTaskOverdue(a)) return "overdue";
+  if (s === "requested") return "requested";
   return "pending";
 }
 
