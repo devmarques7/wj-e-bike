@@ -146,8 +146,9 @@ export function GooeyActions({
   const count = actions.length;
   const [a0, a1] = arc;
 
-  const params = React.useRef({ radius, stagger, stiffness, damping, magnetRange, coreY });
-  params.current = { radius, stagger, stiffness, damping, magnetRange, coreY };
+  const params = React.useRef({ radius, stagger, stiffness, damping, magnetRange, coreX, coreY });
+  params.current = { radius, stagger, stiffness, damping, magnetRange, coreX, coreY };
+
 
   const satsRef = React.useRef<SatState[]>([]);
   const ringKeyRef = React.useRef("");
