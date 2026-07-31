@@ -1,4 +1,4 @@
-import { useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { motion, useMotionValue } from "framer-motion";
 import { useNavigate } from "react-router-dom";
 import { QrCode, CalendarPlus, Pause, Play, Plus } from "lucide-react";
@@ -38,6 +38,41 @@ export default function FleetMenu() {
     else start();
   };
 
+  /**
+   * Keeps the core Fleet button fully inside the viewport: measures the real
+   * button rect and nudges the wrapper offsets until it fits with a margin.
+   */
+  const clampIntoViewport = useCallback(() => {
+    const wrapper = wrapperRef.current;
+    if (!wrapper) return;
+    const core = wrapper.querySelector<HTMLElement>('button[aria-haspopup="menu"]');
+    if (!core) return;
+    const rect = core.getBoundingClientRect();
+    if (!rect.width || !rect.height) return;
+
+    const margin = 12;
+    let dx = 0;
+    let dy = 0;
+    if (rect.left < margin) dx = margin - rect.left;
+    else if (rect.right > window.innerWidth - margin) dx = window.innerWidth - margin - rect.right;
+    if (rect.top < margin) dy = margin - rect.top;
+    else if (rect.bottom > window.innerHeight - margin) dy = window.innerHeight - margin - rect.bottom;
+
+    if (dx) x.set(x.get() + dx);
+    if (dy) y.set(y.get() + dy);
+  }, [x, y]);
+
+  useEffect(() => {
+    clampIntoViewport();
+    const onResize = () => clampIntoViewport();
+    window.addEventListener("resize", onResize);
+    window.addEventListener("orientationchange", onResize);
+    return () => {
+      window.removeEventListener("resize", onResize);
+      window.removeEventListener("orientationchange", onResize);
+    };
+  }, [clampIntoViewport]);
+
   // Memoised so unrelated re-renders never hand GooeyActions a fresh array.
   const actions = useMemo(
     () => [
@@ -76,19 +111,10 @@ export default function FleetMenu() {
       moveEvent.preventDefault();
       const dx = moveEvent.clientX - originX;
       const dy = moveEvent.clientY - originY;
-      // Keep the draggable core visible while allowing movement anywhere in
-      // the viewport. The large action field follows the same translation.
-      const minVisible = 33;
-      const clampedDx = Math.min(
-        window.innerWidth - minVisible - originX,
-        Math.max(minVisible - originX, dx),
-      );
-      const clampedDy = Math.min(
-        window.innerHeight - minVisible - originY,
-        Math.max(minVisible - originY, dy),
-      );
-      x.set(startX + clampedDx);
-      y.set(startY + clampedDy);
+      x.set(startX + dx);
+      y.set(startY + dy);
+      // Hard guarantee: the core never leaves the visible viewport.
+      clampIntoViewport();
     };
 
     const cleanup = (endEvent: PointerEvent) => {
@@ -96,6 +122,7 @@ export default function FleetMenu() {
       window.removeEventListener("pointermove", onMove);
       window.removeEventListener("pointerup", cleanup);
       window.removeEventListener("pointercancel", cleanup);
+      clampIntoViewport();
     };
 
     window.addEventListener("pointermove", onMove, { passive: false });
