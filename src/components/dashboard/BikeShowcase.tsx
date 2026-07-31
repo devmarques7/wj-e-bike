@@ -286,8 +286,29 @@ export default function BikeShowcase({ bikeId }: BikeShowcaseProps = {}) {
       animate={{ opacity: 1, scale: 1 }}
       className="relative h-full min-h-[400px] rounded-3xl overflow-hidden"
     >
+      {/* Functional background from Auth right panel */}
+      <div className="absolute inset-0 z-0 bg-background">
+        <MeshGradient
+          colors={theme === "dark"
+            ? ["#0a0a0a", "#0d2818", "#058c42", "#10b981", "#022c1a"]
+            : ["#f5f7f5", "#dff5e8", "#058c42", "#86efac", "#ecfdf5"]}
+          speed={0.25}
+          distortion={1}
+          swirl={0.8}
+          className="absolute inset-0 w-full h-full"
+          style={{ opacity: theme === "dark" ? 0.85 : 0.7 }}
+        />
+        {/* Overlay gradient for legibility */}
+        <div className="absolute inset-0 bg-gradient-to-br from-wj-forest/60 via-secondary/40 to-wj-deep/70" />
+        {/* Decorative blurs */}
+        <div className="absolute inset-0 opacity-30">
+          <div className="absolute top-1/4 right-1/4 w-96 h-96 rounded-full bg-wj-green/30 blur-3xl" />
+          <div className="absolute bottom-1/4 left-1/4 w-64 h-64 rounded-full bg-wj-green/20 blur-2xl" />
+        </div>
+      </div>
+
       {/* Header */}
-      <div className="absolute top-0 left-0 right-0 z-10 flex items-center justify-between p-4 pb-0">
+      <div className="absolute top-0 left-0 right-0 z-20 flex items-center justify-between p-4 pb-0">
         <div className="space-y-0.5">
           <h2 className="text-lg font-semibold text-foreground tracking-tight">My Bike</h2>
           <p className="text-[11px] text-muted-foreground/70 font-light">Your ride at a glance</p>
