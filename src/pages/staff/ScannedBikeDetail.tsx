@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { motion } from "framer-motion";
-import { Link, Navigate, useLocation, useNavigate, useParams } from "react-router-dom";
+import { Navigate, useLocation, useNavigate, useParams } from "react-router-dom";
 import { Loader2, ScanLine } from "lucide-react";
 import RoleDashboardLayout from "@/components/dashboard/RoleDashboardLayout";
 import GarageBikeCard from "@/components/dashboard/garage/GarageBikeCard";
@@ -113,10 +113,6 @@ export default function ScannedBikeDetail() {
   const garageHref = isStaff ? "/dashboard/staff/garage" : "/dashboard/garage";
   // Where the scan started (e.g. /dashboard/garage?bike=<own-bike-id>), so the
   // breadcrumb takes the rider back to their own bike exactly as they left it.
-  const stateReturn = (location.state as { returnTo?: string } | null)?.returnTo;
-  const returnTo =
-    stateReturn && stateReturn.startsWith("/dashboard") && !stateReturn.includes("/bike/")
-      ? stateReturn
       : garageHref;
   const ownerName = owner?.name || owner?.email || "Unknown customer";
 
