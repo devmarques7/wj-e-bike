@@ -530,21 +530,30 @@ export default function AppointmentsTableCard({
                         <TableRow
                           key={apt.id}
                           className={`border-border/20 transition-all duration-300 hover:bg-wj-green/10 hover:text-foreground hover:shadow-[inset_2px_0_0_0_hsl(var(--wj-green)/0.6)] cursor-pointer`}
-                          onClick={() => {
-                            /* In progress → open the Quality Control drawer so the
-                               mechanic sees exactly which stage the job is on.
-                               Otherwise → jump to the bike's E-Pass detail page
-                               (same destination as the QR scan flow). */
-                            if (!apt.isRequest && apt.status === "in_progress") {
-                              setReviewTarget(apt);
-                              return;
-                            }
-                            /* Completed → full service history (assessment,
-                               notes, photos, billing). */
+                          onClick={async () => {
+                            /* Completed → the ONLY case that opens Review
+                               History (assessment, notes, photos, billing). */
                             if (!apt.isRequest && apt.status === "completed") {
                               setReviewTarget(apt);
                               return;
                             }
+                            /* Staff/admin on a live or scheduled job → open the
+                               Quality Control drawer to run/finish the service.
+                               Pending/confirmed jobs are started first (clock-in
+                               + in_progress) so the QC flow begins at stage 0. */
+                            if (!apt.isRequest && !isCustomer) {
+                              if (apt.status === "in_progress") {
+                                setCompletionTarget(apt);
+                                return;
+                              }
+                              if (apt.status === "pending" || apt.status === "confirmed") {
+                                const ok = await updateAppointmentStatus(apt.id, "in_progress");
+                                if (ok) setCompletionTarget({ ...apt, status: "in_progress" } as any);
+                                return;
+                              }
+                            }
+                            /* Otherwise → jump to the bike's E-Pass detail page
+                               (same destination as the QR scan flow). */
                             const bike = (apt as any).bike_id as string | null | undefined;
                             if (bike) {
                               navigate(
@@ -554,7 +563,6 @@ export default function AppointmentsTableCard({
                               );
                               return;
                             }
-                            if (!apt.isRequest) setReviewTarget(apt);
                           }}
                         >
                           <TableCell className="text-xs font-medium align-middle">
