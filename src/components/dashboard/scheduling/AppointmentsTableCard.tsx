@@ -266,18 +266,6 @@ export default function AppointmentsTableCard({
     appointments.find((a) => a.status === "in_progress" && a.work_started_at) ?? null;
 
   const filteredSorted = useMemo(() => {
-    const matchStatus = (a: ApptRow) => {
-      const s = a.status as string;
-      if (statusFilter === "all") return true;
-      if (statusFilter === "requested") return s === "requested";
-      if (statusFilter === "overdue") return isOverdue(a);
-      if (statusFilter === "pending")
-        return ["pending", "confirmed", "rescheduled"].includes(s) && !isOverdue(a);
-      if (statusFilter === "ongoing") return s === "in_progress";
-      if (statusFilter === "completed") return s === "completed";
-      if (statusFilter === "canceled") return ["canceled", "no_show"].includes(s);
-      return true;
-    };
     const arr = ([...appointments, ...requestRows] as ApptRow[])
       // Staff view: own jobs + anything not assigned yet (so unassigned work is
       // never invisible to the workshop).
@@ -286,13 +274,19 @@ export default function AppointmentsTableCard({
           ? a.assigned_mechanic_id === mineOnlyMechanicId || !a.assigned_mechanic_id
           : true,
       )
-      .filter(matchStatus);
+      // Workshop surfaces focus on what has to be done today (late work stays
+      // visible); the customer view keeps their full history.
+      .filter((a) => (isCustomer ? true : isTodayScope(a)))
+      .filter((a) => matchesFilter(a, statusFilter));
     arr.sort((a, b) => {
-      const cmp = a.scheduled_start_time.localeCompare(b.scheduled_start_time);
+      if (sortMode === "priority") return compareTasks(a, b);
+      const cmp =
+        a.scheduled_date.localeCompare(b.scheduled_date) ||
+        a.scheduled_start_time.localeCompare(b.scheduled_start_time);
       return sortAsc ? cmp : -cmp;
     });
     return arr;
-  }, [appointments, requestRows, statusFilter, sortAsc, mineOnlyMechanicId]);
+  }, [appointments, requestRows, statusFilter, sortAsc, sortMode, mineOnlyMechanicId, isCustomer]);
 
   /* Pagination: at most 5 rows per page; the viewport shows ~3 and scrolls. */
   const PAGE_SIZE = 5;
