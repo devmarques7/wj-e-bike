@@ -29,9 +29,9 @@ export default function ScannedBikeDetail() {
 
   if (isLoading) return null;
   if (!isAuthenticated) return <Navigate to="/auth" replace />;
-  if (user?.role !== "staff" && user?.role !== "admin")
-    return <Navigate to={`/dashboard/garage?bike=${encodeURIComponent(bikeId ?? "")}`} replace />;
 
+  const isStaff = user?.role === "staff" || user?.role === "admin";
+  const garageHref = isStaff ? "/dashboard/staff/garage" : "/dashboard/garage";
   const ownerName = owner?.name || owner?.email || "Unknown customer";
   const shortId = (bike?.id ?? bikeId ?? "").slice(0, 8).toUpperCase();
 
@@ -48,12 +48,12 @@ export default function ScannedBikeDetail() {
             <BreadcrumbList>
               <BreadcrumbItem>
                 <BreadcrumbLink asChild>
-                  <Link to="/dashboard/staff/garage">Garage</Link>
+                  <Link to={garageHref}>Garage</Link>
                 </BreadcrumbLink>
               </BreadcrumbItem>
               <BreadcrumbSeparator />
               <BreadcrumbItem>
-                {owner?.customerId ? (
+                {owner?.customerId && isStaff ? (
                   <BreadcrumbLink asChild>
                     <Link to={`/dashboard/admin/crm/${owner.customerId}`}>{ownerName}</Link>
                   </BreadcrumbLink>
