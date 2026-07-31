@@ -57,6 +57,7 @@ import AdminPickupPlaces from "./pages/admin/AdminPickupPlaces";
 
 // Staff Pages
 import StaffOverview from "./pages/staff/StaffOverview";
+import StaffGarage from "./pages/staff/StaffGarage";
 import StaffSchedule from "./pages/staff/StaffSchedule";
 
 
@@ -126,6 +127,7 @@ const App = () => (
               
               {/* Staff Dashboard Routes */}
               <Route path="/dashboard/staff" element={<StaffOverview />} />
+              <Route path="/dashboard/staff/garage" element={<StaffGarage />} />
               <Route path="/dashboard/staff/schedule" element={<StaffSchedule />} />
 
               
