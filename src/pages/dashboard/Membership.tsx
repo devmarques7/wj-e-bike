@@ -11,12 +11,12 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/contexts/AuthContext";
 import { usePlans, type PlanWithActiveVersion } from "@/hooks/plans/usePlansData";
-import { useMyMembership } from "@/hooks/plans/useMyMembership";
+import { usePlanAccess } from "@/hooks/plans/usePlanAccess";
 
 export default function Membership() {
   const { isAuthenticated, isLoading } = useAuth();
   const { plans, loading } = usePlans();
-  const { membership } = useMyMembership();
+  const { plan: currentPlan, compareTo } = usePlanAccess();
   const [mode, setMode] = useState<"cards" | "compare">("cards");
   const [selected, setSelected] = useState<PlanWithActiveVersion | null>(null);
 
@@ -24,7 +24,7 @@ export default function Membership() {
     () => plans.filter((p) => p.is_active).sort((a, b) => a.tier_level - b.tier_level),
     [plans],
   );
-  const currentPlanId = membership?.planId ?? null;
+  const currentPlanId = currentPlan?.planId ?? null;
 
   if (isLoading) return null;
   if (!isAuthenticated) return <Navigate to="/auth" replace />;
@@ -39,10 +39,15 @@ export default function Membership() {
               Choose the ride that fits you
             </h1>
             <p className="text-sm text-muted-foreground mt-1">
-              {currentPlanId
-                ? "Compare what you have today with everything else we offer."
+              {currentPlan
+                ? `You are on ${currentPlan.name}. Compare it with everything else we offer.`
                 : "Every WJ membership, with service, perks and pricing side by side."}
             </p>
+            {currentPlan && (
+              <span className="inline-flex items-center gap-2 mt-3 px-3 h-7 rounded-full border border-wj-green/40 bg-wj-green/10 text-[11px] uppercase tracking-widest text-wj-green">
+                Current plan · {currentPlan.name}
+              </span>
+            )}
           </div>
 
           <div className="flex items-center gap-1 p-1 rounded-full border border-border/40 bg-background/50 backdrop-blur-xl">
@@ -85,6 +90,7 @@ export default function Membership() {
                 plan={p}
                 index={i}
                 isCurrent={p.id === currentPlanId}
+                relation={compareTo(p.tier_level, p.id)}
                 onSelect={setSelected}
               />
             ))}
