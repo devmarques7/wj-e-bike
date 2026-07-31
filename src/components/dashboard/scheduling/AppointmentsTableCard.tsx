@@ -541,6 +541,23 @@ export default function AppointmentsTableCard({
                           key={apt.id}
                           className={`border-border/20 transition-all duration-300 hover:bg-wj-green/10 hover:text-foreground hover:shadow-[inset_2px_0_0_0_hsl(var(--wj-green)/0.6)] cursor-pointer`}
                           onClick={() => {
+                            /* In progress → open the Quality Control drawer so the
+                               mechanic sees exactly which stage the job is on.
+                               Otherwise → jump to the bike's E-Pass detail page
+                               (same destination as the QR scan flow). */
+                            if (!apt.isRequest && apt.status === "in_progress") {
+                              setReviewTarget(apt);
+                              return;
+                            }
+                            const bike = (apt as any).bike_id as string | null | undefined;
+                            if (bike) {
+                              navigate(
+                                isCustomer
+                                  ? `/dashboard/garage/bike/${bike}`
+                                  : `/dashboard/staff/garage/bike/${bike}`,
+                              );
+                              return;
+                            }
                             if (!apt.isRequest) setReviewTarget(apt);
                           }}
                         >
