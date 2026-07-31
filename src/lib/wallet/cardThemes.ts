@@ -27,7 +27,7 @@ export const WALLET_CARD_THEMES: WalletCardTheme[] = [
   {
     id: "wj-green",
     label: "WJ Green",
-    background: "linear-gradient(135deg, #0a1a10 0%, #06built 0%, #05421f 55%, #058c42 100%)",
+    background: "linear-gradient(135deg, #0a1a10 0%, #05421f 55%, #058c42 100%)",
     panel: "#050c08",
     ink: "#ffffff",
     inkMuted: "rgba(255,255,255,0.6)",
