@@ -136,6 +136,7 @@ export function GooeyActions({
   const activeGestureActionRef = React.useRef(-1);
   const pointerIdRef = React.useRef<number | null>(null);
   const pressOriginRef = React.useRef({ x: 0, y: 0 });
+  const dragHandedOffRef = React.useRef(false);
 
   const uid = React.useId().replace(/[^a-zA-Z0-9]/g, "");
   const filterId = `wj-goo-${uid}`;
@@ -374,6 +375,7 @@ export function GooeyActions({
     pointerIdRef.current = e.pointerId;
     pressOriginRef.current = { x: e.clientX, y: e.clientY };
     activeGestureActionRef.current = -1;
+    dragHandedOffRef.current = false;
 
     clearHold();
     holdTimerRef.current = window.setTimeout(() => {
@@ -391,7 +393,9 @@ export function GooeyActions({
     const origin = pressOriginRef.current;
     const distance = Math.hypot(e.clientX - origin.x, e.clientY - origin.y);
     if (!holdingRef.current) {
-      if (distance > 12) onPressDrag?.(e.nativeEvent, distance);
+      if (distance > 12 && !dragHandedOffRef.current) {
+        dragHandedOffRef.current = onPressDrag?.(e.nativeEvent, distance) === true;
+      }
       return;
     }
 
@@ -418,6 +422,7 @@ export function GooeyActions({
     pressedRef.current = false;
     pointerIdRef.current = null;
     activeGestureActionRef.current = -1;
+    dragHandedOffRef.current = false;
     if (holdingRef.current) {
       holdingRef.current = false;
       setIsOpen(false);
