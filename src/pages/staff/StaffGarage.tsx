@@ -99,22 +99,48 @@ export default function StaffGarage() {
               Every bike and part in the workshop — status, briefing and stock location
             </p>
           </div>
-          <div className="flex items-center gap-1 rounded-full border border-border/30 bg-background/60 backdrop-blur-md p-1">
-            <CalendarDays className="h-3.5 w-3.5 text-muted-foreground mx-2" />
-            {GARAGE_PERIODS.map((p) => (
-              <button
-                key={p.id}
-                onClick={() => setPeriod(p.id)}
-                className={cn(
-                  "px-3 py-1.5 text-xs rounded-full transition-colors",
-                  period === p.id
-                    ? "bg-wj-green text-white"
-                    : "text-muted-foreground hover:text-foreground",
-                )}
-              >
-                {p.label}
-              </button>
-            ))}
+          <div className="flex items-center gap-2 flex-wrap">
+            <TooltipProvider delayDuration={150}>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <button
+                    type="button"
+                    onClick={() => setMyTasksOnly((v) => !v)}
+                    className={cn(
+                      "flex items-center gap-2 rounded-full border px-3 py-1.5 text-xs transition-colors",
+                      myTasksOnly
+                        ? "border-wj-green/50 bg-wj-green text-white hover:bg-wj-green/90"
+                        : "border-border/30 bg-background/60 backdrop-blur-md text-muted-foreground hover:text-foreground hover:border-wj-green/40",
+                    )}
+                    aria-pressed={myTasksOnly}
+                  >
+                    <UserCheck className="h-3.5 w-3.5" />
+                    <span className="hidden sm:inline">My tasks</span>
+                  </button>
+                </TooltipTrigger>
+                <TooltipContent side="bottom" className="max-w-xs text-xs">
+                  Show only tasks assigned to me or unassigned tasks I can pick up.
+                </TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
+
+            <div className="flex items-center gap-1 rounded-full border border-border/30 bg-background/60 backdrop-blur-md p-1">
+              <CalendarDays className="h-3.5 w-3.5 text-muted-foreground mx-2" />
+              {GARAGE_PERIODS.map((p) => (
+                <button
+                  key={p.id}
+                  onClick={() => setPeriod(p.id)}
+                  className={cn(
+                    "px-3 py-1.5 text-xs rounded-full transition-colors",
+                    period === p.id
+                      ? "bg-wj-green text-white"
+                      : "text-muted-foreground hover:text-foreground",
+                  )}
+                >
+                  {p.label}
+                </button>
+              ))}
+            </div>
           </div>
         </motion.div>
 
