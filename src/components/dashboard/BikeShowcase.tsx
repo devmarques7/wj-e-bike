@@ -310,8 +310,8 @@ export default function BikeShowcase({ bikeId }: BikeShowcaseProps = {}) {
       {/* Header */}
       <div className="absolute top-0 left-0 right-0 z-20 flex items-center justify-between p-4 pb-0">
         <div className="space-y-0.5">
-          <h2 className="text-lg font-semibold text-foreground tracking-tight">My Bike</h2>
-          <p className="text-[11px] text-muted-foreground/70 font-light">Your ride at a glance</p>
+          <h2 className="text-lg font-semibold text-primary-foreground tracking-tight">My Bike</h2>
+          <p className="text-[11px] text-primary-foreground/70 font-light">Your ride at a glance</p>
         </div>
         <div className="flex items-center gap-2">
           <Link
