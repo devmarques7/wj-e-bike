@@ -29,3 +29,5 @@ verify_jwt = false
 
 [functions.compute-route]
 verify_jwt = false
+[functions.decode-qr]
+verify_jwt = false

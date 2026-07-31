@@ -1,8 +1,9 @@
 import { useCallback, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
-import { Camera, Crosshair, RefreshCw, SwitchCamera, ScanLine, ArrowRight } from "lucide-react";
+import { Camera, RefreshCw, SwitchCamera, ScanLine, ArrowRight, Sparkles, ZoomIn } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Slider } from "@/components/ui/slider";
 import { useQrScanner } from "@/hooks/useQrScanner";
 import { parseEPassCode } from "@/lib/epass/parse-epass";
 
@@ -12,7 +13,7 @@ interface Props {
   onNavigate?: () => void;
 }
 
-/** Live camera E-Pass scanner: centers the QR, freezes a snapshot and opens the bike garage. */
+/** Live camera E-Pass scanner: auto-captures the QR, freezes the frame and opens the bike garage. */
 export default function EPassScanner({ active, onNavigate }: Props) {
   const navigate = useNavigate();
   const [decoded, setDecoded] = useState<string | null>(null);
@@ -21,8 +22,10 @@ export default function EPassScanner({ active, onNavigate }: Props) {
     setDecoded(parseEPassCode(value));
   }, []);
 
-  const { videoRef, canvasRef, status, error, snapshot, start, capture, reset, flipCamera } =
-    useQrScanner({ onResult: handleResult, active });
+  const {
+    videoRef, canvasRef, status, error, snapshot, aiBusy,
+    zoom, zoomRange, setZoom, start, capture, reset, flipCamera,
+  } = useQrScanner({ onResult: handleResult, active });
 
   const goToBike = () => {
     if (!decoded) return;
@@ -30,51 +33,113 @@ export default function EPassScanner({ active, onNavigate }: Props) {
     navigate(`/dashboard/garage?bike=${encodeURIComponent(decoded)}`);
   };
 
+  const scanning = status === "scanning";
+
   return (
     <div className="space-y-4">
-      <div className="relative aspect-square w-full overflow-hidden rounded-3xl border border-border/50 bg-foreground/[0.04]">
-        <video
-          ref={videoRef}
-          muted
-          playsInline
-          className={`h-full w-full object-cover ${snapshot ? "invisible" : ""}`}
-        />
-        {snapshot && (
-          <img src={snapshot} alt="Captured E-Pass frame" className="absolute inset-0 h-full w-full object-cover" />
-        )}
-        <canvas ref={canvasRef} className="hidden" />
+      {/* Gradient primary border wrapping the whole scan surface */}
+      <div className="relative w-full rounded-[28px] bg-gradient-to-br from-primary via-primary/40 to-primary/5 p-[1.5px]">
+        <div className="relative aspect-square w-full overflow-hidden rounded-[26px] bg-background">
+          <video
+            ref={videoRef}
+            muted
+            playsInline
+            className={`h-full w-full object-cover ${snapshot ? "invisible" : ""}`}
+          />
+          {snapshot && (
+            <img src={snapshot} alt="Captured E-Pass frame" className="absolute inset-0 h-full w-full object-cover" />
+          )}
+          <canvas ref={canvasRef} className="hidden" />
 
-        {/* Center framing guide */}
-        <div className="pointer-events-none absolute inset-0 flex items-center justify-center">
-          <div className="relative h-[62%] w-[62%] rounded-3xl border border-primary/60">
-            <Crosshair className="absolute left-1/2 top-1/2 h-5 w-5 -translate-x-1/2 -translate-y-1/2 text-primary/70" />
-            {status === "scanning" && (
+          {/* Full-width radar overlay */}
+          <div className="pointer-events-none absolute inset-0">
+            <div className="absolute inset-0 rounded-[26px] ring-1 ring-inset ring-primary/30" />
+            <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,transparent_38%,hsl(var(--background)/0.55)_100%)]" />
+
+            {/* Concentric radar rings across the full container */}
+            {[0.95, 0.7, 0.45, 0.22].map((s) => (
+              <div
+                key={s}
+                className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 rounded-full border border-primary/20"
+                style={{ width: `${s * 100}%`, height: `${s * 100}%` }}
+              />
+            ))}
+
+            {/* Rotating radar sweep */}
+            {scanning && (
               <motion.div
-                className="absolute inset-x-2 h-[2px] rounded-full bg-primary"
-                initial={{ top: "6%" }}
-                animate={{ top: ["6%", "94%", "6%"] }}
+                className="absolute inset-0 rounded-[26px]"
+                style={{
+                  background:
+                    "conic-gradient(from 0deg, hsl(var(--primary) / 0.35), transparent 28%, transparent 100%)",
+                  maskImage: "radial-gradient(circle at center, black 0%, transparent 78%)",
+                  WebkitMaskImage: "radial-gradient(circle at center, black 0%, transparent 78%)",
+                }}
+                animate={{ rotate: 360 }}
+                transition={{ duration: 3.2, repeat: Infinity, ease: "linear" }}
+              />
+            )}
+
+            {/* Corner brackets */}
+            {[
+              "left-4 top-4 border-l-2 border-t-2 rounded-tl-xl",
+              "right-4 top-4 border-r-2 border-t-2 rounded-tr-xl",
+              "left-4 bottom-4 border-l-2 border-b-2 rounded-bl-xl",
+              "right-4 bottom-4 border-r-2 border-b-2 rounded-br-xl",
+            ].map((c) => (
+              <div key={c} className={`absolute h-10 w-10 border-primary/80 ${c}`} />
+            ))}
+
+            {/* Scan line */}
+            {scanning && (
+              <motion.div
+                className="absolute inset-x-6 h-[2px] rounded-full bg-gradient-to-r from-transparent via-primary to-transparent"
+                initial={{ top: "8%" }}
+                animate={{ top: ["8%", "92%", "8%"] }}
                 transition={{ duration: 3, repeat: Infinity, ease: "easeInOut" }}
               />
             )}
-          </div>
-        </div>
 
-        {(status === "idle" || status === "requesting" || status === "denied" || status === "error") && (
-          <div className="absolute inset-0 flex flex-col items-center justify-center gap-3 bg-background/80 px-6 text-center backdrop-blur-sm">
-            <Camera className="h-6 w-6 text-muted-foreground" />
-            <p className="text-sm text-muted-foreground">
-              {status === "requesting"
-                ? "Requesting camera access…"
-                : error ?? "Allow camera access to scan an E-Pass."}
-            </p>
-            {status !== "requesting" && (
-              <Button size="sm" variant="outline" className="rounded-full" onClick={start}>
-                Enable camera
-              </Button>
+            {(scanning || aiBusy) && (
+              <div className="absolute inset-x-0 bottom-4 flex justify-center">
+                <span className="flex items-center gap-2 rounded-full border border-primary/30 bg-background/70 px-3 py-1 text-[10px] uppercase tracking-widest text-primary backdrop-blur-sm">
+                  {aiBusy ? <Sparkles className="h-3 w-3 animate-pulse" /> : <ScanLine className="h-3 w-3" />}
+                  {aiBusy ? "AI reading frame" : "Auto-detecting QR"}
+                </span>
+              </div>
             )}
           </div>
-        )}
+
+          {(status === "idle" || status === "requesting" || status === "denied" || status === "error") && (
+            <div className="absolute inset-0 flex flex-col items-center justify-center gap-3 bg-background/80 px-6 text-center backdrop-blur-sm">
+              <Camera className="h-6 w-6 text-muted-foreground" />
+              <p className="text-sm text-muted-foreground">
+                {status === "requesting"
+                  ? "Requesting camera access…"
+                  : error ?? "Allow camera access to scan an E-Pass."}
+              </p>
+              {status !== "requesting" && (
+                <Button size="sm" variant="outline" className="rounded-full" onClick={start}>
+                  Enable camera
+                </Button>
+              )}
+            </div>
+          )}
+        </div>
       </div>
+
+      {zoomRange && scanning && (
+        <div className="flex items-center gap-3 px-1">
+          <ZoomIn className="h-4 w-4 text-muted-foreground" />
+          <Slider
+            value={[zoom]}
+            min={zoomRange.min}
+            max={zoomRange.max}
+            step={(zoomRange.max - zoomRange.min) / 20 || 0.1}
+            onValueChange={([v]) => setZoom(v)}
+          />
+        </div>
+      )}
 
       <div className="flex items-center justify-center gap-2">
         <Button variant="outline" size="icon" className="rounded-full" onClick={flipCamera} title="Switch camera">
@@ -83,14 +148,14 @@ export default function EPassScanner({ active, onNavigate }: Props) {
         <Button
           className="rounded-full px-6"
           onClick={snapshot ? reset : capture}
-          disabled={status === "requesting"}
+          disabled={status === "requesting" || aiBusy}
         >
           {snapshot ? <RefreshCw className="mr-2 h-4 w-4" /> : <ScanLine className="mr-2 h-4 w-4" />}
-          {snapshot ? "Scan again" : "Capture"}
+          {snapshot ? "Scan again" : "Capture now"}
         </Button>
       </div>
 
-      {snapshot && (
+      {snapshot && !aiBusy && (
         <div className="rounded-2xl border border-border/50 bg-card/40 p-4 text-center space-y-3">
           {decoded ? (
             <>
@@ -102,7 +167,7 @@ export default function EPassScanner({ active, onNavigate }: Props) {
             </>
           ) : (
             <p className="text-sm text-muted-foreground">
-              No QR code in this frame. Center the pass and capture again.
+              No QR code in this frame. Move closer, hold steady and capture again.
             </p>
           )}
         </div>
