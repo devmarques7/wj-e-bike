@@ -50,9 +50,8 @@ export default function KPICarousel({
       <div
         ref={scrollerRef}
         className={cn(
-          "md:hidden flex gap-4 overflow-x-auto snap-x snap-mandatory scrollbar-none -mr-4 pl-1 pr-4 pb-1",
+          "md:hidden flex gap-4 overflow-x-auto snap-x snap-mandatory scrollbar-hide -mr-4 pl-1 pr-4 pb-1",
         )}
-        style={{ scrollbarWidth: "none" }}
       >
         {items.map((child, i) => (
           <div key={i} className={mobileItemClassName}>
