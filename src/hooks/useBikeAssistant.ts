@@ -95,9 +95,16 @@ function pickPhrases() {
 const uid = () => crypto.randomUUID();
 const wait = (ms: number) => new Promise((r) => setTimeout(r, ms));
 
-export function useBikeAssistant() {
+export interface BikeAssistantOptions {
+  /** Extra context appended to the AI prompt (e.g. a staff workshop briefing). */
+  extraContext?: string;
+}
+
+export function useBikeAssistant(options: BikeAssistantOptions = {}) {
   const navigate = useNavigate();
   const { user } = useAuth();
+  const extraContextRef = useRef<string | undefined>(options.extraContext);
+  extraContextRef.current = options.extraContext;
   const [config, setConfig] = useState<AssistantConfig>(loadConfig);
   const [messages, setMessages] = useState<AssistantMessage[]>([]);
   const [status, setStatus] = useState<"idle" | "thinking" | "answering">("idle");
@@ -534,7 +541,9 @@ export function useBikeAssistant() {
             assistantName: config.name,
             tone: config.tone,
             // The model must always know which bike the rider is talking about.
-            bikeContext: bikeScopePrompt() || undefined,
+            bikeContext:
+              [bikeScopePrompt(), extraContextRef.current].filter(Boolean).join("\n\n") ||
+              undefined,
           },
         });
 
@@ -590,6 +599,7 @@ export function useBikeAssistant() {
     send,
     reset,
     runAction,
+    pushAssistant,
     savedCalls,
     diagnosis,
     diagnosisProgress: diagnosis ? progressOf(diagnosis) : null,

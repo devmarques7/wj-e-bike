@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { motion } from "framer-motion";
 import { Link, Navigate, useLocation, useNavigate, useParams } from "react-router-dom";
 import { Loader2, Mail, Phone, ScanLine, User } from "lucide-react";
@@ -21,6 +21,7 @@ import {
 } from "@/components/ui/breadcrumb";
 import { useAuth } from "@/contexts/AuthContext";
 import { useBikeById } from "@/hooks/garage/useBikeById";
+import { useServiceBriefing } from "@/hooks/staff/useServiceBriefing";
 
 /**
  * E-Pass identification screen: opened right after a QR scan.
@@ -37,6 +38,50 @@ export default function ScannedBikeDetail() {
   const [plan, setPlan] = useState<{ name: string; slug: string } | null>(null);
   const [bookingOpen, setBookingOpen] = useState(false);
   const allowance = usePlanAllowance(plan?.slug, owner?.userId ?? null);
+
+  const isStaffRole = user?.role === "staff" || user?.role === "admin";
+  // Automated workshop briefing: appointment yes/no, reported problem,
+  // plan coverage, parts to review and the booking window.
+  const briefing = useServiceBriefing({
+    ownerUserId: owner?.userId,
+    bikeId: bike?.id ?? null,
+    bikeModel: bike?.model ?? null,
+    ownerName: owner?.name ?? owner?.email ?? null,
+    planName: plan?.name ?? "Free",
+    metrics: health.metrics,
+    daysToRevision,
+    enabled: isStaffRole,
+  });
+
+  const staffActions = useMemo(
+    () => [
+      {
+        label: briefing.hasAppointment ? "Open booking" : "Create appointment",
+        prompt: "",
+        primary: true,
+        onSelect: () => setBookingOpen(true),
+      },
+      {
+        label: "What should I check first?",
+        prompt: "Based on the workshop briefing, list the checks I should do on this bike, in order.",
+      },
+      {
+        label: "Is this covered by the plan?",
+        prompt: "Is the work needed on this bike covered by the customer's plan, or is it an extra charge?",
+      },
+      {
+        label: "Parts & estimated time",
+        prompt: "Which parts are likely needed and how long should this service take?",
+      },
+      {
+        label: briefing.hasAppointment ? "Summarise the appointment" : "When should we book it?",
+        prompt: briefing.hasAppointment
+          ? "Summarise the customer's appointment and the reported problem for the workshop."
+          : "This bike has no appointment. When should it be booked and what service should I choose?",
+      },
+    ],
+    [briefing.hasAppointment],
+  );
 
   // Active membership of the scanned rider — feeds the allowance counters.
   useEffect(() => {
@@ -230,7 +275,17 @@ export default function ScannedBikeDetail() {
               )}
             </div>
             <div className="col-span-12 lg:col-span-4">
-              <BikeAssistantCard className="h-full" />
+              {isStaffRole ? (
+                <BikeAssistantCard
+                  className="h-full"
+                  greeting="Workshop briefing ready — ask me what to do with this bike."
+                  briefing={briefing.loading ? undefined : briefing.markdown}
+                  extraContext={`STAFF MODE — you are assisting a WJ workshop technician (not the rider). Be concise, technical and action-oriented: what must be done on this bike, coverage, parts, and how to register an appointment.\n\n${briefing.markdown}`}
+                  quickActions={staffActions}
+                />
+              ) : (
+                <BikeAssistantCard className="h-full" />
+              )}
             </div>
           </div>
         )}

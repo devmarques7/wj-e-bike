@@ -14,6 +14,14 @@ import type { AssistantAction } from "@/lib/ai/intents";
 
 interface BikeAssistantCardProps {
   className?: string;
+  /** Overrides the rider quick prompts (e.g. workshop actions for staff). */
+  quickActions?: { label: string; prompt: string; primary?: boolean; onSelect?: () => void }[];
+  /** Markdown briefing pushed automatically as the first assistant message. */
+  briefing?: string;
+  /** Extra context handed to the AI on every escalation. */
+  extraContext?: string;
+  /** Headline shown in the empty state. */
+  greeting?: string;
 }
 
 
@@ -46,7 +54,13 @@ function parseOptions(content: string): { text: string; options: string[] } {
   return { text: kept.join("\n").replace(/\n{3,}/g, "\n\n").trim(), options };
 }
 
-export default function BikeAssistantCard({ className }: BikeAssistantCardProps) {
+export default function BikeAssistantCard({
+  className,
+  quickActions,
+  briefing,
+  extraContext,
+  greeting,
+}: BikeAssistantCardProps) {
   const { user } = useAuth();
   const {
     config,
@@ -60,21 +74,32 @@ export default function BikeAssistantCard({ className }: BikeAssistantCardProps)
     send,
     reset,
     runAction,
+    pushAssistant,
     savedCalls,
     diagnosis,
     diagnosisProgress,
     removeDiagnosisTag,
     cancelDiagnosis,
-  } = useBikeAssistant();
+  } = useBikeAssistant({ extraContext });
   const [value, setValue] = useState("");
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [inputFocused, setInputFocused] = useState(false);
   const [openAnalysis, setOpenAnalysis] = useState<Record<string, boolean>>({});
   const scrollRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
+  const seededRef = useRef(false);
 
   const firstName = user?.name?.split(" ")[0] ?? "rider";
   const busy = status !== "idle";
+  const actions = quickActions ?? PRIORITY_ACTIONS;
+
+  // Automation: as soon as the briefing is ready, the assistant opens the
+  // conversation with it (staff scanning an E-Pass never has to ask).
+  useEffect(() => {
+    if (!briefing || seededRef.current) return;
+    seededRef.current = true;
+    pushAssistant(briefing, { source: "local" });
+  }, [briefing, pushAssistant]);
 
   useEffect(() => {
     scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight, behavior: "smooth" });
@@ -147,14 +172,27 @@ export default function BikeAssistantCard({ className }: BikeAssistantCardProps)
                 />
               </div>
               <h3 className="text-xl font-semibold text-foreground">
-                Hey, my name is <span className="text-wj-green">{config.name}</span>. How can I help you today?
+                {greeting ?? (
+                  <>
+                    Hey, my name is <span className="text-wj-green">{config.name}</span>. How can I
+                    help you today?
+                  </>
+                )}
               </h3>
               <div className="mt-5 flex flex-wrap items-center justify-center gap-2">
-                {PRIORITY_ACTIONS.map(({ icon: Icon, label, prompt, primary }) => (
+                {actions.map((action) => {
+                  const Icon = (action as { icon?: typeof Zap }).icon ?? Zap;
+                  const { label, prompt, primary, onSelect } = action as {
+                    label: string;
+                    prompt: string;
+                    primary?: boolean;
+                    onSelect?: () => void;
+                  };
+                  return (
                   <button
                     key={label}
                     type="button"
-                    onClick={() => submit(prompt)}
+                    onClick={() => (onSelect ? onSelect() : submit(prompt))}
                     className={cn(
                       "group inline-flex items-center gap-2 rounded-full border px-3 py-1.5 text-left transition-colors",
                       primary
@@ -170,7 +208,8 @@ export default function BikeAssistantCard({ className }: BikeAssistantCardProps)
                     />
                     <span className="whitespace-nowrap text-xs font-medium text-foreground">{label}</span>
                   </button>
-                ))}
+                  );
+                })}
               </div>
             </div>
           ) : (
@@ -330,6 +369,28 @@ export default function BikeAssistantCard({ className }: BikeAssistantCardProps)
         </div>
 
         {error && <p className="relative z-10 mt-3 text-xs text-destructive">{error}</p>}
+
+        {/* Persistent quick actions (staff workshop mode) */}
+        {quickActions && messages.length > 0 && (
+          <div className="relative z-10 mt-3 flex flex-wrap gap-1.5">
+            {quickActions.map(({ label, prompt, primary, onSelect }) => (
+              <button
+                key={label}
+                type="button"
+                disabled={busy}
+                onClick={() => (onSelect ? onSelect() : submit(prompt))}
+                className={cn(
+                  "rounded-full border px-3 py-1.5 text-[11px] transition-colors disabled:opacity-50",
+                  primary
+                    ? "border-wj-green/50 bg-wj-green/15 text-wj-green hover:bg-wj-green/25"
+                    : "border-border/30 bg-muted/40 text-foreground/90 hover:border-wj-green/40 hover:bg-wj-green/10",
+                )}
+              >
+                {label}
+              </button>
+            ))}
+          </div>
+        )}
 
         {/* Composer */}
         <div className="relative z-10 mt-5 rounded-2xl border border-border/30 bg-background/70 p-2">
