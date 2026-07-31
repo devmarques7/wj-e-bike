@@ -15,15 +15,18 @@ export default function MembershipPlanCard({
   plan,
   index,
   isCurrent,
+  relation = "upgrade",
   onSelect,
 }: {
   plan: PlanWithActiveVersion;
   index: number;
   isCurrent: boolean;
+  relation?: "current" | "upgrade" | "downgrade";
   onSelect: (plan: PlanWithActiveVersion) => void;
 }) {
   const v = plan.activeVersion;
   const accent = plan.color_hex ?? undefined;
+  const current = isCurrent || relation === "current";
 
   return (
     <motion.div
@@ -32,12 +35,14 @@ export default function MembershipPlanCard({
       transition={{ duration: 0.5, delay: index * 0.06 }}
       className={cn(
         "relative flex flex-col rounded-3xl border p-6 bg-background/50 backdrop-blur-xl transition-colors",
-        isCurrent ? "border-wj-green/60 bg-wj-green/5" : "border-border/40 hover:border-wj-green/30",
+        current
+          ? "border-wj-green/70 bg-wj-green/10 ring-2 ring-wj-green/40 shadow-[0_0_40px_-12px_hsl(var(--primary))]"
+          : "border-border/40 hover:border-wj-green/30",
       )}
     >
-      {isCurrent && (
-        <span className="absolute top-5 right-5 text-[10px] uppercase tracking-widest text-wj-green">
-          Current plan
+      {current && (
+        <span className="absolute top-5 right-5 inline-flex items-center gap-1 px-2 h-6 rounded-full bg-wj-green/20 text-[10px] uppercase tracking-widest text-wj-green">
+          <Check className="h-3 w-3" /> Current
         </span>
       )}
 
@@ -82,11 +87,11 @@ export default function MembershipPlanCard({
 
       <Button
         className="mt-6 w-full rounded-full"
-        variant={isCurrent ? "outline" : "default"}
-        disabled={isCurrent || !v}
+        variant={current ? "outline" : relation === "downgrade" ? "secondary" : "default"}
+        disabled={current || !v}
         onClick={() => onSelect(plan)}
       >
-        {isCurrent ? "Your membership" : "Upgrade"}
+        {current ? "Your membership" : relation === "downgrade" ? "Downgrade" : "Upgrade"}
       </Button>
     </motion.div>
   );
