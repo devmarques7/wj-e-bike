@@ -20,6 +20,7 @@ import ActivityYearGrid from "@/components/dashboard/wallet/ActivityYearGrid";
 import ActivityMonthGrid from "@/components/dashboard/wallet/ActivityMonthGrid";
 import ActivityDayPanel from "@/components/dashboard/wallet/ActivityDayPanel";
 import ServiceRecordDialog from "@/components/dashboard/wallet/ServiceRecordDialog";
+import ArchivedBikesTable from "@/components/dashboard/wallet/ArchivedBikesTable";
 import { useActivityYear, type ActivityDay, type ActivityRecord } from "@/hooks/wallet/useActivityYear";
 
 type PointEntry = {
@@ -79,6 +80,7 @@ export default function MyWallet() {
   /** Per-card colour themes, persisted locally. */
   const [cardThemes, setCardThemes] = useState<Record<string, string>>(() => loadWalletThemes());
   const [editingCardId, setEditingCardId] = useState<string | null>(null);
+  const [archivedRefresh, setArchivedRefresh] = useState(0);
   const [scanOpen, setScanOpen] = useState(false);
   /** Year activity map + folder history state. */
   const [activityYear, setActivityYear] = useState(() => new Date().getFullYear());
@@ -541,6 +543,8 @@ export default function MyWallet() {
           record={selectedRecord}
           onOpenChange={(o) => !o && setSelectedRecord(null)}
         />
+
+        <ArchivedBikesTable refreshKey={archivedRefresh} />
       </div>
 
       <WalletCardThemeDialog
@@ -548,6 +552,13 @@ export default function MyWallet() {
         onOpenChange={(o) => !o && setEditingCardId(null)}
         themeId={editingCardId ? themeFor(editingCardId) : undefined}
         onSelect={(themeId) => editingCardId && applyTheme(editingCardId, themeId)}
+        bikeId={editingCardId}
+        onCancelled={(bikeId) => {
+          setLinkedBikes((prev) => prev.filter((b) => b.id !== bikeId));
+          setStackOrder((prev) => prev.filter((id) => id !== bikeId));
+          setEditingCardId(null);
+          setArchivedRefresh((n) => n + 1);
+        }}
         preview={{
           label: t("e_pass.member_card"),
           bikeName: activeBikeName !== t("e_pass.no_bike") ? activeBikeName : "WJ Vision",
