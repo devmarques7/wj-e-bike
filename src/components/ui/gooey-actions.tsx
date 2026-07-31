@@ -598,11 +598,6 @@ export function GooeyActions({
             }
           }}
           onPointerDown={onCorePointerDown}
-          onPointerDownCapture={(e) => {
-            // React capture runs before framer-motion's native listener on any
-            // ancestor, so the wrapper can't hijack the press into a drag.
-            if (holdToOpen) e.nativeEvent.stopPropagation();
-          }}
           className={cn(
             "pointer-events-auto absolute grid cursor-pointer place-items-center rounded-full border-0 p-0",
             "text-primary-foreground text-xs font-medium tracking-[0.18em] uppercase touch-none",
