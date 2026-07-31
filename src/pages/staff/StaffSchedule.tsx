@@ -35,6 +35,7 @@ import MyShiftWeekCompact from "@/components/dashboard/scheduling/MyShiftWeekCom
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { useSchedulingAvailability } from "@/contexts/SchedulingAvailabilityContext";
 import { dateKey } from "@/lib/scheduling/availabilityGuard";
+import { useStaffWeekWorkload } from "@/hooks/staff/useStaffWeekWorkload";
 
 const DAY_KEYS = ["sun", "mon", "tue", "wed", "thu", "fri", "sat"] as const;
 const WEEKDAYS_HEAT_KEYS = ["sun", "mon", "tue", "wed", "thu", "fri", "sat"] as const;
@@ -103,6 +104,14 @@ export default function StaffSchedule() {
     () => mechanics.find((m) => m.user_id === mineUserId) ?? null,
     [mechanics, mineUserId],
   );
+
+  /**
+   * Weekly truth for this mechanic: booked minutes vs. real capacity from
+   * staff_schedules, refreshed live through the global appointments bus.
+   * The page-level `appointments` list only holds the selected day, so every
+   * "this week" figure has to come from here.
+   */
+  const { totals: week } = useStaffWeekWorkload(mineUserId || undefined);
 
   // Load my working hours (staff_schedules) to derive real weekly availability
   useEffect(() => {
