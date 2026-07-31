@@ -22,6 +22,11 @@ import {
 } from "@/lib/ai/diagnosisFlow";
 import { judgeFreeText } from "@/lib/ai/diagnosisJudge";
 import {
+  SOLUTION_BOOK,
+  SOLUTION_FIXED,
+  SOLUTION_OPTIONS,
+} from "@/lib/ai/repairSkills";
+import {
   BACK_TO_DAYS,
   NO_FIT_OPTION,
   bookingPrompt,
@@ -72,10 +77,14 @@ function loadConfig(): AssistantConfig {
   }
 }
 
-/** Minimum time the assistant "analyses" before answering (feels deliberate). */
-const MIN_THINKING_MS = 2000;
-/** Diagnosis steps are deterministic — keep them snappy. */
-const FLOW_THINKING_MS = 550;
+/**
+ * Minimum time the assistant "analyses" before answering. Every reply — even a
+ * deterministic one — is held for at least 2.5s so it always reads as a real
+ * analysis instead of an instant canned response.
+ */
+const MIN_THINKING_MS = 2500;
+/** Diagnosis steps run through the same 2.5s analysis window. */
+const FLOW_THINKING_MS = 2500;
 
 const THINKING_PHRASES = [
   "Reading your request...",
