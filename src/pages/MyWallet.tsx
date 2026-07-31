@@ -193,7 +193,14 @@ export default function MyWallet() {
     return () => { cancelled = true; };
   }, [user?.id]);
 
-  const totalPoints = useMemo(() => history.reduce((s, h) => s + h.points, 0), [history]);
+  /* E-Pass points come from the reward ledger (service + condition bonus +
+     extras). Falls back to the service reward points while the ledger is
+     still empty for legacy appointments. */
+  const { total: ledgerPoints } = useRewards();
+  const totalPoints = useMemo(
+    () => (ledgerPoints > 0 ? ledgerPoints : history.reduce((s, h) => s + h.points, 0)),
+    [ledgerPoints, history],
+  );
 
   const totalPages = useMemo(() => Math.max(1, Math.ceil(history.length / HISTORY_PAGE_SIZE)), [history]);
   const paginatedHistory = useMemo(() => {
