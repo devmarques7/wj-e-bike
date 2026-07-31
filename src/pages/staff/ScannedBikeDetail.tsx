@@ -226,6 +226,8 @@ export default function ScannedBikeDetail() {
               <BikeHealthGrid
                 metrics={condition.metrics}
                 assessment={assessment}
+                bikeId={bike?.id ?? null}
+                bikeModel={bike?.model ?? null}
                 onAssess={isStaffRole ? () => setAssessOpen(true) : undefined}
               />
               {owner?.userId && (
