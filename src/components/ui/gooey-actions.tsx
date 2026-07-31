@@ -333,44 +333,47 @@ export function GooeyActions({
     e.preventDefault();
     e.stopPropagation();
     const rootEl = rootRef.current;
-    const target = e.currentTarget as HTMLElement;
-    try {
-      target.setPointerCapture(e.pointerId);
-    } catch {
-      /* noop */
-    }
     if (rootEl) {
       const r = rootEl.getBoundingClientRect();
       pointerRef.current = { x: e.clientX - r.left, y: e.clientY - r.top, inside: true };
     }
     holdingRef.current = false;
+    pressedRef.current = true;
     clearHold();
     holdTimerRef.current = window.setTimeout(() => {
+      if (!pressedRef.current) return;
       holdingRef.current = true;
       setIsOpen(true);
     }, holdDelay);
-  };
 
-  const onCorePointerMove = (e: React.PointerEvent) => {
-    if (!holdToOpen) return;
-    track(e);
-  };
-
-  const onCorePointerUp = (e: React.PointerEvent) => {
-    if (!holdToOpen) return;
-    clearHold();
-    try {
-      (e.currentTarget as HTMLElement).releasePointerCapture(e.pointerId);
-    } catch {
-      /* noop */
-    }
-    if (holdingRef.current) {
-      const idx = hoverIdxRef.current;
-      if (idx >= 0 && actions[idx]) onSelect?.(actions[idx].id);
-      holdingRef.current = false;
-      setIsOpen(false);
+    // Track the finger on the window so the gesture survives leaving the core,
+    // crossing the satellites or any overlay — the menu only closes on release.
+    const onMove = (ev: PointerEvent) => {
+      if (ev.pointerId !== e.pointerId) return;
+      ev.preventDefault();
+      const root = rootRef.current;
+      if (!root) return;
+      const r = root.getBoundingClientRect();
+      pointerRef.current = { x: ev.clientX - r.left, y: ev.clientY - r.top, inside: true };
+    };
+    const onUp = (ev: PointerEvent) => {
+      if (ev.pointerId !== e.pointerId) return;
+      window.removeEventListener("pointermove", onMove);
+      window.removeEventListener("pointerup", onUp);
+      window.removeEventListener("pointercancel", onUp);
+      clearHold();
+      pressedRef.current = false;
+      if (holdingRef.current) {
+        const idx = hoverIdxRef.current;
+        if (idx >= 0 && actions[idx]) onSelect?.(actions[idx].id);
+        holdingRef.current = false;
+        setIsOpen(false);
+      }
       release();
-    }
+    };
+    window.addEventListener("pointermove", onMove, { passive: false });
+    window.addEventListener("pointerup", onUp);
+    window.addEventListener("pointercancel", onUp);
   };
 
   React.useEffect(() => clearHold, [clearHold]);
@@ -549,9 +552,6 @@ export function GooeyActions({
             }
           }}
           onPointerDown={onCorePointerDown}
-          onPointerMove={onCorePointerMove}
-          onPointerUp={onCorePointerUp}
-          onPointerCancel={onCorePointerUp}
           className={cn(
             "pointer-events-auto absolute grid cursor-pointer place-items-center rounded-full border-0 p-0",
             "text-primary-foreground text-xs font-medium tracking-[0.18em] uppercase touch-none",
@@ -567,7 +567,7 @@ export function GooeyActions({
             willChange: "transform",
           }}
         >
-          {label}
+          {coreIcon ?? label}
         </button>
       </div>
 
