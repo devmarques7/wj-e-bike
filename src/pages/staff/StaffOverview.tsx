@@ -8,6 +8,7 @@ import ShiftTracker from "@/components/dashboard/ShiftTracker";
 import NextAppointmentCard from "@/components/dashboard/staff/NextAppointmentCard";
 import WorkloadGauge from "@/components/dashboard/staff/WorkloadGauge";
 import WeeklyWorkloadChart from "@/components/dashboard/staff/WeeklyWorkloadChart";
+import TodayPriorityQueue from "@/components/dashboard/staff/TodayPriorityQueue";
 import { useAuth } from "@/contexts/AuthContext";
 import { Navigate } from "react-router-dom";
 import { useShift } from "@/hooks/useShift";
@@ -120,15 +121,26 @@ export default function StaffOverview() {
           ))}
         </KPICarousel>
 
-        {/* Mobile-first hero row: what to do next + shift control */}
-        <div className="grid grid-cols-12 gap-4 lg:gap-6">
-          <div className="col-span-12 md:col-span-6 xl:col-span-4 order-1">
+        {/* Hero row (reference layout): analytics · next job · priority list.
+            Mobile-first order keeps the next appointment on top. */}
+        <div className="grid grid-cols-12 gap-4 lg:gap-6 items-stretch">
+          <div className="col-span-12 md:col-span-7 xl:col-span-5 order-2 md:order-1 min-h-[280px]">
+            <WeeklyWorkloadChart userId={user?.id} />
+          </div>
+          <div className="col-span-12 md:col-span-5 xl:col-span-4 order-1 md:order-2 min-h-[280px]">
             <NextAppointmentCard userId={user?.id} />
           </div>
-          <div className="col-span-12 md:col-span-6 xl:col-span-4 order-2 min-h-[220px]">
+          <div className="col-span-12 xl:col-span-3 order-3 min-h-[280px]">
+            <TodayPriorityQueue userId={user?.id} />
+          </div>
+        </div>
+
+        {/* Shift + capacity row */}
+        <div className="grid grid-cols-12 gap-4 lg:gap-6">
+          <div className="col-span-12 md:col-span-6 xl:col-span-4 min-h-[220px]">
             <ShiftTracker />
           </div>
-          <div className="col-span-12 xl:col-span-4 order-3">
+          <div className="col-span-12 md:col-span-6 xl:col-span-3">
             <WorkloadGauge
               pct={stats.currentLoadPct}
               completedToday={stats.completedToday}
@@ -137,14 +149,7 @@ export default function StaffOverview() {
               targetHours={stats.targetHours}
             />
           </div>
-        </div>
-
-        {/* Analytics + appointments grid */}
-        <div className="grid grid-cols-12 gap-4 lg:gap-6">
-          <div className="col-span-12 xl:col-span-4 min-h-[260px]">
-            <WeeklyWorkloadChart userId={user?.id} />
-          </div>
-          <div className="col-span-12 xl:col-span-8 min-h-[500px]">
+          <div className="col-span-12 xl:col-span-5 min-h-[500px]">
             <AppointmentsTableCard mineOnlyMechanicId={user?.id} />
           </div>
         </div>
