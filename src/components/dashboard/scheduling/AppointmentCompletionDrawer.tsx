@@ -110,6 +110,8 @@ export default function AppointmentCompletionDrawer({
   /* Final condition validation (same SSBike flow used on the E-Pass page). */
   const [assessOpen, setAssessOpen] = useState(false);
   const [assessDone, setAssessDone] = useState(false);
+  /* True when the assessment was opened as the final step of completing. */
+  const completeAfterAssessRef = useRef(false);
 
   const { briefing, loading: briefingLoading } = useBikeBriefing(appointment?.id, open);
   const { workNow } = useWorkPause();
@@ -729,6 +731,44 @@ export default function AppointmentCompletionDrawer({
                 ) : null}
               </AnimatePresence>
 
+              {/* Final condition assessment (SSBike) — mandatory before closing */}
+              {assessBikeId ? (
+                <div
+                  className={cn(
+                    "mt-3 rounded-2xl border p-3 flex items-center justify-between gap-3",
+                    assessDone
+                      ? "bg-wj-green/10 border-wj-green/30"
+                      : "bg-amber-500/[0.06] border-amber-500/30",
+                  )}
+                >
+                  <div className="min-w-0">
+                    <p className="text-xs font-medium text-foreground">
+                      Final condition assessment
+                    </p>
+                    <p className="text-[11px] text-muted-foreground mt-0.5">
+                      {assessDone
+                        ? "Battery, brakes and drivetrain rated — overall condition updated on the E-Pass."
+                        : "Rate battery, brakes, drivetrain and frame to update the bike overall condition."}
+                    </p>
+                  </div>
+                  <Button
+                    size="sm"
+                    variant={assessDone ? "outline" : "default"}
+                    disabled={saving}
+                    onClick={() => {
+                      completeAfterAssessRef.current = false;
+                      setAssessOpen(true);
+                    }}
+                    className={cn(
+                      "h-8 text-xs shrink-0",
+                      !assessDone && "bg-wj-green hover:bg-wj-green/90 text-black",
+                    )}
+                  >
+                    {assessDone ? "Review rating" : "Assess bike"}
+                  </Button>
+                </div>
+              ) : null}
+
               {/* Final completion */}
               <div className="mt-3 flex items-center justify-between gap-3 px-1">
                 <div className="text-[11px] text-muted-foreground">
@@ -741,7 +781,12 @@ export default function AppointmentCompletionDrawer({
                 </div>
                 <Button
                   size="sm"
-                  disabled={!briefingAck || !allStagesCompleted || !allDeliveryChecked || saving}
+                  disabled={
+                    !briefingAck ||
+                    !allStagesCompleted ||
+                    !allDeliveryChecked ||
+                    saving
+                  }
                   onClick={() => {
                     if (!allDeliveryChecked) {
                       setActiveStageId(DELIVERY_ID);
@@ -750,6 +795,7 @@ export default function AppointmentCompletionDrawer({
                     /* Close the job with the same guided SSBike condition
                        assessment used on the E-Pass page. */
                     if (assessBikeId && !assessDone) {
+                      completeAfterAssessRef.current = true;
                       setAssessOpen(true);
                       return;
                     }
@@ -785,7 +831,10 @@ export default function AppointmentCompletionDrawer({
             onSaved={(res) => {
               setAssessDone(true);
               setAssessOpen(false);
-              void completeAppointment(res?.overall ?? null);
+              if (completeAfterAssessRef.current) {
+                completeAfterAssessRef.current = false;
+                void completeAppointment(res?.overall ?? null);
+              }
             }}
           />
         ) : null}
