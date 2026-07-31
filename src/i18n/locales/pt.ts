@@ -593,6 +593,9 @@ const pt = {
     appts: {
       title: "Agendamentos",
       day: "Hoje", week: "Semana", month: "Mês",
+      empty_title: "Sem agendamentos",
+      empty_sub: "Nada agendado nesta vista. Cria um agendamento para trazer uma bike à oficina.",
+      empty_cta: "Criar agendamento",
       pending: "Pendentes", requested: "Solicitados", ongoing: "Em curso",
       unassigned: "Sem mecânico", overdue: "Atrasados", canceled: "Cancelados",
       completed: "Concluídos",
