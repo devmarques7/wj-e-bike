@@ -350,6 +350,59 @@ export type Database = {
           },
         ]
       }
+      bike_archive_records: {
+        Row: {
+          archived_by: string | null
+          bike_id: string
+          bike_model: string | null
+          bike_serial: string | null
+          created_at: string
+          customer_id: string
+          id: string
+          plan_name: string | null
+          reason: string | null
+          restored_at: string | null
+          subscription_id: string | null
+          user_id: string | null
+        }
+        Insert: {
+          archived_by?: string | null
+          bike_id: string
+          bike_model?: string | null
+          bike_serial?: string | null
+          created_at?: string
+          customer_id: string
+          id?: string
+          plan_name?: string | null
+          reason?: string | null
+          restored_at?: string | null
+          subscription_id?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          archived_by?: string | null
+          bike_id?: string
+          bike_model?: string | null
+          bike_serial?: string | null
+          created_at?: string
+          customer_id?: string
+          id?: string
+          plan_name?: string | null
+          reason?: string | null
+          restored_at?: string | null
+          subscription_id?: string | null
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "bike_archive_records_bike_id_fkey"
+            columns: ["bike_id"]
+            isOneToOne: false
+            referencedRelation: "customer_bikes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       business_hour_exceptions: {
         Row: {
           close_time: string | null
@@ -519,6 +572,9 @@ export type Database = {
       }
       customer_bikes: {
         Row: {
+          archived_at: string | null
+          archived_by: string | null
+          archived_reason: string | null
           color: string | null
           created_at: string
           customer_id: string
@@ -535,6 +591,9 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          archived_at?: string | null
+          archived_by?: string | null
+          archived_reason?: string | null
           color?: string | null
           created_at?: string
           customer_id: string
@@ -551,6 +610,9 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          archived_at?: string | null
+          archived_by?: string | null
+          archived_reason?: string | null
           color?: string | null
           created_at?: string
           customer_id?: string
@@ -2357,6 +2419,29 @@ export type Database = {
         SetofOptions: {
           from: "*"
           to: "inventory"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
+      fn_cancel_bike_subscription: {
+        Args: { p_bike_id: string; p_reason?: string }
+        Returns: {
+          archived_by: string | null
+          bike_id: string
+          bike_model: string | null
+          bike_serial: string | null
+          created_at: string
+          customer_id: string
+          id: string
+          plan_name: string | null
+          reason: string | null
+          restored_at: string | null
+          subscription_id: string | null
+          user_id: string | null
+        }
+        SetofOptions: {
+          from: "*"
+          to: "bike_archive_records"
           isOneToOne: true
           isSetofReturn: false
         }
