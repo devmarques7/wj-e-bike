@@ -18,6 +18,9 @@ import {
   Repeat2,
   Hash,
   UserCog,
+  Gauge,
+  Receipt,
+  CreditCard,
 } from "lucide-react";
 import {
   Dialog,
@@ -51,6 +54,28 @@ type ProgressRow = {
   notes: string | null;
 };
 
+type AssessmentRow = {
+  id: string;
+  overall_score: number;
+  condition_label: string;
+  scores: Record<string, number> | null;
+  answers: Record<string, unknown> | null;
+  notes: string | null;
+  is_second_hand: boolean | null;
+  created_at: string;
+};
+
+type PaymentRow = {
+  id: string;
+  amount: number;
+  currency: string;
+  status: string;
+  method: string;
+  paid_at: string;
+  notes: string | null;
+  invoice_url: string | null;
+};
+
 const fmtDur = (s: number | null) => {
   if (s == null) return "—";
   const h = Math.floor(s / 3600);
@@ -80,6 +105,10 @@ export default function AppointmentReviewHistoryDialog({
   const [rows, setRows] = useState<ProgressRow[]>([]);
   const [details, setDetails] = useState<AppointmentRowFull | null>(null);
   const [detailsLoading, setDetailsLoading] = useState(false);
+  const [assessment, setAssessment] = useState<AssessmentRow | null>(null);
+  const [payments, setPayments] = useState<PaymentRow[]>([]);
+
+  const isCompleted = appointment?.status === "completed";
 
   useEffect(() => {
     if (!open || !appointment) return;
@@ -97,6 +126,44 @@ export default function AppointmentReviewHistoryDialog({
         if (!error) setRows((data as any) ?? []);
         setLoading(false);
       }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [open, appointment]);
+
+  /* Completed jobs → load the full aftercare history: the bike condition
+     assessment recorded at handover and any payment charged around it. */
+  useEffect(() => {
+    if (!open || !appointment || appointment.status !== "completed") {
+      setAssessment(null);
+      setPayments([]);
+      return;
+    }
+    let cancelled = false;
+    (async () => {
+      const bikeId = appointment.bike_id;
+      const day = appointment.scheduled_date;
+      const [assessRes, payRes] = await Promise.all([
+        bikeId
+          ? supabase
+              .from("bike_assessments")
+              .select("id, overall_score, condition_label, scores, answers, notes, is_second_hand, created_at")
+              .eq("bike_id", bikeId)
+              .order("created_at", { ascending: false })
+              .limit(1)
+          : Promise.resolve({ data: [] as any[] }),
+        supabase
+          .from("payments")
+          .select("id, amount, currency, status, method, paid_at, notes, invoice_url")
+          .eq("user_id", appointment.user_id)
+          .gte("paid_at", `${day}T00:00:00Z`)
+          .lte("paid_at", `${day}T23:59:59Z`)
+          .order("paid_at", { ascending: false }),
+      ]);
+      if (cancelled) return;
+      setAssessment(((assessRes as any).data?.[0] as AssessmentRow) ?? null);
+      setPayments(((payRes as any).data as PaymentRow[]) ?? []);
     })();
     return () => {
       cancelled = true;
