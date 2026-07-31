@@ -313,6 +313,113 @@ export default function AppointmentReviewHistoryDialog({
               </div>
             )}
 
+            {isCompleted && (
+              <div className="px-6 py-4 border-b border-border/30 space-y-4">
+                {/* Assessment result */}
+                <div>
+                  <div className="text-[10px] uppercase tracking-wider text-muted-foreground mb-2 flex items-center gap-1">
+                    <Gauge className="h-3 w-3" /> Bike assessment
+                  </div>
+                  {assessment ? (
+                    <div className="rounded-xl border border-border/30 bg-muted/20 p-4">
+                      <div className="flex items-center gap-4">
+                        <div className="relative h-14 w-14 shrink-0 rounded-full flex items-center justify-center border-2 border-wj-green/40 bg-wj-green/10">
+                          <span className="text-base font-light tabular-nums text-wj-green">
+                            {assessment.overall_score}
+                          </span>
+                        </div>
+                        <div className="min-w-0">
+                          <div className="text-sm font-medium capitalize">
+                            {assessment.condition_label}
+                          </div>
+                          <div className="text-[10px] text-muted-foreground mt-0.5">
+                            {fmtAbs(assessment.created_at, i18n.language)}
+                            {assessment.is_second_hand ? " · second hand" : ""}
+                          </div>
+                        </div>
+                      </div>
+                      {assessment.scores && Object.keys(assessment.scores).length > 0 && (
+                        <div className="mt-3 grid grid-cols-2 md:grid-cols-3 gap-2">
+                          {Object.entries(assessment.scores).map(([k, v]) => (
+                            <div key={k} className="rounded-lg bg-muted/30 px-2.5 py-1.5">
+                              <div className="text-[10px] uppercase tracking-wider text-muted-foreground truncate">
+                                {k.replace(/_/g, " ")}
+                              </div>
+                              <div className="text-xs tabular-nums font-medium">{String(v)}</div>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                      {assessment.notes && (
+                        <p className="mt-3 text-[11px] text-muted-foreground border-t border-border/20 pt-2 whitespace-pre-wrap">
+                          {assessment.notes}
+                        </p>
+                      )}
+                    </div>
+                  ) : (
+                    <p className="text-xs text-muted-foreground">No assessment recorded.</p>
+                  )}
+                </div>
+
+                {/* Billing */}
+                <div>
+                  <div className="text-[10px] uppercase tracking-wider text-muted-foreground mb-2 flex items-center gap-1">
+                    <Receipt className="h-3 w-3" /> Billing
+                  </div>
+                  <div className="rounded-xl border border-border/30 bg-muted/20 p-4 space-y-2">
+                    <div className="flex items-center justify-between text-xs">
+                      <span className="text-muted-foreground">Covered by plan</span>
+                      <span
+                        className={cn(
+                          "font-medium",
+                          details?.is_covered_by_plan ? "text-wj-green" : "text-foreground",
+                        )}
+                      >
+                        {details?.is_covered_by_plan
+                          ? `Yes${appointment.plan_name ? ` · ${appointment.plan_name}` : ""}`
+                          : "No"}
+                      </span>
+                    </div>
+                    <div className="flex items-center justify-between text-xs">
+                      <span className="text-muted-foreground">Extra charge</span>
+                      <span className="font-medium tabular-nums">
+                        €{Number(details?.extra_charge_eur ?? 0).toFixed(2)}
+                      </span>
+                    </div>
+                    <div className="flex items-center justify-between text-xs">
+                      <span className="text-muted-foreground">Paid</span>
+                      <span className="font-medium tabular-nums text-wj-green">
+                        €
+                        {payments
+                          .filter((p) => p.status === "succeeded")
+                          .reduce((s, p) => s + Number(p.amount), 0)
+                          .toFixed(2)}
+                      </span>
+                    </div>
+                    {payments.length > 0 && (
+                      <div className="pt-2 border-t border-border/20 space-y-1.5">
+                        {payments.map((p) => (
+                          <div key={p.id} className="flex items-center gap-2 text-[11px]">
+                            <CreditCard className="h-3 w-3 text-muted-foreground shrink-0" />
+                            <span className="truncate flex-1">
+                              {p.method.replace(/_/g, " ")}
+                              {p.notes ? ` · ${p.notes}` : ""}
+                            </span>
+                            <span className="text-muted-foreground tabular-nums shrink-0">
+                              {fmtAbs(p.paid_at, i18n.language)}
+                            </span>
+                            <span className="font-medium tabular-nums shrink-0">
+                              €{Number(p.amount).toFixed(2)}
+                            </span>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </div>
+            )}
+
             <div className="px-6 py-5">
               <div className="text-[10px] uppercase tracking-wider text-muted-foreground mb-3">
                 {t("workshop.review.title")}
