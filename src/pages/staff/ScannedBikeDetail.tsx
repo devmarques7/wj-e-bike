@@ -1,5 +1,5 @@
 import { motion } from "framer-motion";
-import { Link, Navigate, useParams } from "react-router-dom";
+import { Link, Navigate, useLocation, useParams } from "react-router-dom";
 import { CalendarDays, Loader2, Mail, Phone, ScanLine, User } from "lucide-react";
 import RoleDashboardLayout from "@/components/dashboard/RoleDashboardLayout";
 import GarageBikeCard from "@/components/dashboard/garage/GarageBikeCard";
@@ -24,6 +24,7 @@ import { useBikeById, REVISION_LABEL } from "@/hooks/garage/useBikeById";
  */
 export default function ScannedBikeDetail() {
   const { bikeId } = useParams<{ bikeId: string }>();
+  const location = useLocation();
   const { user, isAuthenticated, isLoading } = useAuth();
   const { bike, owner, loading, error, health, nextRevision, daysToRevision } = useBikeById(bikeId);
 
@@ -32,6 +33,14 @@ export default function ScannedBikeDetail() {
 
   const isStaff = user?.role === "staff" || user?.role === "admin";
   const garageHref = isStaff ? "/dashboard/staff/garage" : "/dashboard/garage";
+  // Where the scan started (e.g. /dashboard/garage?bike=<own-bike-id>), so the
+  // breadcrumb takes the rider back to their own bike exactly as they left it.
+  const stateReturn = (location.state as { returnTo?: string } | null)?.returnTo;
+  const returnTo =
+    stateReturn && stateReturn.startsWith("/dashboard") && !stateReturn.includes("/bike/")
+      ? stateReturn
+      : garageHref;
+  const isOwnBike = !!owner?.userId && owner.userId === user?.id;
   const ownerName = owner?.name || owner?.email || "Unknown customer";
   const shortId = (bike?.id ?? bikeId ?? "").slice(0, 8).toUpperCase();
 
@@ -48,7 +57,7 @@ export default function ScannedBikeDetail() {
             <BreadcrumbList>
               <BreadcrumbItem>
                 <BreadcrumbLink asChild>
-                  <Link to={garageHref}>Garage</Link>
+                  <Link to={returnTo}>Garage</Link>
                 </BreadcrumbLink>
               </BreadcrumbItem>
               <BreadcrumbSeparator />
@@ -56,6 +65,10 @@ export default function ScannedBikeDetail() {
                 {owner?.customerId && isStaff ? (
                   <BreadcrumbLink asChild>
                     <Link to={`/dashboard/admin/crm/${owner.customerId}`}>{ownerName}</Link>
+                  </BreadcrumbLink>
+                ) : !isStaff ? (
+                  <BreadcrumbLink asChild>
+                    <Link to={returnTo}>{isOwnBike ? "My bike" : "Back to my bike"}</Link>
                   </BreadcrumbLink>
                 ) : (
                   <span className="text-muted-foreground">{ownerName}</span>
