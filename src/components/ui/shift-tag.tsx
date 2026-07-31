@@ -203,14 +203,18 @@ export function ShiftTag() {
       style={{ position: "fixed", left: 0, top: 0, touchAction: "none" }}
       className="z-[9999] hidden sm:flex flex-col items-stretch"
     >
-      {/* Pill */}
-      <div
+      {/* Pill — Dynamic-Island style status bar */}
+      <motion.div
+        layout
+        transition={{ type: "spring", stiffness: 380, damping: 34 }}
         className={cn(
-          "group flex items-center gap-2 rounded-full border border-border/40 bg-background/60 backdrop-blur px-3 py-1.5 shadow-lg shadow-black/10 transition-colors duration-300 hover:border-wj-green/40",
-          status === "completed" && "bg-wj-green border-wj-green text-white hover:border-white/40",
+          "group flex items-center gap-2 rounded-2xl border border-border/40 bg-background/70 backdrop-blur-xl p-1.5 shadow-xl shadow-black/10 transition-colors duration-300 hover:border-wj-green/40",
           dragging ? "cursor-grabbing" : "cursor-grab",
         )}
       >
+        <GripVertical className="h-3.5 w-3.5 text-muted-foreground/50 shrink-0" />
+
+        {/* Clock block — day + live shift timer */}
         <button
           type="button"
           onClick={() => {
@@ -221,43 +225,52 @@ export function ShiftTag() {
               setOpen(true);
             }
           }}
-          className="flex items-center gap-2"
+          className={cn(
+            "flex items-center gap-2 rounded-xl px-2.5 py-1.5 transition-colors",
+            "bg-foreground text-background hover:bg-foreground/90",
+            open && tab === "shift" && "ring-2 ring-wj-green/50",
+          )}
         >
-        <GripVertical className="h-3 w-3 text-muted-foreground/60 -ml-1" />
-        <span className="relative flex h-2 w-2">
-          {status === "active" && (
-            <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-wj-green opacity-60" />
-          )}
-          {status === "completed" && (
-            <span className="absolute inline-flex h-full w-full animate-pulse rounded-full bg-white opacity-40" />
-          )}
-          <span className={cn("relative inline-flex h-2 w-2 rounded-full", dotClass)} />
-        </span>
-        <Activity className={cn("h-3.5 w-3.5 text-muted-foreground", status === "completed" && "text-white")} />
-        <span className={cn("text-xs font-medium tabular-nums min-w-[64px] text-left", status === "completed" ? "text-white" : "text-foreground")}>
-          {loading ? "—" : fmtHMS(elapsedSec)}
-        </span>
-        <span className={cn("text-[10px] uppercase tracking-wider hidden md:inline", status === "completed" ? "text-white/80" : "text-muted-foreground")}>
-          {label}
-        </span>
+          <span className="flex flex-col items-start leading-none">
+            <span className="text-[9px] font-semibold">
+              {new Date().toLocaleDateString([], { weekday: "long" })}
+            </span>
+            <span className="text-[9px] opacity-60">
+              {new Date().toLocaleDateString([], { day: "numeric", month: "short" })}
+            </span>
+          </span>
+          <span className="text-base font-semibold tabular-nums tracking-tight">
+            {loading ? "—" : fmtHMS(elapsedSec)}
+          </span>
         </button>
 
-        {/* Active job timer — extends the pill in width */}
+        {/* Status */}
+        <span className="flex items-center gap-1.5 px-1">
+          <span className="relative flex h-2 w-2">
+            {status === "active" && (
+              <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-wj-green opacity-60" />
+            )}
+            <span className={cn("relative inline-flex h-2 w-2 rounded-full", dotClass)} />
+          </span>
+          <span className="text-[11px] font-medium text-foreground hidden md:inline">{label}</span>
+        </span>
+
+        {/* Active job chip — extends the bar */}
         <AnimatePresence initial={false}>
           {hasJob && (
             <motion.span
               key="job"
-              initial={{ width: 0, opacity: 0, marginLeft: 0 }}
-              animate={{ width: "auto", opacity: 1, marginLeft: 4 }}
-              exit={{ width: 0, opacity: 0, marginLeft: 0 }}
+              initial={{ width: 0, opacity: 0 }}
+              animate={{ width: "auto", opacity: 1 }}
+              exit={{ width: 0, opacity: 0 }}
               transition={{ type: "spring", stiffness: 320, damping: 32 }}
               className="flex items-center gap-2 overflow-hidden"
             >
-              <span className="h-4 w-px bg-border/60 shrink-0" />
+              <span className="h-5 w-px bg-border/60 shrink-0" />
               <motion.button
                 type="button"
-                whileHover={{ scale: 1.05 }}
-                whileTap={{ scale: 0.95 }}
+                whileHover={{ scale: 1.04 }}
+                whileTap={{ scale: 0.96 }}
                 onClick={() => {
                   if (dragMoved.current) return;
                   if (open && tab === "job") setOpen(false);
@@ -267,11 +280,11 @@ export function ShiftTag() {
                   }
                 }}
                 className={cn(
-                  "flex items-center gap-1.5 rounded-full px-2 py-0.5 border shrink-0 transition-colors",
-                  open && tab === "job" && "ring-1 ring-wj-green/50",
+                  "flex items-center gap-1.5 rounded-xl px-2.5 py-1.5 border shrink-0 transition-colors",
+                  open && tab === "job" && "ring-2 ring-wj-green/50",
                   isPaused
-                    ? "bg-amber-500/10 border-amber-400/40"
-                    : "bg-wj-green/10 border-wj-green/30",
+                    ? "bg-amber-500/10 border-amber-400/40 hover:bg-amber-500/20"
+                    : "bg-wj-green/10 border-wj-green/30 hover:bg-wj-green/20",
                 )}
               >
                 <motion.span
@@ -279,7 +292,7 @@ export function ShiftTag() {
                   transition={{ duration: 2.4, repeat: Infinity, ease: "easeInOut" }}
                   className="flex"
                 >
-                  <Wrench className={cn("h-3 w-3", isPaused ? "text-amber-400" : "text-wj-green")} />
+                  <Wrench className={cn("h-3.5 w-3.5", isPaused ? "text-amber-400" : "text-wj-green")} />
                 </motion.span>
                 <span
                   className={cn(
@@ -289,11 +302,45 @@ export function ShiftTag() {
                 >
                   {fmtHMS(jobElapsed)}
                 </span>
+                <span className="hidden lg:inline text-[11px] text-muted-foreground truncate max-w-[110px]">
+                  {appointment?.customer_name ?? appointment?.service_name ?? ""}
+                </span>
               </motion.button>
             </motion.span>
           )}
         </AnimatePresence>
-      </div>
+
+        {/* Quick actions */}
+        <span className="flex items-center gap-1 pl-0.5">
+          {status === "idle" && (
+            <QuickAction onClick={handleStart} working={working} icon={Play} label="Start" tone="green" />
+          )}
+          {status === "active" && (
+            <>
+              <QuickAction onClick={handlePause} working={working} icon={Pause} label="Pause" tone="amber" />
+              <QuickAction onClick={handleFinish} working={working} icon={Square} label="End" tone="red" />
+            </>
+          )}
+          {status === "paused" && (
+            <>
+              <QuickAction onClick={handleResume} working={working} icon={Play} label="Resume" tone="green" />
+              <QuickAction onClick={handleFinish} working={working} icon={Square} label="End" tone="red" />
+            </>
+          )}
+          {hasJob && (
+            <QuickAction
+              onClick={() => {
+                setQcOpen(true);
+                setOpen(false);
+              }}
+              working={false}
+              icon={ShieldCheck}
+              label="Process"
+              tone="green"
+            />
+          )}
+        </span>
+      </motion.div>
 
       {/* Expanded panel */}
       <AnimatePresence>
