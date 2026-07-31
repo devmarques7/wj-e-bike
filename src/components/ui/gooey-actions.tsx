@@ -469,7 +469,9 @@ export function GooeyActions({
       holdingRef.current = true;
       setIsOpen(true);
     }, holdDelay);
-    onPressDrag?.(e.nativeEvent, 0);
+    // Hand the drag off once per gesture; re-arming it on later moves stacked
+    // duplicate drag sessions that fought over the wrapper position.
+    dragHandedOffRef.current = onPressDrag?.(e.nativeEvent, 0) === true;
   };
 
   React.useEffect(() => () => {
