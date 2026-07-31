@@ -75,6 +75,8 @@ export type AppointmentRow = {
   customer_name: string | null;
   customer_email: string | null;
   mechanic_name: string | null;
+  completed_by?: string | null;
+  completed_by_name?: string | null;
   service_name: string | null;
   service_color: string | null;
   plan_name: string | null;
