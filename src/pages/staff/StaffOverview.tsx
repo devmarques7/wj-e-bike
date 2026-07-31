@@ -98,7 +98,7 @@ export default function StaffOverview() {
 
   return (
     <RoleDashboardLayout>
-      <div className="p-4 lg:p-6 space-y-6">
+      <div className="p-4 lg:p-6 space-y-6 w-full">
         {/* Page Header */}
         <motion.div
           initial={{ opacity: 0, y: -10 }}
