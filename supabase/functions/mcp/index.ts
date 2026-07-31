@@ -3,7 +3,7 @@
 // supabase function: mcp
 // Bundled from src/lib/mcp/index.ts by @lovable.dev/mcp-js.
 // src/lib/mcp/index.ts
-import { defineMcp } from "npm:@lovable.dev/mcp-js@0.20.1";
+import { defineMcp, auth } from "npm:@lovable.dev/mcp-js@0.20.1";
 
 // src/lib/mcp/tools/list-bikes.ts
 import { defineTool } from "npm:@lovable.dev/mcp-js@0.20.1";
@@ -416,7 +416,13 @@ var mcp_default = defineMcp({
   title: "WJ Vision E-Bikes",
   version: "0.1.0",
   instructions: "Tools for browsing the WJ Vision e-bike and accessory catalog. Use `list_bikes` to browse bikes (optionally by category), `get_bike` for full specs of one bike by id, and `list_accessories` to browse accessories.",
-  tools: [list_bikes_default, get_bike_default, list_accessories_default]
+  tools: [list_bikes_default, get_bike_default, list_accessories_default],
+  auth: auth.oauth.issuer({
+    issuer: "https://spuvedbcgsygzvloeyrs.supabase.co/auth/v1",
+    resource: "https://spuvedbcgsygzvloeyrs.supabase.co/functions/v1/mcp",
+    resourceName: "WJ Vision E-Bikes MCP",
+    acceptedAudiences: ["authenticated"]
+  })
 });
 
 // lovable-mcp-supabase-entry.ts
