@@ -143,7 +143,10 @@ export default function FleetMenu({ showShift = true }: FleetMenuProps) {
       <motion.div
         ref={wrapperRef}
         style={{ x, y }}
-        className="fixed bottom-8 right-8 z-[2147483000] cursor-grab active:cursor-grabbing"
+        /* The wrapper spans 80vw/80vh so the action arc has room, so it must stay
+           click-through: only the FAB and the open action buttons re-enable
+           pointer events. Otherwise it swallows clicks on the page behind it. */
+        className="pointer-events-none fixed bottom-8 right-8 z-[2147483000] cursor-grab active:cursor-grabbing"
       >
         <GooeyActions
           label="Fleet"
