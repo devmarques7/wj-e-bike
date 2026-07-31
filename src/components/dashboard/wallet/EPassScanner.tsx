@@ -81,7 +81,7 @@ export default function EPassScanner({ active, onNavigate }: Props) {
 
   const {
     videoRef, canvasRef, status, error, snapshot, aiBusy,
-    zoom, zoomRange, setZoom, start, capture, reset, flipCamera,
+    zoom, zoomRange, digitalZoom, setZoom, start, capture, reset, flipCamera,
   } = useQrScanner({ onResult: handleResult, active });
 
   const goToBike = () => {
@@ -102,6 +102,7 @@ export default function EPassScanner({ active, onNavigate }: Props) {
             muted
             playsInline
             className={`h-full w-full object-cover ${snapshot ? "invisible" : ""}`}
+            style={digitalZoom ? { transform: `scale(${zoom})`, transformOrigin: "center" } : undefined}
           />
           {snapshot && (
             <img src={snapshot} alt="Captured E-Pass frame" className="absolute inset-0 h-full w-full object-cover" />
@@ -151,7 +152,7 @@ export default function EPassScanner({ active, onNavigate }: Props) {
         </div>
       </div>
 
-      {zoomRange && scanning && (
+      {zoomRange && (scanning || status === "captured") && (
         <div className="flex items-center gap-3 px-1">
           <ZoomIn className="h-4 w-4 text-muted-foreground" />
           <Slider
@@ -161,6 +162,9 @@ export default function EPassScanner({ active, onNavigate }: Props) {
             step={(zoomRange.max - zoomRange.min) / 20 || 0.1}
             onValueChange={([v]) => setZoom(v)}
           />
+          <span className="w-10 text-right text-[10px] tabular-nums text-muted-foreground">
+            {zoom.toFixed(1)}×
+          </span>
         </div>
       )}
 

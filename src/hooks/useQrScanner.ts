@@ -39,6 +39,9 @@ export function useQrScanner({ onResult, active, aiAssist = true }: Options) {
   const [aiBusy, setAiBusy] = useState(false);
   const [zoom, setZoomState] = useState(1);
   const [zoomRange, setZoomRange] = useState<{ min: number; max: number } | null>(null);
+  /** True when the device has no native zoom and we crop the frame instead. */
+  const [digitalZoom, setDigitalZoom] = useState(true);
+  const zoomRef = useRef(1);
   const [facingMode, setFacingMode] = useState<"environment" | "user">("environment");
 
   const getWorkCanvas = () => {
@@ -82,7 +85,10 @@ export function useQrScanner({ onResult, active, aiAssist = true }: Options) {
     const ctx = canvas.getContext("2d", { willReadFrequently: true });
     if (!ctx || !video.videoWidth) return null;
 
-    for (const scale of ROI_SCALES) {
+    // When zooming digitally, the visible frame is already cropped to 1/zoom.
+    const base = digitalZoom ? 1 / Math.max(1, zoomRef.current) : 1;
+    for (const roi of ROI_SCALES) {
+      const scale = Math.min(1, base * roi);
       const sw = Math.round(video.videoWidth * scale);
       const sh = Math.round(video.videoHeight * scale);
       const sx = Math.round((video.videoWidth - sw) / 2);
@@ -98,7 +104,7 @@ export function useQrScanner({ onResult, active, aiAssist = true }: Options) {
       if (code?.data) return code.data;
     }
     return null;
-  }, []);
+  }, [digitalZoom]);
 
   /** Escalate a frozen frame to the AI gateway (small / low-contrast codes). */
   const decodeWithAi = useCallback(
@@ -125,11 +131,17 @@ export function useQrScanner({ onResult, active, aiAssist = true }: Options) {
 
   const applyZoom = useCallback((value: number) => {
     const track = streamRef.current?.getVideoTracks()[0] as any;
-    if (!track) return;
-    const caps = track.getCapabilities?.();
-    if (!caps?.zoom) return;
+    const caps = track?.getCapabilities?.();
+    if (!caps?.zoom) {
+      // Digital fallback: clamp locally, the video is scaled via CSS.
+      const clampedDigital = Math.min(5, Math.max(1, value));
+      zoomRef.current = clampedDigital;
+      setZoomState(clampedDigital);
+      return;
+    }
     const clamped = Math.min(caps.zoom.max, Math.max(caps.zoom.min, value));
     track.applyConstraints({ advanced: [{ zoom: clamped }] }).catch(() => {});
+    zoomRef.current = clamped;
     setZoomState(clamped);
   }, []);
 
@@ -156,10 +168,17 @@ export function useQrScanner({ onResult, active, aiAssist = true }: Options) {
       const track = stream.getVideoTracks()[0] as any;
       const caps = track?.getCapabilities?.();
       if (caps?.zoom) {
+        setDigitalZoom(false);
         setZoomRange({ min: caps.zoom.min, max: caps.zoom.max });
-        setZoomState(track.getSettings?.().zoom ?? caps.zoom.min);
+        const initial = track.getSettings?.().zoom ?? caps.zoom.min;
+        zoomRef.current = initial;
+        setZoomState(initial);
       } else {
-        setZoomRange(null);
+        // No hardware zoom (most desktops / iOS Safari): expose digital zoom.
+        setDigitalZoom(true);
+        setZoomRange({ min: 1, max: 5 });
+        zoomRef.current = 1;
+        setZoomState(1);
       }
       if (caps?.focusMode?.includes?.("continuous")) {
         track.applyConstraints({ advanced: [{ focusMode: "continuous" }] }).catch(() => {});
@@ -252,6 +271,7 @@ export function useQrScanner({ onResult, active, aiAssist = true }: Options) {
     aiBusy,
     zoom,
     zoomRange,
+    digitalZoom,
     setZoom: applyZoom,
     start,
     capture,
