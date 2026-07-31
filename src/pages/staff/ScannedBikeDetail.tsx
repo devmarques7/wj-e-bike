@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { motion } from "framer-motion";
-import { Link, Navigate, useLocation, useNavigate, useParams } from "react-router-dom";
+import { Navigate, useNavigate, useParams } from "react-router-dom";
 import { Loader2, ScanLine } from "lucide-react";
 import RoleDashboardLayout from "@/components/dashboard/RoleDashboardLayout";
 import GarageBikeCard from "@/components/dashboard/garage/GarageBikeCard";
@@ -13,14 +13,6 @@ import AppointmentsTableCard from "@/components/dashboard/scheduling/Appointment
 import BikeAssistantCard from "@/components/dashboard/assistant/BikeAssistantCard";
 import BikeAssessmentDialog from "@/components/dashboard/garage/BikeAssessmentDialog";
 import { useBikeAssessment } from "@/hooks/garage/useBikeAssessment";
-import {
-  Breadcrumb,
-  BreadcrumbItem,
-  BreadcrumbLink,
-  BreadcrumbList,
-  BreadcrumbPage,
-  BreadcrumbSeparator,
-} from "@/components/ui/breadcrumb";
 import { useAuth } from "@/contexts/AuthContext";
 import { useBikeById } from "@/hooks/garage/useBikeById";
 import { useServiceBriefing } from "@/hooks/staff/useServiceBriefing";
@@ -32,7 +24,6 @@ import { useServiceBriefing } from "@/hooks/staff/useServiceBriefing";
  */
 export default function ScannedBikeDetail() {
   const { bikeId } = useParams<{ bikeId: string }>();
-  const location = useLocation();
   const navigate = useNavigate();
   const { user, isAuthenticated, isLoading } = useAuth();
   const { bike, owner, loading, error, health, nextRevision, daysToRevision, refetch } =
@@ -118,17 +109,7 @@ export default function ScannedBikeDetail() {
   if (!isAuthenticated) return <Navigate to="/auth" replace />;
 
   const isStaff = user?.role === "staff" || user?.role === "admin";
-  const garageHref = isStaff ? "/dashboard/staff/garage" : "/dashboard/garage";
-  // Where the scan started (e.g. /dashboard/garage?bike=<own-bike-id>), so the
-  // breadcrumb takes the rider back to their own bike exactly as they left it.
-  const stateReturn = (location.state as { returnTo?: string } | null)?.returnTo;
-  const returnTo =
-    stateReturn && stateReturn.startsWith("/dashboard") && !stateReturn.includes("/bike/")
-      ? stateReturn
-      : garageHref;
-  const isOwnBike = !!owner?.userId && owner.userId === user?.id;
   const ownerName = owner?.name || owner?.email || "Unknown customer";
-  const shortId = (bike?.id ?? bikeId ?? "").slice(0, 8).toUpperCase();
 
   return (
     <RoleDashboardLayout>
@@ -139,34 +120,6 @@ export default function ScannedBikeDetail() {
           transition={{ duration: 0.3 }}
           className="space-y-3"
         >
-          <Breadcrumb>
-            <BreadcrumbList>
-              <BreadcrumbItem>
-                <BreadcrumbLink asChild>
-                  <Link to={returnTo}>Garage</Link>
-                </BreadcrumbLink>
-              </BreadcrumbItem>
-              <BreadcrumbSeparator />
-              <BreadcrumbItem>
-                {owner?.customerId && isStaff ? (
-                  <BreadcrumbLink asChild>
-                    <Link to={`/dashboard/admin/crm/${owner.customerId}`}>{ownerName}</Link>
-                  </BreadcrumbLink>
-                ) : !isStaff ? (
-                  <BreadcrumbLink asChild>
-                    <Link to={returnTo}>{isOwnBike ? "My bike" : "Back to my bike"}</Link>
-                  </BreadcrumbLink>
-                ) : (
-                  <span className="text-muted-foreground">{ownerName}</span>
-                )}
-              </BreadcrumbItem>
-              <BreadcrumbSeparator />
-              <BreadcrumbItem>
-                <BreadcrumbPage>Bike #{shortId}</BreadcrumbPage>
-              </BreadcrumbItem>
-            </BreadcrumbList>
-          </Breadcrumb>
-
           <div className="flex flex-wrap items-end justify-between gap-3">
             <div>
               <h1 className="text-xl sm:text-2xl font-light text-foreground">
