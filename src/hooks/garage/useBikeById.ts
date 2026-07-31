@@ -1,6 +1,14 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { computeHealth, nextRevisionDate, type GarageBike } from "@/hooks/garage/useGarageBike";
+import {
+  computeHealth,
+  nextRevisionDate,
+  REVISION_CYCLE_MONTHS,
+  type GarageBike,
+} from "@/hooks/garage/useGarageBike";
+
+/** Human label of the WJ standard maintenance cycle. */
+export const REVISION_LABEL = `${REVISION_CYCLE_MONTHS}-month standard cycle`;
 
 export interface BikeOwner {
   customerId: string;
