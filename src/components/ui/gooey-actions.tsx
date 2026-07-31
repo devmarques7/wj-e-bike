@@ -29,6 +29,8 @@ export interface GooeyActionsProps
   defaultOpen?: boolean;
   onOpenChange?: (open: boolean) => void;
   onSelect?: (id: string) => void;
+  /** Horizontal anchor of the core inside the box (0–1). */
+  coreX?: number;
   /** Vertical anchor of the core inside the box (0–1). */
   coreY?: number;
   reducedMotion?: boolean;
@@ -98,6 +100,7 @@ export function GooeyActions({
   defaultOpen = false,
   onOpenChange,
   onSelect,
+  coreX = 0.5,
   coreY = 0.62,
   reducedMotion,
   holdToOpen = false,
@@ -143,8 +146,9 @@ export function GooeyActions({
   const count = actions.length;
   const [a0, a1] = arc;
 
-  const params = React.useRef({ radius, stagger, stiffness, damping, magnetRange, coreY });
-  params.current = { radius, stagger, stiffness, damping, magnetRange, coreY };
+  const params = React.useRef({ radius, stagger, stiffness, damping, magnetRange, coreX, coreY });
+  params.current = { radius, stagger, stiffness, damping, magnetRange, coreX, coreY };
+
 
   const satsRef = React.useRef<SatState[]>([]);
   const ringKeyRef = React.useRef("");
@@ -162,7 +166,7 @@ export function GooeyActions({
   const center = React.useCallback(() => {
     const root = rootRef.current;
     if (!root) return { x: 0, y: 0 };
-    return { x: root.clientWidth / 2, y: root.clientHeight * params.current.coreY };
+    return { x: root.clientWidth * params.current.coreX, y: root.clientHeight * params.current.coreY };
   }, []);
 
   const applyOne = React.useCallback((i: number) => {
@@ -381,11 +385,17 @@ export function GooeyActions({
   };
 
   const topPct = `${coreY * 100}%`;
+  const leftPct = `${coreX * 100}%`;
+
 
   return (
     <div
       ref={rootRef}
-      className={cn("relative select-none", className)}
+      className={cn(
+        "relative select-none",
+        isOpen ? "pointer-events-auto" : "pointer-events-none",
+        className,
+      )}
       style={{ width: 300, height: 260, ...style }}
       onPointerMove={track}
       onPointerLeave={release}
@@ -423,7 +433,7 @@ export function GooeyActions({
           ref={coreBlobRef}
           className="absolute rounded-full bg-wj-green"
           style={{
-            left: "50%",
+            left: leftPct,
             top: topPct,
             width: CORE_PX,
             height: CORE_PX,
@@ -439,7 +449,7 @@ export function GooeyActions({
             }}
             className="absolute rounded-full bg-wj-green"
             style={{
-              left: "50%",
+              left: leftPct,
               top: topPct,
               width: SAT_PX,
               height: SAT_PX,
@@ -485,7 +495,7 @@ export function GooeyActions({
                 staticMode && "transition-opacity duration-200",
               )}
               style={{
-                left: "50%",
+                left: leftPct,
                 top: topPct,
                 width: SAT_PX,
                 height: SAT_PX,
@@ -530,7 +540,7 @@ export function GooeyActions({
             "focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-wj-green",
           )}
           style={{
-            left: "50%",
+            left: leftPct,
             top: topPct,
             width: CORE_PX,
             height: CORE_PX,

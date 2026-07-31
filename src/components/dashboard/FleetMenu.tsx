@@ -53,7 +53,7 @@ export default function FleetMenu() {
         dragMomentum={false}
         dragElastic={0.08}
         whileDrag={{ scale: 1.03 }}
-        className="fixed bottom-4 right-2 z-[2147483000] cursor-grab active:cursor-grabbing"
+        className="fixed bottom-8 right-8 z-[2147483000] cursor-grab active:cursor-grabbing"
       >
         <GooeyActions
           label="Fleet"
@@ -61,12 +61,13 @@ export default function FleetMenu() {
           holdToOpen
           holdDelay={1000}
           radius={74}
-          arc={[-186, -14]}
+          arc={[-160, -80]}
           magnetRange={46}
-          coreY={0.72}
+          coreX={1}
+          coreY={1}
           open={menuOpen}
           onOpenChange={setMenuOpen}
-          style={{ width: 210, height: 170 }}
+          style={{ width: "80vw", height: "80vh" }}
           onSelect={onSelect}
         />
       </motion.div>
