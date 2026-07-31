@@ -65,21 +65,6 @@ export default function EPassScanner({ active, onNavigate }: Props) {
               />
             ))}
 
-            {/* Rotating radar sweep */}
-            {scanning && (
-              <motion.div
-                className="absolute inset-0 rounded-[26px]"
-                style={{
-                  background:
-                    "conic-gradient(from 0deg, hsl(var(--primary) / 0.35), transparent 28%, transparent 100%)",
-                  maskImage: "radial-gradient(circle at center, black 0%, transparent 78%)",
-                  WebkitMaskImage: "radial-gradient(circle at center, black 0%, transparent 78%)",
-                }}
-                animate={{ rotate: 360 }}
-                transition={{ duration: 3.2, repeat: Infinity, ease: "linear" }}
-              />
-            )}
-
             {/* Corner brackets */}
             {[
               "left-4 top-4 border-l-2 border-t-2 rounded-tl-xl",
@@ -90,13 +75,13 @@ export default function EPassScanner({ active, onNavigate }: Props) {
               <div key={c} className={`absolute h-10 w-10 border-primary/80 ${c}`} />
             ))}
 
-            {/* Scan line */}
+            {/* Simple top-to-bottom scan line with upward gradient */}
             {scanning && (
               <motion.div
-                className="absolute inset-x-6 h-[2px] rounded-full bg-gradient-to-r from-transparent via-primary to-transparent"
-                initial={{ top: "8%" }}
-                animate={{ top: ["8%", "92%", "8%"] }}
-                transition={{ duration: 3, repeat: Infinity, ease: "easeInOut" }}
+                className="absolute inset-x-0 h-[2px] rounded-full bg-gradient-to-t from-transparent via-primary to-primary"
+                initial={{ top: "0%" }}
+                animate={{ top: ["0%", "100%", "0%"] }}
+                transition={{ duration: 2.5, repeat: Infinity, ease: "linear" }}
               />
             )}
 
