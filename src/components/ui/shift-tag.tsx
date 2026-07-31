@@ -372,6 +372,10 @@ export function ShiftTag() {
                       value={row?.scheduled_minutes ? `${Math.round(row.scheduled_minutes / 60)}h` : "—"}
                     />
                     <DetailRow
+                      label={`Breaks${breakCount ? ` (${breakCount})` : ""}`}
+                      value={breakCount ? fmtHMS(breakSec) : "—"}
+                    />
+                    <DetailRow
                       label="Remaining"
                       value={
                         row?.scheduled_minutes
