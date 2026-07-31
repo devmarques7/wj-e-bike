@@ -328,7 +328,7 @@ export default function BikeShowcase({ bikeId }: BikeShowcaseProps = {}) {
                   onClick={() => setActiveBikeIndex(i)}
                   title={b.model}
                   className={`h-2 w-2 rounded-full transition-all ${
-                    i === activeBikeIndex ? "bg-wj-green scale-110" : "bg-muted-foreground/40 hover:bg-muted-foreground/70"
+                    i === activeBikeIndex ? "bg-wj-green scale-110" : "bg-primary-foreground/40 hover:bg-primary-foreground/70"
                   }`}
                 />
               ))}
