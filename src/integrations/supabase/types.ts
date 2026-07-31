@@ -403,6 +403,62 @@ export type Database = {
           },
         ]
       }
+      bike_assessments: {
+        Row: {
+          answers: Json
+          assessed_by: string | null
+          bike_id: string
+          condition_label: string
+          created_at: string
+          customer_id: string | null
+          id: string
+          is_second_hand: boolean
+          notes: string | null
+          origin: string
+          overall_score: number
+          scores: Json
+          updated_at: string
+        }
+        Insert: {
+          answers?: Json
+          assessed_by?: string | null
+          bike_id: string
+          condition_label?: string
+          created_at?: string
+          customer_id?: string | null
+          id?: string
+          is_second_hand?: boolean
+          notes?: string | null
+          origin?: string
+          overall_score?: number
+          scores?: Json
+          updated_at?: string
+        }
+        Update: {
+          answers?: Json
+          assessed_by?: string | null
+          bike_id?: string
+          condition_label?: string
+          created_at?: string
+          customer_id?: string | null
+          id?: string
+          is_second_hand?: boolean
+          notes?: string | null
+          origin?: string
+          overall_score?: number
+          scores?: Json
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "bike_assessments_bike_id_fkey"
+            columns: ["bike_id"]
+            isOneToOne: false
+            referencedRelation: "customer_bikes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       business_hour_exceptions: {
         Row: {
           close_time: string | null
