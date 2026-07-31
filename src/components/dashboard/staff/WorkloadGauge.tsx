@@ -10,7 +10,7 @@ interface Props {
 }
 
 /**
- * Arc gauge for today's workload (reference layout: big % inside a半 donut).
+ * Arc gauge for today's workload (reference layout: big % inside ahalf donut).
  */
 export default function WorkloadGauge({
   pct,
