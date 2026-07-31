@@ -1,6 +1,6 @@
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
-import { Menu, Home, LogOut, Moon, Sun } from "lucide-react";
+import { Menu, Home, LogOut, Moon, Sun, Check, ExternalLink } from "lucide-react";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -22,7 +22,7 @@ export default function UnifiedFloatingNav() {
   const location = useLocation();
   const navigate = useNavigate();
   const nav = useDashboardNav();
-  const { theme, toggleTheme } = useTheme();
+  const { theme, setTheme } = useTheme();
   const { logout } = useAuth();
 
   const isActive = (href: string) =>
@@ -101,24 +101,43 @@ export default function UnifiedFloatingNav() {
                   </DropdownMenuItem>
                 ))}
                 {more.length > 0 && <DropdownMenuSeparator />}
+                <DropdownMenuLabel>Appearance</DropdownMenuLabel>
                 <DropdownMenuItem
                   onSelect={(e) => {
                     e.preventDefault();
-                    toggleTheme();
+                    setTheme("light");
                   }}
                   className="gap-2"
                 >
-                  {theme === "dark" ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
-                  {theme === "dark" ? "Light mode" : "Dark mode"}
+                  <Sun className="h-4 w-4" />
+                  Light mode
+                  {theme === "light" && <Check className="ml-auto h-4 w-4 text-wj-green" />}
                 </DropdownMenuItem>
+                <DropdownMenuItem
+                  onSelect={(e) => {
+                    e.preventDefault();
+                    setTheme("dark");
+                  }}
+                  className="gap-2"
+                >
+                  <Moon className="h-4 w-4" />
+                  Dark mode
+                  {theme === "dark" && <Check className="ml-auto h-4 w-4 text-wj-green" />}
+                </DropdownMenuItem>
+                <DropdownMenuSeparator />
                 <DropdownMenuItem asChild>
                   <Link to="/" className="gap-2">
+                    <ExternalLink className="h-4 w-4" />
                     Back to site
                   </Link>
                 </DropdownMenuItem>
                 <DropdownMenuSeparator />
                 <DropdownMenuItem
-                  onClick={() => logout()}
+                  onSelect={async (e) => {
+                    e.preventDefault();
+                    await logout();
+                    navigate("/auth", { replace: true });
+                  }}
                   className="gap-2 text-destructive focus:text-destructive"
                 >
                   <LogOut className="h-4 w-4" />
