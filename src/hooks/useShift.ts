@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
+import { pauseWork, resumeWork, clearWorkPause } from "@/lib/workshop/workPause";
 
 export type ShiftStatus = "idle" | "active" | "paused" | "completed";
 
@@ -87,6 +88,7 @@ async function start(userId: string) {
       .single();
     if (error) throw error;
     setState({ row: data as ShiftRow });
+    clearWorkPause();
     toast.success("Shift started");
   } catch (e: any) {
     toast.error(e.message ?? "Failed to start shift");
@@ -108,6 +110,7 @@ async function resume() {
       .single();
     if (error) throw error;
     setState({ row: data as ShiftRow });
+    await resumeWork(state.userId);
     toast.success("Shift resumed");
   } catch (e: any) {
     toast.error(e.message ?? "Failed to resume");
@@ -136,7 +139,8 @@ async function pause() {
       .single();
     if (error) throw error;
     setState({ row: data as ShiftRow });
-    toast.success("Shift paused");
+    await pauseWork(state.userId);
+    toast.success("Shift paused — running job on hold");
   } catch (e: any) {
     toast.error(e.message ?? "Failed to pause");
   } finally {
@@ -166,12 +170,32 @@ async function finish() {
       .single();
     if (error) throw error;
     setState({ row: data as ShiftRow });
+    clearWorkPause();
     toast.success("Shift finished");
   } catch (e: any) {
     toast.error(e.message ?? "Failed to finish");
   } finally {
     setState({ working: false });
   }
+}
+
+/**
+ * Make sure the shift clock is running (used when a mechanic starts a job).
+ * Starts the shift if none exists today, resumes it if paused.
+ */
+export async function ensureShiftActive(userId?: string) {
+  const uid = userId || state.userId;
+  if (!uid) return;
+  if (state.userId !== uid || (!state.row && state.loading)) {
+    setState({ userId: uid });
+    await loadFor(uid);
+  }
+  const row = state.row;
+  if (!row) {
+    await start(uid);
+    return;
+  }
+  if (row.status === "paused") await resume();
 }
 
 /**
