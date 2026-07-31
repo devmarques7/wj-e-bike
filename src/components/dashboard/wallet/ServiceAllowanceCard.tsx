@@ -21,6 +21,12 @@ interface ServiceAllowanceCardProps {
   upgradeOptions?: UpgradeOption[];
   onUpgrade?: () => void;
   onBook?: () => void;
+  /** Label of the primary action inside the green revision rail. */
+  manageLabel?: string;
+  /** Primary action override (defaults to onBook). */
+  onManage?: () => void;
+  /** Optional caption above the counters (e.g. the customer name for staff). */
+  contextLabel?: string;
 }
 
 /**
@@ -37,6 +43,9 @@ export default function ServiceAllowanceCard({
   upgradeOptions = [],
   onUpgrade,
   onBook,
+  manageLabel = "Manage",
+  onManage,
+  contextLabel,
 }: ServiceAllowanceCardProps) {
   const { total, scheduled, remaining } = allowance;
 
@@ -57,6 +66,11 @@ export default function ServiceAllowanceCard({
       {/* ---------- Left rail ---------- */}
       <div className="flex flex-col gap-3 min-w-0">
         <div className="rounded-3xl border border-border/50 bg-card p-4 sm:p-5">
+          {contextLabel && (
+            <p className="text-[10px] uppercase tracking-widest text-muted-foreground mb-3 truncate">
+              {contextLabel}
+            </p>
+          )}
           <StatRow
             value={total}
             icon={<CalendarCheck className="h-5 w-5" />}
@@ -126,10 +140,10 @@ export default function ServiceAllowanceCard({
           <p className="text-sm font-semibold truncate">{bikeName || "Your bike"}</p>
           <p className="text-xs opacity-70 truncate">{dateLabel}</p>
           <button
-            onClick={onBook}
+            onClick={onManage ?? onBook}
             className="mt-3 w-full rounded-full bg-black text-white text-sm font-medium py-2.5 hover:opacity-90 transition-opacity"
           >
-            Manage
+            {manageLabel}
           </button>
         </div>
       </div>

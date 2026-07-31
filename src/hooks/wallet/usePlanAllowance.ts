@@ -29,14 +29,19 @@ export interface PlanAllowance {
  * Validates how many plan-covered appointments the rider has used, scheduled and
  * still has available in the running 12-month membership cycle.
  */
-export function usePlanAllowance(planSlug: string | undefined): PlanAllowance {
+export function usePlanAllowance(
+  planSlug: string | undefined,
+  /** Inspect another rider's allowance (staff E-Pass scan). Defaults to the logged-in user. */
+  userIdOverride?: string | null,
+): PlanAllowance {
   const { user } = useAuth();
+  const targetUserId = userIdOverride ?? user?.id;
   const [used, setUsed] = useState(0);
   const [scheduled, setScheduled] = useState(0);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    if (!user?.id) {
+    if (!targetUserId) {
       setLoading(false);
       return;
     }
@@ -48,7 +53,7 @@ export function usePlanAllowance(planSlug: string | undefined): PlanAllowance {
       const { data } = await supabase
         .from("appointments")
         .select("id, status")
-        .eq("user_id", user.id)
+        .eq("user_id", targetUserId)
         .gte("scheduled_date", from.toISOString().slice(0, 10));
 
       if (cancelled) return;
@@ -62,7 +67,7 @@ export function usePlanAllowance(planSlug: string | undefined): PlanAllowance {
     return () => {
       cancelled = true;
     };
-  }, [user?.id]);
+  }, [targetUserId]);
 
   return useMemo(() => {
     const total = PLAN_SERVICE_ALLOWANCE[planSlug ?? "free"] ?? 1;
