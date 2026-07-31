@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef, useMemo } from "react";
 import { createPortal } from "react-dom";
-import { GripVertical, Play, Pause, Square, Loader2, Activity, Wrench, ShieldCheck, ChevronRight, Bell, Timer } from "lucide-react";
+import { GripVertical, Play, Pause, Square, Loader2, Activity, Wrench, ShieldCheck, ChevronRight, ChevronLeft, Bell, Timer } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { cn } from "@/lib/utils";
 import { useShift } from "@/hooks/useShift";
@@ -41,6 +41,22 @@ export function ShiftTag() {
   const [open, setOpen] = useState(false);
   const [tab, setTab] = useState<"shift" | "job">("shift");
   const [confirmOpen, setConfirmOpen] = useState(false);
+  const [collapsed, setCollapsed] = useState(false);
+
+  // Restore collapsed preference
+  useEffect(() => {
+    try {
+      setCollapsed(localStorage.getItem("wj.shiftTag.collapsed") === "1");
+    } catch {}
+  }, []);
+  const toggleCollapsed = () => {
+    setCollapsed((c) => {
+      const next = !c;
+      try { localStorage.setItem("wj.shiftTag.collapsed", next ? "1" : "0"); } catch {}
+      if (next) setOpen(false);
+      return next;
+    });
+  };
 
   /* ---- Active workshop job (global, realtime) ---- */
   const { appointment, refetch } = useActiveWork();
@@ -107,7 +123,7 @@ export function ShiftTag() {
     } catch {}
   }, []);
 
-  // Default position (top-right, slightly below header) + bounds
+  // Default position (top-right, slightly below header) + always keep in viewport
   useEffect(() => {
     const PAD = 16;
     const compute = () => {
@@ -116,23 +132,29 @@ export function ShiftTag() {
       const h = el?.offsetHeight ?? 32;
       const vw = window.innerWidth;
       const vh = window.innerHeight;
-      setBounds({
-        left: PAD,
-        top: PAD,
-        right: Math.max(PAD, vw - w - PAD),
-        bottom: Math.max(PAD, vh - h - PAD),
-      });
+      const maxX = Math.max(PAD, vw - w - PAD);
+      const maxY = Math.max(PAD, vh - h - PAD);
+      setBounds({ left: PAD, top: PAD, right: maxX, bottom: maxY });
       setPos((p) => {
-        if (!p) return { x: Math.max(PAD, vw - w - PAD), y: PAD + 56 };
-        return {
-          x: Math.min(Math.max(p.x, PAD), Math.max(PAD, vw - w - PAD)),
-          y: Math.min(Math.max(p.y, PAD), Math.max(PAD, vh - h - PAD)),
+        if (!p) return { x: maxX, y: PAD + 56 };
+        const next = {
+          x: Math.min(Math.max(p.x, PAD), maxX),
+          y: Math.min(Math.max(p.y, PAD), maxY),
         };
+        return next.x === p.x && next.y === p.y ? p : next;
       });
     };
     compute();
     window.addEventListener("resize", compute);
-    return () => window.removeEventListener("resize", compute);
+    window.addEventListener("orientationchange", compute);
+    // Keep clamped when the pill itself grows/shrinks (expand, job chip, collapse)
+    const ro = typeof ResizeObserver !== "undefined" ? new ResizeObserver(() => compute()) : null;
+    if (ro && elRef.current) ro.observe(elRef.current);
+    return () => {
+      window.removeEventListener("resize", compute);
+      window.removeEventListener("orientationchange", compute);
+      ro?.disconnect();
+    };
   }, []);
 
   // Collapse when clicking outside the pill / panel
@@ -218,6 +240,10 @@ export function ShiftTag() {
           type="button"
           onClick={() => {
             if (dragMoved.current) return;
+            if (collapsed) {
+              toggleCollapsed();
+              return;
+            }
             if (open && tab === "shift") setOpen(false);
             else {
               setTab("shift");
@@ -238,7 +264,7 @@ export function ShiftTag() {
               (status === "idle" || status === "completed") && "text-muted-foreground",
             )}
           />
-          {status === "idle" ? (
+          {collapsed ? null : status === "idle" ? (
             <span className="flex flex-col items-start leading-none">
               <span className="text-[9px] font-semibold capitalize">
                 {new Date().toLocaleDateString([], { weekday: "long", day: "numeric", month: "short" })}
@@ -255,7 +281,7 @@ export function ShiftTag() {
         </button>
 
         {/* Status */}
-        <span className="flex items-center gap-1.5 px-1">
+        <span className={cn("flex items-center gap-1.5 px-1", collapsed && "hidden")}>
           <span className="relative flex h-2 w-2">
             {status === "active" && (
               <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-wj-green opacity-60" />
@@ -276,13 +302,17 @@ export function ShiftTag() {
               transition={{ type: "spring", stiffness: 320, damping: 32 }}
               className="flex items-center gap-2 overflow-hidden"
             >
-              <span className="h-5 w-px bg-border/60 shrink-0" />
+              <span className={cn("h-5 w-px bg-border/60 shrink-0", collapsed && "hidden")} />
               <motion.button
                 type="button"
                 whileHover={{ scale: 1.04 }}
                 whileTap={{ scale: 0.96 }}
                 onClick={() => {
                   if (dragMoved.current) return;
+                  if (collapsed) {
+                    toggleCollapsed();
+                    return;
+                  }
                   if (open && tab === "job") setOpen(false);
                   else {
                     setTab("job");
@@ -290,11 +320,11 @@ export function ShiftTag() {
                   }
                 }}
                 className={cn(
-                  "flex items-center gap-1.5 rounded-xl px-2.5 py-1.5 border shrink-0 transition-colors",
+                  "flex items-center gap-2 rounded-xl px-2.5 py-1.5 border shrink-0 transition-colors bg-transparent",
                   open && tab === "job" && "ring-2 ring-wj-green/50",
                   isPaused
-                    ? "bg-amber-500/10 border-amber-400/40 hover:bg-amber-500/20"
-                    : "bg-wj-green/10 border-wj-green/30 hover:bg-wj-green/20",
+                    ? "border-amber-400/50 hover:bg-amber-500/10"
+                    : "border-border/60 hover:border-wj-green/50 hover:bg-wj-green/5",
                 )}
               >
                 <motion.span
@@ -302,26 +332,30 @@ export function ShiftTag() {
                   transition={{ duration: 2.4, repeat: Infinity, ease: "easeInOut" }}
                   className="flex"
                 >
-                  <Wrench className={cn("h-3.5 w-3.5", isPaused ? "text-amber-400" : "text-wj-green")} />
+                  <Wrench className={cn("h-4 w-4 shrink-0", isPaused ? "text-amber-400" : "text-wj-green")} />
                 </motion.span>
-                <span
-                  className={cn(
-                    "text-xs font-mono font-bold tabular-nums",
-                    isPaused ? "text-amber-400" : "text-wj-green",
-                  )}
-                >
-                  {fmtHMS(jobElapsed)}
-                </span>
-                <span className="hidden lg:inline text-[11px] text-muted-foreground truncate max-w-[110px]">
-                  {appointment?.customer_name ?? appointment?.service_name ?? ""}
-                </span>
+                {!collapsed && (
+                  <>
+                    <span
+                      className={cn(
+                        "text-base font-semibold tabular-nums tracking-tight",
+                        isPaused ? "text-amber-400" : "text-foreground",
+                      )}
+                    >
+                      {fmtHMS(jobElapsed)}
+                    </span>
+                    <span className="hidden lg:inline text-[11px] text-muted-foreground truncate max-w-[110px]">
+                      {appointment?.customer_name ?? appointment?.service_name ?? ""}
+                    </span>
+                  </>
+                )}
               </motion.button>
             </motion.span>
           )}
         </AnimatePresence>
 
         {/* Quick actions */}
-        <span className="flex items-center gap-1 pl-0.5">
+        <span className={cn("flex items-center gap-1 pl-0.5", collapsed && "hidden")}>
           {status === "idle" && (
             <QuickAction onClick={handleStart} working={working} icon={Play} label="Start" tone="green" />
           )}
@@ -350,11 +384,24 @@ export function ShiftTag() {
             />
           )}
         </span>
+
+        {/* Collapse / expand */}
+        <button
+          type="button"
+          onClick={() => {
+            if (dragMoved.current) return;
+            toggleCollapsed();
+          }}
+          title={collapsed ? "Expand" : "Collapse"}
+          className="flex items-center justify-center h-7 w-6 rounded-lg text-muted-foreground hover:text-foreground hover:bg-muted/50 transition-colors shrink-0"
+        >
+          {collapsed ? <ChevronLeft className="h-3.5 w-3.5" /> : <ChevronRight className="h-3.5 w-3.5" />}
+        </button>
       </motion.div>
 
       {/* Expanded panel */}
       <AnimatePresence>
-        {open && (
+        {open && !collapsed && (
           <motion.div
             initial={{ opacity: 0, y: -6, scale: 0.96 }}
             animate={{ opacity: 1, y: 0, scale: 1 }}
