@@ -511,7 +511,7 @@ export default function AppointmentCompletionDrawer({
                         ? "bg-wj-green/10 border-wj-green/40"
                         : briefingAck
                           ? "bg-muted/30 border-border/30"
-                          : "bg-amber-500/[0.06] border-amber-500/30",
+                          : "bg-transparent border-primary/60 ring-1 ring-primary/30",
                     )}
                   >
                     <div
@@ -519,7 +519,7 @@ export default function AppointmentCompletionDrawer({
                         "w-7 h-7 rounded-full flex items-center justify-center text-[11px] font-semibold shrink-0",
                         briefingAck
                           ? "bg-wj-green text-black"
-                          : "bg-amber-500/20 text-amber-400 border border-amber-500/40",
+                          : "bg-transparent text-primary border border-primary/60",
                       )}
                     >
                       {briefingAck ? <Check className="h-3.5 w-3.5" /> : 0}
@@ -709,7 +709,7 @@ export default function AppointmentCompletionDrawer({
                                       {task.label}
                                     </p>
                                     {task.is_required && (
-                                      <Badge className="text-[9px] h-4 px-1.5 bg-amber-500/15 text-amber-400 border-amber-500/30">
+                                      <Badge className="text-[9px] h-4 px-1.5 bg-transparent text-primary border border-primary/50">
                                         {t("workshop.drawer.required_badge")}
                                       </Badge>
                                     )}
@@ -784,7 +784,7 @@ export default function AppointmentCompletionDrawer({
                     "mt-3 rounded-2xl border p-3 flex items-center justify-between gap-3",
                     assessDone
                       ? "bg-wj-green/10 border-wj-green/30"
-                      : "bg-amber-500/[0.06] border-amber-500/30",
+                      : "bg-transparent border-primary/60 ring-1 ring-primary/30",
                   )}
                 >
                   <div className="min-w-0">
