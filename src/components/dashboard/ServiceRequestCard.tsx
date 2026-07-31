@@ -2,7 +2,9 @@ import { useState, useRef, useEffect } from "react";
 import { motion, useMotionValue, useTransform, animate } from "framer-motion";
 import { ArrowRight, CheckCircle, Lock, AlertTriangle, Loader2 } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
+import { MeshGradient } from "@paper-design/shaders-react";
 import { useAuth } from "@/contexts/AuthContext";
+import { useTheme } from "@/contexts/ThemeContext";
 import { supabase } from "@/integrations/supabase/client";
 import EmptyState from "./EmptyState";
 import {
@@ -15,7 +17,7 @@ import {
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { toast } from "@/hooks/use-toast";
-import { ShaderBackground } from "@/components/ui/verdant-swirl";
+
 
 interface ServiceRequestCardProps {
   /** Bike selected by the page-level BikeTabs selector. */
