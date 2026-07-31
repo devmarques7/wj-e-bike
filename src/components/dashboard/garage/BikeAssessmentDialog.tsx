@@ -1,9 +1,11 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
-import { Check, Loader2, Sparkles } from "lucide-react";
+import { Check, Loader2 } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
+import AgentOrb from "@/components/agent/AgentOrb";
+import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 import {
   ASSESSMENT_QUESTIONS,
@@ -24,10 +26,20 @@ interface Props {
 
 type Bubble = { id: string; role: "bot" | "user"; text: string };
 
+/** Local, zero-token "thinking" beats so the flow reads like a real assistant. */
+const THINKING_LINES = [
+  "Logging that point...",
+  "Weighing wear against the cap...",
+  "Updating the condition score...",
+  "Checking the next wear point...",
+];
+const THINK_MS = 520;
+
 /**
- * Guided condition assessment — an AI-chat style questionnaire where the
- * technician answers one wear point at a time. The result is scored honestly
- * (non-new parts capped at 80%) and stored against the bike.
+ * Guided condition assessment — a validation conversation with the WJ agent.
+ * Runs fully offline (deterministic script, no model tokens): the orb + typing
+ * beats only simulate the assistant while the technician answers one wear point
+ * at a time. Scoring is honest (non-new parts capped) and stored on the bike.
  */
 export default function BikeAssessmentDialog({
   open,
@@ -42,7 +54,9 @@ export default function BikeAssessmentDialog({
   const [answers, setAnswers] = useState<AssessmentAnswers>({});
   const [bubbles, setBubbles] = useState<Bubble[]>([]);
   const [notes, setNotes] = useState("");
+  const [thinking, setThinking] = useState<string | null>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
+  const timerRef = useRef<number | null>(null);
 
   const done = step >= ASSESSMENT_QUESTIONS.length;
   const question = done ? null : ASSESSMENT_QUESTIONS[step];
@@ -53,43 +67,56 @@ export default function BikeAssessmentDialog({
     setStep(0);
     setAnswers({});
     setNotes("");
+    setThinking(null);
     setBubbles([
       {
         id: "intro",
         role: "bot",
-        text: `Quick condition assessment for ${bikeModel ?? "this bike"}. Six questions — answer what you see on the stand.`,
+        text: `I'll validate the condition of ${bikeModel ?? "this bike"} with you. Six quick checks — answer what you see on the stand.`,
       },
       { id: "q0", role: "bot", text: ASSESSMENT_QUESTIONS[0].question },
     ]);
   }, [open, bikeModel]);
 
+  useEffect(
+    () => () => {
+      if (timerRef.current) window.clearTimeout(timerRef.current);
+    },
+    [],
+  );
+
   useEffect(() => {
     scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight, behavior: "smooth" });
-  }, [bubbles, done]);
+  }, [bubbles, done, thinking]);
 
   const answer = (key: AssessmentKey, optionId: string, label: string) => {
+    if (thinking) return;
     const next = { ...answers, [key]: optionId };
     setAnswers(next);
     const nextStep = step + 1;
     const nextQuestion = ASSESSMENT_QUESTIONS[nextStep];
-    setBubbles((b) => [
-      ...b,
-      { id: `${key}-a`, role: "user", text: label },
-      ...(nextQuestion
-        ? [{ id: `q${nextStep}`, role: "bot" as const, text: nextQuestion.question }]
-        : [
-            {
+    setBubbles((b) => [...b, { id: `${key}-a`, role: "user", text: label }]);
+    setStep(nextStep);
+    setThinking(THINKING_LINES[nextStep % THINKING_LINES.length]);
+    timerRef.current = window.setTimeout(() => {
+      setThinking(null);
+      setBubbles((b) => [
+        ...b,
+        nextQuestion
+          ? { id: `q${nextStep}`, role: "bot" as const, text: nextQuestion.question }
+          : {
               id: "summary",
               role: "bot" as const,
-              text: "All points checked. Review the result and confirm to register it on this bike.",
+              text: "All points checked. Here's the condition I calculated — confirm to register it on this bike.",
             },
-          ]),
-    ]);
-    setStep(nextStep);
+      ]);
+    }, THINK_MS);
   };
 
   const back = () => {
     if (step === 0) return;
+    if (timerRef.current) window.clearTimeout(timerRef.current);
+    setThinking(null);
     const prev = ASSESSMENT_QUESTIONS[step - 1];
     const next = { ...answers };
     delete next[prev.key];
@@ -114,7 +141,7 @@ export default function BikeAssessmentDialog({
       <DialogContent className="max-w-lg rounded-3xl border-border/40 bg-background/95 backdrop-blur-xl">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2 text-base font-light">
-            <Sparkles className="h-4 w-4 text-wj-green" /> Assess bike condition
+            <AgentOrb size={26} state={thinking ? "thinking" : "idle"} /> Assess bike condition
           </DialogTitle>
         </DialogHeader>
 
@@ -130,13 +157,24 @@ export default function BikeAssessmentDialog({
 
         <div ref={scrollRef} className="max-h-[42vh] overflow-y-auto space-y-3 pr-1">
           <AnimatePresence initial={false}>
-            {bubbles.map((b) => (
+            {bubbles.map((b, i) => (
               <motion.div
                 key={b.id + b.text}
                 initial={{ opacity: 0, y: 8 }}
                 animate={{ opacity: 1, y: 0 }}
-                className={b.role === "user" ? "flex justify-end" : "flex justify-start"}
+                className={cn("flex gap-2", b.role === "user" ? "justify-end" : "justify-start")}
               >
+                {b.role === "bot" && (
+                  <span className="relative flex w-[26px] shrink-0 justify-center pt-1">
+                    {!thinking && i === bubbles.length - 1 ? (
+                      <motion.span layoutId="assess-orb">
+                        <AgentOrb size={26} state="speaking" />
+                      </motion.span>
+                    ) : (
+                      <span className="mt-2 h-1.5 w-1.5 rounded-full bg-wj-green/50" />
+                    )}
+                  </span>
+                )}
                 <p
                   className={`max-w-[85%] rounded-2xl px-3.5 py-2 text-sm ${
                     b.role === "user"
@@ -150,7 +188,24 @@ export default function BikeAssessmentDialog({
             ))}
           </AnimatePresence>
 
-          {done && (
+          {/* Assistant "typing" beat — purely local, no model call. */}
+          <AnimatePresence>
+            {thinking && (
+              <motion.div
+                initial={{ opacity: 0, y: 6 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0 }}
+                className="flex items-center gap-2"
+              >
+                <motion.span layoutId="assess-orb" className="flex w-[26px] shrink-0 justify-center">
+                  <AgentOrb size={26} state="thinking" />
+                </motion.span>
+                <span className="text-xs text-muted-foreground">{thinking}</span>
+              </motion.div>
+            )}
+          </AnimatePresence>
+
+          {done && !thinking && (
             <motion.div
               initial={{ opacity: 0, y: 8 }}
               animate={{ opacity: 1, y: 0 }}
@@ -181,7 +236,7 @@ export default function BikeAssessmentDialog({
           )}
         </div>
 
-        {question ? (
+        {thinking ? null : question ? (
           <div className="space-y-2">
             {question.options.map((o) => (
               <button
