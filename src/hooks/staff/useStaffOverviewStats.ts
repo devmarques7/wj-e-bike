@@ -48,6 +48,8 @@ const EMPTY: StaffStats = {
  */
 export function useStaffOverviewStats(userId: string | undefined) {
   const [stats, setStats] = useState<StaffStats>(EMPTY);
+  // Any appointment change anywhere refreshes the mechanic's KPIs instantly.
+  const tick = useAppointmentsRealtimeTick(!!userId);
 
   useEffect(() => {
     if (!userId || !UUID_RE.test(userId)) {
@@ -205,7 +207,7 @@ export function useStaffOverviewStats(userId: string | undefined) {
       clearInterval(interval);
       window.removeEventListener("focus", onFocus);
     };
-  }, [userId]);
+  }, [userId, tick]);
 
   return stats;
 }
