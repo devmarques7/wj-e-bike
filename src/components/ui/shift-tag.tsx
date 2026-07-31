@@ -48,10 +48,9 @@ export function ShiftTag() {
   const [qcOpen, setQcOpen] = useState(false);
   const [, setTick] = useState(0);
   useEffect(() => {
-    if (!appointment?.work_started_at) return;
     const i = setInterval(() => setTick((t) => t + 1), 1000);
     return () => clearInterval(i);
-  }, [appointment?.work_started_at]);
+  }, []);
 
   useEffect(() => {
     if (!appointment) setTab("shift");
@@ -226,22 +225,33 @@ export function ShiftTag() {
             }
           }}
           className={cn(
-            "flex items-center gap-2 rounded-xl px-2.5 py-1.5 transition-colors",
-            "bg-foreground text-background hover:bg-foreground/90",
+            "flex items-center gap-2 rounded-xl px-2.5 py-1.5 transition-colors border",
+            "bg-transparent border-border/60 text-foreground hover:border-wj-green/50 hover:bg-wj-green/5",
             open && tab === "shift" && "ring-2 ring-wj-green/50",
           )}
         >
-          <span className="flex flex-col items-start leading-none">
-            <span className="text-[9px] font-semibold">
-              {new Date().toLocaleDateString([], { weekday: "long" })}
+          <Timer
+            className={cn(
+              "h-4 w-4 shrink-0",
+              status === "active" && "text-wj-green",
+              status === "paused" && "text-amber-400",
+              (status === "idle" || status === "completed") && "text-muted-foreground",
+            )}
+          />
+          {status === "idle" ? (
+            <span className="flex flex-col items-start leading-none">
+              <span className="text-[9px] font-semibold capitalize">
+                {new Date().toLocaleDateString([], { weekday: "long", day: "numeric", month: "short" })}
+              </span>
+              <span className="text-sm font-semibold tabular-nums tracking-tight mt-0.5">
+                {new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
+              </span>
             </span>
-            <span className="text-[9px] opacity-60">
-              {new Date().toLocaleDateString([], { day: "numeric", month: "short" })}
+          ) : (
+            <span className="text-base font-semibold tabular-nums tracking-tight">
+              {loading ? "—" : fmtHMS(elapsedSec)}
             </span>
-          </span>
-          <span className="text-base font-semibold tabular-nums tracking-tight">
-            {loading ? "—" : fmtHMS(elapsedSec)}
-          </span>
+          )}
         </button>
 
         {/* Status */}
