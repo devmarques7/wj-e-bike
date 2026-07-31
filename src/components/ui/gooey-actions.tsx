@@ -429,7 +429,7 @@ export function GooeyActions({
           ref={coreBlobRef}
           className="absolute rounded-full bg-wj-green"
           style={{
-            left: "50%",
+            left: leftPct,
             top: topPct,
             width: CORE_PX,
             height: CORE_PX,
