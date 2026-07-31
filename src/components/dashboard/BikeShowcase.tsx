@@ -350,7 +350,7 @@ export default function BikeShowcase({ bikeId }: BikeShowcaseProps = {}) {
         </div>
       </div>
       {/* Carousel Container */}
-      <div className="absolute inset-0" ref={emblaRef}>
+      <div className="absolute inset-0 z-10" ref={emblaRef}>
         <div className="flex h-full">
           {bikeFeatures.map((feature, index) => (
             <div
