@@ -31,25 +31,21 @@ export default function GarageBikeCard({ bike, overall, metrics = [] }: Props) {
         <source src="/videos/service-countdown-bg.mp4" type="video/mp4" />
       </video>
 
-      {/* Layer 2: Gradient overlays */}
-      <div className="absolute inset-0 bg-gradient-to-t from-background via-background/60 to-transparent pointer-events-none" />
-      <div className="absolute inset-0 bg-gradient-to-r from-background via-background/80 to-transparent pointer-events-none" />
-
-      {/* Layer 3: Bike image on the left */}
+      {/* Layer 2: Bike image on the left */}
       <div className="absolute bottom-0 left-0 w-full h-[75%] pointer-events-none">
         <motion.img
           src={bikeAsset.url}
           alt={bike?.model ? `${bike.model} e-bike` : "WJ e-bike"}
           loading="lazy"
           initial={{ opacity: 0, scale: 1.02 }}
-          animate={{ opacity: 0.95, scale: 1 }}
+          animate={{ opacity: 0.9, scale: 1 }}
           transition={{ duration: 0.6 }}
           className="w-full h-full object-contain object-left-bottom drop-shadow-[0_20px_40px_rgba(0,0,0,0.45)]"
         />
-        {/* Bottom-to-top fade over the bike */}
-        <div className="absolute inset-0 bg-gradient-to-t from-background via-background/60 to-transparent pointer-events-none" />
-        {/* Left-to-right fade over the bike, pushing it behind the card content */}
-        <div className="absolute inset-0 bg-gradient-to-r from-background via-background/70 to-transparent pointer-events-none" />
+        {/* Bottom edge fade — only a few pixels up to the wheel */}
+        <div className="absolute bottom-0 left-0 right-0 h-8 bg-gradient-to-t from-background via-background/40 to-transparent pointer-events-none" />
+        {/* Left edge fade — only a few pixels in from the lateral side */}
+        <div className="absolute top-0 bottom-0 left-0 w-8 bg-gradient-to-r from-background via-background/40 to-transparent pointer-events-none" />
       </div>
 
       {/* Layer 4: Content */}
