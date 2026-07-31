@@ -3,7 +3,13 @@
   "sdk_version": "0.20.1",
   "path": "/functions/v1/mcp",
   "auth": {
-    "type": "none"
+    "type": "oauth",
+    "issuer": "https://spuvedbcgsygzvloeyrs.supabase.co/auth/v1",
+    "resource": "https://spuvedbcgsygzvloeyrs.supabase.co/functions/v1/mcp",
+    "resource_name": "WJ Vision E-Bikes MCP",
+    "accepted_audiences": [
+      "authenticated"
+    ]
   },
   "mcp": {
     "server": {
