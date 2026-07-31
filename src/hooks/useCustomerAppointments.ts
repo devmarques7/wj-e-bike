@@ -79,9 +79,6 @@ export function useCustomerAppointments() {
       const svcIds = Array.from(
         new Set(rows.map((a) => a.service_type_id).filter(Boolean) as string[]),
       );
-      const mechIds = Array.from(
-        new Set(rows.map((a) => a.assigned_mechanic_id).filter(Boolean) as string[]),
-      );
       const apptIds = rows.map((a) => a.id);
 
       const [svcRes, staffRes, qcRes, bikeRes] = await Promise.all([
