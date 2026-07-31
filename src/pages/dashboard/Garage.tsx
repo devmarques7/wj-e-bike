@@ -58,7 +58,12 @@ export default function Garage() {
 
           <div className="col-span-12 lg:col-span-8 flex flex-col gap-4 lg:gap-6">
             <div className="flex-1 min-h-0">
-              <BikeHealthGrid metrics={condition.metrics} assessment={condition.assessment} />
+              <BikeHealthGrid
+                metrics={condition.metrics}
+                assessment={condition.assessment}
+                bikeId={bike?.id ?? null}
+                bikeModel={bike?.model ?? null}
+              />
             </div>
             <div className="flex-none">
               <AppointmentsTableCard
