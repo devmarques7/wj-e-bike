@@ -24,6 +24,8 @@ import ServiceRecordDialog from "@/components/dashboard/wallet/ServiceRecordDial
 import ArchivedBikesTable from "@/components/dashboard/wallet/ArchivedBikesTable";
 import { useActivityYear, type ActivityDay, type ActivityRecord } from "@/hooks/wallet/useActivityYear";
 import { parseEntitlements, type PlanEntitlements } from "@/lib/plans/entitlements";
+import { useBikeSubscriptions, type PlanOption } from "@/hooks/plans/useBikeSubscriptions";
+import BikePlanDialog from "@/components/dashboard/wallet/BikePlanDialog";
 
 type PointEntry = {
   id: string;
@@ -76,7 +78,7 @@ export default function MyWallet() {
   /** Card queue: index 0 is the featured card, the rest ascend behind it. */
   const [stackOrder, setStackOrder] = useState<string[]>([]);
   const [hoveredId, setHoveredId] = useState<string | null>(null);
-  const [currentPlan, setCurrentPlan] = useState<PlanInfo | null>(null);
+  const [userPlan, setUserPlan] = useState<PlanInfo | null>(null);
   const [plans, setPlans] = useState<PlanInfo[]>([]);
   const [history, setHistory] = useState<PointEntry[]>([]);
   const [currentPage, setCurrentPage] = useState(1);
@@ -183,7 +185,7 @@ export default function MyWallet() {
       }
 
       if (cancelled) return;
-      setCurrentPlan(cur);
+      setUserPlan(cur);
       setPlans(planList);
       setHistory(entries);
       setLinkedBikes(bikes);
@@ -231,9 +233,6 @@ export default function MyWallet() {
       : t("e_pass.in_days", { n: nextMaintenance.days })
     : t("e_pass.not_scheduled");
 
-  const slug = currentPlan?.slug ?? "free";
-  const styles = cardStyles[slug] ?? cardStyles.free;
-
   /* --------- Apple Wallet queue --------- */
   const orderedBikes = useMemo(() => {
     const byId = new Map(linkedBikes.map((b) => [b.id, b]));
@@ -243,6 +242,37 @@ export default function MyWallet() {
   }, [linkedBikes, stackOrder]);
 
   const activeBike = orderedBikes[0];
+
+  /* --------- Per-bike memberships ---------
+     Every registered bike inherits the rider's subscription, but each E-Pass
+     card can then be upgraded to its own plan. */
+  const bikeIds = useMemo(() => linkedBikes.map((b) => b.id), [linkedBikes]);
+  const {
+    plans: bikePlanOptions,
+    planForBike,
+    pendingForBike,
+    requestChange,
+    cancelPending,
+  } = useBikeSubscriptions(user?.id, bikeIds);
+  const [planDialogBikeId, setPlanDialogBikeId] = useState<string | null>(null);
+
+  /** Plan of the featured card — falls back to the rider-level subscription. */
+  const activeBikePlan: PlanOption | null = planForBike(activeBike?.id);
+  const currentPlan: PlanInfo | null = useMemo(() => {
+    if (!activeBikePlan) return userPlan;
+    return {
+      slug: activeBikePlan.slug,
+      name: activeBikePlan.name,
+      tier_level: activeBikePlan.tierLevel,
+      price: activeBikePlan.price,
+      currency: activeBikePlan.currency,
+      interval: activeBikePlan.interval,
+      features: activeBikePlan.features,
+      description: activeBikePlan.description,
+      entitlements: activeBikePlan.entitlements,
+    };
+  }, [activeBikePlan, userPlan]);
+  const activePendingPlan = pendingForBike(activeBike?.id);
 
   /** Clicking a back card moves it to the front of the queue, while the previous front card
    * is sent to the back of the stack (last peek). */
@@ -376,7 +406,7 @@ export default function MyWallet() {
                     label={t("e_pass.bike", { defaultValue: "Bike" })}
                     bikeName={bike.model || t("e_pass.no_bike")}
                     serial={bike.serial || undefined}
-                    planName={currentPlan?.name ?? "Free"}
+                    planName={planForBike(bike.id)?.name ?? "Free"}
                     memberName={user?.name || "Guest"}
                     cardNumber={cardNumber}
                   />
@@ -491,7 +521,14 @@ export default function MyWallet() {
                 revisionDate={nextRevision}
                 bikeName={garageBike?.model || activeBikeName}
                 upgradeOptions={upgradeOptions}
-                onUpgrade={() => navigate("/membership-plans")}
+                contextLabel={
+                  activePendingPlan
+                    ? `${activePendingPlan.name} · awaiting payment`
+                    : undefined
+                }
+                onUpgrade={() =>
+                  activeBike?.id ? setPlanDialogBikeId(activeBike.id) : navigate("/membership-plans")
+                }
                 onBook={() => navigate("/dashboard/garage")}
               />
             </div>
@@ -502,7 +539,9 @@ export default function MyWallet() {
                 onScan={() => setScanOpen(true)}
                 onAddCard={() => setPickerOpen(true)}
                 onTips={() => navigate("/dashboard/garage")}
-                onPlans={() => navigate("/membership-plans")}
+                onPlans={() =>
+                  activeBike?.id ? setPlanDialogBikeId(activeBike.id) : navigate("/membership-plans")
+                }
                 onAllBikes={() => navigate("/dashboard/bike")}
               />
             </div>
@@ -599,6 +638,20 @@ export default function MyWallet() {
         bikeName={activeBikeName}
         memberName={user?.name || "Guest"}
         planName={currentPlan?.name ?? "Free"}
+      />
+
+      <BikePlanDialog
+        open={planDialogBikeId !== null}
+        onOpenChange={(o) => !o && setPlanDialogBikeId(null)}
+        bikeId={planDialogBikeId}
+        bikeName={
+          linkedBikes.find((b) => b.id === planDialogBikeId)?.model || activeBikeName
+        }
+        plans={bikePlanOptions}
+        currentPlan={planForBike(planDialogBikeId)}
+        pendingPlan={pendingForBike(planDialogBikeId)}
+        onRequestChange={requestChange}
+        onCancelPending={cancelPending}
       />
 
     </RoleDashboardLayout>
