@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { motion } from "framer-motion";
 import { useNavigate } from "react-router-dom";
-import { QrCode, CalendarPlus, Pause, Play } from "lucide-react";
+import { QrCode, CalendarPlus, Pause, Play, Plus } from "lucide-react";
 import { GooeyActions } from "@/components/ui/gooey-actions";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import EPassScanner from "@/components/dashboard/wallet/EPassScanner";
@@ -57,6 +57,7 @@ export default function FleetMenu() {
       >
         <GooeyActions
           label="Fleet"
+          coreIcon={<Plus className="h-6 w-6" strokeWidth={2.2} />}
           actions={actions}
           holdToOpen
           holdDelay={1000}
