@@ -729,6 +729,41 @@ export default function AppointmentCompletionDrawer({
                 ) : null}
               </AnimatePresence>
 
+              {/* Final condition assessment (SSBike) — mandatory before closing */}
+              {assessBikeId ? (
+                <div
+                  className={cn(
+                    "mt-3 rounded-2xl border p-3 flex items-center justify-between gap-3",
+                    assessDone
+                      ? "bg-wj-green/10 border-wj-green/30"
+                      : "bg-amber-500/[0.06] border-amber-500/30",
+                  )}
+                >
+                  <div className="min-w-0">
+                    <p className="text-xs font-medium text-foreground">
+                      Final condition assessment
+                    </p>
+                    <p className="text-[11px] text-muted-foreground mt-0.5">
+                      {assessDone
+                        ? "Battery, brakes and drivetrain rated — overall condition updated on the E-Pass."
+                        : "Rate battery, brakes, drivetrain and frame to update the bike overall condition."}
+                    </p>
+                  </div>
+                  <Button
+                    size="sm"
+                    variant={assessDone ? "outline" : "default"}
+                    disabled={saving}
+                    onClick={() => setAssessOpen(true)}
+                    className={cn(
+                      "h-8 text-xs shrink-0",
+                      !assessDone && "bg-wj-green hover:bg-wj-green/90 text-black",
+                    )}
+                  >
+                    {assessDone ? "Review rating" : "Assess bike"}
+                  </Button>
+                </div>
+              ) : null}
+
               {/* Final completion */}
               <div className="mt-3 flex items-center justify-between gap-3 px-1">
                 <div className="text-[11px] text-muted-foreground">
@@ -741,7 +776,12 @@ export default function AppointmentCompletionDrawer({
                 </div>
                 <Button
                   size="sm"
-                  disabled={!briefingAck || !allStagesCompleted || !allDeliveryChecked || saving}
+                  disabled={
+                    !briefingAck ||
+                    !allStagesCompleted ||
+                    !allDeliveryChecked ||
+                    saving
+                  }
                   onClick={() => {
                     if (!allDeliveryChecked) {
                       setActiveStageId(DELIVERY_ID);
