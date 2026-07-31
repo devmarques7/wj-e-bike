@@ -48,6 +48,7 @@ interface Props {
   onCompleted: () => void;
 }
 
+
 type Stage = {
   id: string;
   template_id: string;
