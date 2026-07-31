@@ -290,8 +290,7 @@ export default function AppointmentCompletionDrawer({
       const acked =
         !!readQcSession(appointment.id).ack || !!(appointment as any)?.work_started_at;
       if (acked) {
-        const first =
-          (stageRows ?? []).find((s: any) => !map[s.id]?.completed_at) ?? (stageRows ?? [])[0];
+        const first = st.find((s) => !map[s.id]?.completed_at) ?? st[0];
         setActiveStageId(first?.id ?? DELIVERY_ID);
       } else {
         setActiveStageId(BRIEFING_ID);
