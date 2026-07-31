@@ -36,6 +36,32 @@ import { awardAppointmentPoints } from "@/lib/rewards/rewards";
 const BRIEFING_ID = "__briefing__";
 const DELIVERY_ID = "__delivery__";
 
+/* Session persistence: once a mechanic starts the control or checks delivery
+   items, that state survives closing/re-opening the drawer in the same tab. */
+const sessionKey = (id: string) => `wj_qc_session_${id}`;
+type QcSession = {
+  ack?: boolean;
+  delivery?: Record<string, boolean>;
+  assessDone?: boolean;
+};
+function readQcSession(id?: string | null): QcSession {
+  if (!id) return {};
+  try {
+    return JSON.parse(sessionStorage.getItem(sessionKey(id)) ?? "{}") as QcSession;
+  } catch {
+    return {};
+  }
+}
+function writeQcSession(id: string | null | undefined, patch: QcSession) {
+  if (!id) return;
+  try {
+    const next = { ...readQcSession(id), ...patch };
+    sessionStorage.setItem(sessionKey(id), JSON.stringify(next));
+  } catch {
+    /* ignore */
+  }
+}
+
 const DEFAULT_DELIVERY_ITEMS: DeliveryItem[] = [
   { id: "d_reported", label: "All reported points were reviewed with the customer", source: "default" },
   { id: "d_brakes", label: "Brakes and safety check after the intervention", source: "default" },
