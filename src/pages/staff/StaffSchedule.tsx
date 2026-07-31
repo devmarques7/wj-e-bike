@@ -71,6 +71,20 @@ export default function StaffSchedule() {
     { day_of_week: number; is_working: boolean; start_time: string | null; end_time: string | null }[]
   >([]);
   const [scheduleVersion, setScheduleVersion] = useState(0);
+  const { ensureAvailability } = useSchedulingAvailability();
+
+  /**
+   * Selecting a future day with no availability offers to open it, so the
+   * workload of that day becomes bookable for the whole workshop.
+   */
+  const handleDaySelect = async (date: Date) => {
+    setSelectedDate(date);
+    if (!user?.id) return;
+    const key = dateKey(date);
+    if (key < dateKey(new Date())) return;
+    const opened = await ensureAvailability(user.id, key);
+    if (opened) setScheduleVersion((v) => v + 1);
+  };
 
   const shaderColors = theme === "dark"
     ? ["#0a0a0a", "#0d2818", "#058c42", "#10b981", "#022c1a"]
@@ -588,7 +602,7 @@ export default function StaffSchedule() {
                       <Tooltip key={key}>
                         <TooltipTrigger asChild>
                           <button
-                            onClick={() => setSelectedDate(date)}
+                            onClick={() => handleDaySelect(date)}
                             className={cn(
                               "aspect-square rounded-md flex items-center justify-center text-[10px] transition-all hover:ring-1 hover:ring-wj-green/50",
                               isWeekend && !count && "opacity-40",
