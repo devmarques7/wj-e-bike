@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef, useMemo } from "react";
 import { createPortal } from "react-dom";
-import { GripVertical, Play, Pause, Square, Loader2, Activity, Wrench, ShieldCheck, ChevronRight, Bell } from "lucide-react";
+import { GripVertical, Play, Pause, Square, Loader2, Activity, Wrench, ShieldCheck, ChevronRight, Bell, Timer } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { cn } from "@/lib/utils";
 import { useShift } from "@/hooks/useShift";
