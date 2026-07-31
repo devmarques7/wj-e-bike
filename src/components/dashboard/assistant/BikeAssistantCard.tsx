@@ -370,6 +370,28 @@ export default function BikeAssistantCard({
 
         {error && <p className="relative z-10 mt-3 text-xs text-destructive">{error}</p>}
 
+        {/* Persistent quick actions (staff workshop mode) */}
+        {quickActions && messages.length > 0 && (
+          <div className="relative z-10 mt-3 flex flex-wrap gap-1.5">
+            {quickActions.map(({ label, prompt, primary, onSelect }) => (
+              <button
+                key={label}
+                type="button"
+                disabled={busy}
+                onClick={() => (onSelect ? onSelect() : submit(prompt))}
+                className={cn(
+                  "rounded-full border px-3 py-1.5 text-[11px] transition-colors disabled:opacity-50",
+                  primary
+                    ? "border-wj-green/50 bg-wj-green/15 text-wj-green hover:bg-wj-green/25"
+                    : "border-border/30 bg-muted/40 text-foreground/90 hover:border-wj-green/40 hover:bg-wj-green/10",
+                )}
+              >
+                {label}
+              </button>
+            ))}
+          </div>
+        )}
+
         {/* Composer */}
         <div className="relative z-10 mt-5 rounded-2xl border border-border/30 bg-background/70 p-2">
           {diagnosis && diagnosis.tags.length > 0 && (
