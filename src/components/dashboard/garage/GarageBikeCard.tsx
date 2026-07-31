@@ -1,6 +1,8 @@
 import { motion } from "framer-motion";
 import { Battery, Gauge, MapPin, Zap, ArrowUpRight } from "lucide-react";
 import { Link } from "react-router-dom";
+import { MeshGradient } from "@paper-design/shaders-react";
+import { useTheme } from "@/contexts/ThemeContext";
 import type { GarageBike } from "@/hooks/garage/useGarageBike";
 import type { HealthMetric } from "@/hooks/garage/useGarageBike";
 import bikeAsset from "@/assets/garage-bike-black.png.asset.json";
@@ -13,6 +15,7 @@ interface Props {
 
 /** Identity card of the registered bike: model, serial, key telemetry, E-Pass link. */
 export default function GarageBikeCard({ bike, overall, metrics = [] }: Props) {
+  const { theme } = useTheme();
   return (
     <motion.div
       initial={{ opacity: 0, y: 16 }}
@@ -20,16 +23,18 @@ export default function GarageBikeCard({ bike, overall, metrics = [] }: Props) {
       transition={{ duration: 0.5 }}
       className="relative h-full min-h-[360px] rounded-3xl overflow-hidden border border-border/30 bg-background/60 backdrop-blur-md"
     >
-      {/* Layer 1: Video Background */}
-      <video
-        autoPlay
-        muted
-        loop
-        playsInline
-        className="absolute inset-0 w-full h-full object-cover"
-      >
-        <source src="/videos/service-countdown-bg.mp4" type="video/mp4" />
-      </video>
+      {/* Layer 1: Mesh gradient background (system standard) */}
+      <MeshGradient
+        colors={theme === "dark"
+          ? ["#0a0a0a", "#0d2818", "#058c42", "#10b981", "#022c1a"]
+          : ["#f5f7f5", "#dff5e8", "#058c42", "#86efac", "#ecfdf5"]}
+        speed={0.25}
+        distortion={1}
+        swirl={0.8}
+        className="absolute inset-0 w-full h-full"
+        style={{ opacity: theme === "dark" ? 0.85 : 0.7 }}
+      />
+      <div className="absolute inset-0 bg-gradient-to-t from-background via-background/80 to-background/40" />
 
       {/* Layer 2: Bike image on the left */}
       <div className="absolute bottom-0 left-0 w-full h-[75%] pointer-events-none">
