@@ -118,11 +118,11 @@ export default function StaffGarage() {
         </KPICarousel>
 
         <div className="grid grid-cols-12 gap-4 lg:gap-6">
-          <div className="col-span-12 lg:col-span-7">
-            <GarageAssistantCard className="h-[560px]" />
+          <div className="col-span-12">
+            <GarageAssistantCard className="h-[420px]" />
           </div>
-          <div className="col-span-12 lg:col-span-5">
-            <AppointmentsTableCard title="Bikes in the workshop" />
+          <div className="col-span-12">
+            <AppointmentsTableCard title="Bikes in the workshop" className="h-[640px]" />
           </div>
         </div>
       </div>
