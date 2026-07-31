@@ -294,11 +294,21 @@ export default function ServiceRequestCard({ bike }: ServiceRequestCardProps = {
         transition={{ delay: 0.1 }}
         className="relative h-full rounded-3xl overflow-hidden bg-background"
       >
-        {/* Shader Background */}
-        <ShaderBackground className="absolute inset-0 w-full h-full block" />
+        {/* Mesh Gradient Background (same as login right panel / WalletCard) */}
+        <MeshGradient
+          colors={theme === "dark"
+            ? ["#0a0a0a", "#0d2818", "#058c42", "#10b981", "#022c1a"]
+            : ["#f5f7f5", "#dff5e8", "#058c42", "#86efac", "#ecfdf5"]}
+          speed={0.25}
+          distortion={1}
+          swirl={0.8}
+          className="absolute inset-0 w-full h-full"
+          style={{ opacity: theme === "dark" ? 0.85 : 0.7 }}
+        />
 
-        {/* Overlay */}
-        <div className="absolute inset-0 bg-gradient-to-br from-black/70 via-black/50 to-black/70" />
+        {/* Overlay (same bottom-to-top fade used across dashboard cards) */}
+        <div className="absolute inset-0 bg-gradient-to-t from-background via-background/80 to-background/40" />
+
         
         {/* Content */}
         <div className="relative z-10 h-full p-6 flex flex-col justify-between">
