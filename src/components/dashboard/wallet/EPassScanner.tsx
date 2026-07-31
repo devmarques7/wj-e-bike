@@ -1,5 +1,7 @@
-import { useCallback, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/contexts/AuthContext";
 import { Camera, RefreshCw, SwitchCamera, ScanLine, ArrowRight, Sparkles, ZoomIn } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Slider } from "@/components/ui/slider";
@@ -13,13 +15,59 @@ interface Props {
 }
 
 /** Live camera E-Pass scanner: auto-captures the QR, freezes the frame and opens the bike garage. */
+const isUuid = (v: string) =>
+  /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(v);
+
 export default function EPassScanner({ active, onNavigate }: Props) {
   const navigate = useNavigate();
+  const { user } = useAuth();
   const [decoded, setDecoded] = useState<string | null>(null);
+  const [resolving, setResolving] = useState(false);
+  const [notFound, setNotFound] = useState(false);
+  const redirectedRef = useRef(false);
 
   const handleResult = useCallback((value: string) => {
     setDecoded(parseEPassCode(value));
   }, []);
+
+  const isStaff = user?.role === "staff" || user?.role === "admin";
+
+  /** Resolves the scanned code to a bike id and opens the identification page. */
+  const openBike = useCallback(
+    async (code: string) => {
+      setResolving(true);
+      setNotFound(false);
+      let bikeId: string | null = isUuid(code) ? code : null;
+      if (!bikeId) {
+        const { data } = await supabase
+          .from("customer_bikes")
+          .select("id")
+          .ilike("serial", code)
+          .limit(1)
+          .maybeSingle();
+        bikeId = data?.id ?? null;
+      }
+      setResolving(false);
+      if (!bikeId) {
+        setNotFound(true);
+        return;
+      }
+      onNavigate?.();
+      navigate(
+        isStaff
+          ? `/dashboard/staff/garage/bike/${encodeURIComponent(bikeId)}`
+          : `/dashboard/garage?bike=${encodeURIComponent(bikeId)}`,
+      );
+    },
+    [isStaff, navigate, onNavigate],
+  );
+
+  // Auto-redirect as soon as a valid E-Pass is identified.
+  useEffect(() => {
+    if (!decoded || redirectedRef.current) return;
+    redirectedRef.current = true;
+    void openBike(decoded);
+  }, [decoded, openBike]);
 
   const {
     videoRef, canvasRef, status, error, snapshot, aiBusy,
@@ -28,8 +76,8 @@ export default function EPassScanner({ active, onNavigate }: Props) {
 
   const goToBike = () => {
     if (!decoded) return;
-    onNavigate?.();
-    navigate(`/dashboard/garage?bike=${encodeURIComponent(decoded)}`);
+    redirectedRef.current = true;
+    void openBike(decoded);
   };
 
   const scanning = status === "scanning";
@@ -112,7 +160,16 @@ export default function EPassScanner({ active, onNavigate }: Props) {
         </Button>
         <Button
           className="rounded-full px-6"
-          onClick={snapshot ? reset : capture}
+          onClick={() => {
+            if (snapshot) {
+              redirectedRef.current = false;
+              setDecoded(null);
+              setNotFound(false);
+              reset();
+            } else {
+              capture();
+            }
+          }}
           disabled={status === "requesting" || aiBusy}
         >
           {snapshot ? <RefreshCw className="mr-2 h-4 w-4" /> : <ScanLine className="mr-2 h-4 w-4" />}
@@ -124,10 +181,17 @@ export default function EPassScanner({ active, onNavigate }: Props) {
         <div className="rounded-2xl border border-border/50 bg-card/40 p-4 text-center space-y-3">
           {decoded ? (
             <>
-              <p className="text-[10px] uppercase tracking-widest text-muted-foreground">E-Pass detected</p>
+              <p className="text-[10px] uppercase tracking-widest text-muted-foreground">
+                {resolving ? "Identifying E-Pass" : notFound ? "Unknown E-Pass" : "E-Pass detected"}
+              </p>
               <p className="truncate text-sm font-medium text-foreground">{decoded}</p>
-              <Button className="w-full rounded-full" onClick={goToBike}>
-                Open bike details <ArrowRight className="ml-2 h-4 w-4" />
+              {notFound && (
+                <p className="text-xs text-muted-foreground">
+                  No bike is registered with this code. Try another pass.
+                </p>
+              )}
+              <Button className="w-full rounded-full" onClick={goToBike} disabled={resolving}>
+                {resolving ? "Opening…" : "Open bike details"} <ArrowRight className="ml-2 h-4 w-4" />
               </Button>
             </>
           ) : (
