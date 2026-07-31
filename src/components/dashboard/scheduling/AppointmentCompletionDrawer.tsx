@@ -30,6 +30,7 @@ import { useBikeBriefing } from "@/hooks/workshop/useBikeBriefing";
 import BikeBriefingPanel from "./BikeBriefingPanel";
 import DeliveryChecklistPanel, { type DeliveryItem } from "./DeliveryChecklistPanel";
 import { useWorkPause } from "@/lib/workshop/workPause";
+import { ensureShiftActive } from "@/hooks/useShift";
 
 const BRIEFING_ID = "__briefing__";
 const DELIVERY_ID = "__delivery__";
@@ -100,6 +101,10 @@ export default function AppointmentCompletionDrawer({
   const [activeStageId, setActiveStageId] = useState<string | null>(null);
   const [tick, setTick] = useState(0);
   const [briefingAck, setBriefingAck] = useState(false);
+  /* Local mirror of work_started_at: the timer only starts when the mechanic
+     presses "Start Control" on the briefing stage. */
+  const [startedAtLocal, setStartedAtLocal] = useState<number | null>(null);
+  const [starting, setStarting] = useState(false);
   const [deliveryChecked, setDeliveryChecked] = useState<Record<string, boolean>>({});
   /* Final condition validation (same SSBike flow used on the E-Pass page). */
   const [assessOpen, setAssessOpen] = useState(false);
@@ -136,8 +141,39 @@ export default function AppointmentCompletionDrawer({
   // Global appointment start (drives the live cumulative timer)
   const workStartedAtMs = useMemo(() => {
     const v = (appointment as any)?.work_started_at;
-    return v ? new Date(v).getTime() : null;
-  }, [appointment]);
+    return v ? new Date(v).getTime() : startedAtLocal;
+  }, [appointment, startedAtLocal]);
+
+  /** Start Control: clock in, flip the job to in_progress and start the timer. */
+  const startControl = useCallback(async () => {
+    if (!appointment || starting) return;
+    setStarting(true);
+    try {
+      if (!workStartedAtMs) {
+        const { data: auth } = await supabase.auth.getUser();
+        const uid = auth.user?.id;
+        await ensureShiftActive(uid);
+        const startedAt = new Date();
+        const { error } = await supabase
+          .from("appointments")
+          .update({
+            status: "in_progress",
+            work_started_at: startedAt.toISOString(),
+            assigned_mechanic_id: appointment.assigned_mechanic_id ?? uid,
+          })
+          .eq("id", appointment.id);
+        if (error) throw error;
+        setStartedAtLocal(startedAt.getTime());
+      }
+      setBriefingAck(true);
+      const first = stages.find((s) => !progress[s.id]?.completed_at) ?? stages[0];
+      setActiveStageId(first?.id ?? DELIVERY_ID);
+    } catch (e: any) {
+      toast.error(e?.message ?? "Could not start this job");
+    } finally {
+      setStarting(false);
+    }
+  }, [appointment, starting, workStartedAtMs, stages, progress]);
 
   const elapsedFromStartSeconds = useMemo(() => {
     if (!workStartedAtMs) return 0;
@@ -226,6 +262,7 @@ export default function AppointmentCompletionDrawer({
       setActiveStageId(null);
       setBriefingAck(false);
       setDeliveryChecked({});
+      setStartedAtLocal(null);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open, appointment?.id]);
@@ -529,11 +566,8 @@ export default function AppointmentCompletionDrawer({
                     loading={briefingLoading}
                     customerName={appointment?.customer_name}
                     acknowledged={briefingAck}
-                    onAcknowledge={() => {
-                      setBriefingAck(true);
-                      const first = stages.find((s) => !progress[s.id]?.completed_at) ?? stages[0];
-                      setActiveStageId(first?.id ?? DELIVERY_ID);
-                    }}
+                    starting={starting}
+                    onAcknowledge={startControl}
                   />
                 ) : activeStageId === DELIVERY_ID ? (
                   <DeliveryChecklistPanel

@@ -22,6 +22,7 @@ interface Props {
   customerName?: string | null;
   acknowledged: boolean;
   onAcknowledge: () => void;
+  starting?: boolean;
 }
 
 function Field({ label, value, icon: Icon }: { label: string; value: string; icon: any }) {
@@ -42,6 +43,7 @@ export default function BikeBriefingPanel({
   customerName,
   acknowledged,
   onAcknowledge,
+  starting,
 }: Props) {
   if (loading) {
     return (
@@ -182,15 +184,16 @@ export default function BikeBriefingPanel({
 
       <div className="p-3 border-t border-border/30 flex items-center justify-between gap-2">
         <span className="text-[10px] text-muted-foreground">
-          Confirm you read the briefing to unlock the QC stages.
+          Start Control begins the appointment timer and unlocks the quality control stages.
         </span>
         <Button
           size="sm"
-          disabled={acknowledged}
+          disabled={acknowledged || !!starting}
           onClick={onAcknowledge}
           className="bg-wj-green hover:bg-wj-green/90 text-black h-8 text-xs"
         >
-          {acknowledged ? "Briefing reviewed" : "Start Quality Control"}
+          {starting && <Loader2 className="h-3 w-3 mr-1.5 animate-spin" />}
+          {acknowledged ? "Control running" : "Start Control"}
         </Button>
       </div>
     </motion.div>
