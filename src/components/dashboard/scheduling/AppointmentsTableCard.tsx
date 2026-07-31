@@ -113,6 +113,8 @@ interface AppointmentsTableCardProps {
   customerUserId?: string;
   /** Also list scheduling requests (waitlist) as rows with a "requested" status. */
   includeRequests?: boolean;
+  /** Optional extra classes for the card root. */
+  className?: string;
 }
 
 /**
@@ -126,6 +128,7 @@ export default function AppointmentsTableCard({
   mineOnlyMechanicId,
   customerUserId,
   includeRequests = false,
+  className,
 }: AppointmentsTableCardProps) {
   const { t, i18n } = useTranslation();
   const isCustomer = !!customerUserId;
