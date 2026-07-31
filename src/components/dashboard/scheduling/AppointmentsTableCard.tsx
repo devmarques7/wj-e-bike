@@ -325,7 +325,7 @@ export default function AppointmentsTableCard({
   }, [totalPages]);
   useEffect(() => {
     setPage(0);
-  }, [statusFilter, groupBy, sortAsc]);
+  }, [statusFilter, groupBy, sortAsc, sortMode]);
   const pagedRows = useMemo(
     () => filteredSorted.slice(page * PAGE_SIZE, page * PAGE_SIZE + PAGE_SIZE),
     [filteredSorted, page],
@@ -337,7 +337,7 @@ export default function AppointmentsTableCard({
     const labelFor = (a: ApptRow): { key: string; label: string } => {
       switch (groupBy) {
         case "status":
-          return { key: a.status, label: t(`workshop.status.${a.status}`, a.status) };
+          return { key: taskBucket(a), label: t(`workshop.appts.${taskBucket(a)}`) };
         case "mechanic":
           return {
             key: a.assigned_mechanic_id ?? "none",
