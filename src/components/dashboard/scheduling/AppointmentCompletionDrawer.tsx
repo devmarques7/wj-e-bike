@@ -286,9 +286,16 @@ export default function AppointmentCompletionDrawer({
       });
       setProgress(map);
 
-      // pick first incomplete stage as active
-      // stage 0 is always the briefing
-      setActiveStageId(BRIEFING_ID);
+      // stage 0 is the briefing — skip it when it was already acknowledged
+      const acked =
+        !!readQcSession(appointment.id).ack || !!(appointment as any)?.work_started_at;
+      if (acked) {
+        const first =
+          (stageRows ?? []).find((s: any) => !map[s.id]?.completed_at) ?? (stageRows ?? [])[0];
+        setActiveStageId(first?.id ?? DELIVERY_ID);
+      } else {
+        setActiveStageId(BRIEFING_ID);
+      }
     } catch (e: any) {
       toast.error(e.message ?? t("workshop.drawer.load_error"));
     } finally {
