@@ -53,8 +53,8 @@ export default function FleetMenu() {
         drag={!menuOpen}
         dragListener={false}
         dragControls={dragControls}
-        drag={!menuOpen}Momentum={false}
-        drag={!menuOpen}Elastic={0.08}
+        dragMomentum={false}
+        dragElastic={0.08}
         whileDrag={{ scale: 1.03 }}
         className="fixed bottom-8 right-8 z-[2147483000] cursor-grab active:cursor-grabbing"
       >
