@@ -66,7 +66,7 @@ const EMPTY: GarageStats = {
  * Workshop-wide garage counters for the staff Garage page.
  * Refreshes every 60s and on window focus.
  */
-export function useStaffGarageStats(period: GaragePeriod) {
+export function useStaffGarageStats(period: GaragePeriod, mineOnlyMechanicId?: string) {
   const [stats, setStats] = useState<GarageStats>(EMPTY);
 
   const load = useCallback(async () => {
@@ -75,22 +75,27 @@ export function useStaffGarageStats(period: GaragePeriod) {
     const tomorrow = new Date(today);
     tomorrow.setDate(today.getDate() + 1);
 
+    const mine = <T extends { or: (f: string) => T }>(q: T) =>
+      mineOnlyMechanicId
+        ? q.or(`assigned_mechanic_id.eq.${mineOnlyMechanicId},assigned_mechanic_id.is.null`)
+        : q;
+
     const [rangeRes, todayRes, tomorrowRes, activeRes, doneRes] = await Promise.all([
-      supabase
+      mine(supabase
         .from("appointments")
         .select("id, status, priority")
         .gte("scheduled_date", from)
-        .lte("scheduled_date", to),
-      supabase.from("appointments").select("id").eq("scheduled_date", ymd(today)),
-      supabase.from("appointments").select("id").eq("scheduled_date", ymd(tomorrow)),
-      supabase.from("appointments").select("id").eq("status", "in_progress"),
-      supabase
+        .lte("scheduled_date", to)),
+      mine(supabase.from("appointments").select("id").eq("scheduled_date", ymd(today))),
+      mine(supabase.from("appointments").select("id").eq("scheduled_date", ymd(tomorrow))),
+      mine(supabase.from("appointments").select("id").eq("status", "in_progress")),
+      mine(supabase
         .from("appointments")
         .select("actual_duration_minutes, duration_minutes")
         .eq("status", "completed")
         .not("actual_duration_minutes", "is", null)
         .order("work_ended_at", { ascending: false })
-        .limit(30),
+        .limit(30)),
     ]);
 
     const rows = rangeRes.data ?? [];
@@ -124,7 +129,7 @@ export function useStaffGarageStats(period: GaragePeriod) {
         : 60,
       onTimePct: done.length ? Math.round((onTime / done.length) * 100) : null,
     });
-  }, [period]);
+  }, [period, mineOnlyMechanicId]);
 
   useEffect(() => {
     let cancelled = false;
