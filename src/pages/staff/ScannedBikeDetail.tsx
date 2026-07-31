@@ -11,6 +11,8 @@ import { usePlanAllowance, PLAN_SERVICE_ALLOWANCE } from "@/hooks/wallet/usePlan
 import { supabase } from "@/integrations/supabase/client";
 import AppointmentsTableCard from "@/components/dashboard/scheduling/AppointmentsTableCard";
 import BikeAssistantCard from "@/components/dashboard/assistant/BikeAssistantCard";
+import BikeAssessmentDialog from "@/components/dashboard/garage/BikeAssessmentDialog";
+import { useBikeAssessment } from "@/hooks/garage/useBikeAssessment";
 import {
   Breadcrumb,
   BreadcrumbItem,
@@ -37,7 +39,12 @@ export default function ScannedBikeDetail() {
     useBikeById(bikeId);
   const [plan, setPlan] = useState<{ name: string; slug: string } | null>(null);
   const [bookingOpen, setBookingOpen] = useState(false);
+  const [assessOpen, setAssessOpen] = useState(false);
   const allowance = usePlanAllowance(plan?.slug, owner?.userId ?? null);
+  const { assessment, refetch: refetchAssessment } = useBikeAssessment(
+    bike?.id ?? null,
+    owner?.customerId ?? null,
+  );
 
   const isStaffRole = user?.role === "staff" || user?.role === "admin";
   // Automated workshop briefing: appointment yes/no, reported problem,
@@ -265,7 +272,11 @@ export default function ScannedBikeDetail() {
             </div>
 
             <div className="col-span-12 lg:col-span-8 flex flex-col gap-4 lg:gap-6">
-              <BikeHealthGrid metrics={health.metrics} />
+              <BikeHealthGrid
+                metrics={health.metrics}
+                assessment={assessment}
+                onAssess={isStaffRole ? () => setAssessOpen(true) : undefined}
+              />
               {owner?.userId && (
                 <AppointmentsTableCard
                   customerUserId={owner.userId}
