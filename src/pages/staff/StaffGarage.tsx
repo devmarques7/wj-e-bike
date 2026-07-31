@@ -25,6 +25,7 @@ const fmtMin = (m: number | null) =>
 export default function StaffGarage() {
   const { user, isAuthenticated, isLoading } = useAuth();
   const [period, setPeriod] = useState<GaragePeriod>("today");
+  const [myTasksOnly, setMyTasksOnly] = useState(false);
   const { stats } = useStaffGarageStats(period);
 
   if (isLoading) return null;
