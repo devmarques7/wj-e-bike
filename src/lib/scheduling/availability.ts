@@ -93,11 +93,12 @@ export function resolveServiceType(
 export async function fetchDaySlots(
   dateKey: string,
   serviceTypeId: string,
+  mechanicId: string | null = null,
 ): Promise<AvailableSlot[]> {
   const { data, error } = await supabase.rpc("get_available_slots", {
     _date: dateKey,
     _service_type_id: serviceTypeId,
-    _mechanic_id: null,
+    _mechanic_id: mechanicId,
   });
   if (error) return [];
   const byStart = new Map<string, AvailableSlot>();
@@ -119,6 +120,7 @@ export async function fetchAvailability(
   serviceTypeId: string,
   days = 7,
   from: Date = new Date(),
+  mechanicId: string | null = null,
 ): Promise<DayAvailability[]> {
   const keys = Array.from({ length: days }, (_, i) => {
     const d = new Date(from);
@@ -129,7 +131,7 @@ export async function fetchAvailability(
     keys.map(async (key) => ({
       date: key,
       label: dayLabel(key),
-      slots: await fetchDaySlots(key, serviceTypeId),
+      slots: await fetchDaySlots(key, serviceTypeId, mechanicId),
     })),
   );
   return results.filter((d) => d.slots.length > 0);
