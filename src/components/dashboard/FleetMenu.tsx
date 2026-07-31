@@ -52,7 +52,7 @@ export default function FleetMenu() {
 
   const handleOpenChange = (next: boolean) => {
     // The ref changes synchronously, so the active pointermove handler freezes
-    // the Fleet button on the exact frame the five-second hold blooms actions.
+    // the Fleet button on the exact frame the hold blooms actions.
     menuOpenRef.current = next;
     setMenuOpen(next);
   };
@@ -112,7 +112,7 @@ export default function FleetMenu() {
           coreIcon={<Plus className="h-6 w-6" strokeWidth={2.2} />}
           actions={actions}
           holdToOpen
-          holdDelay={5000}
+          holdDelay={800}
           onPressDrag={startFreeDrag}
           radius={74}
           arc={[-160, -80]}

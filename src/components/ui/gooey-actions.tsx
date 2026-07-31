@@ -143,6 +143,9 @@ export function GooeyActions({
   const isOpen = isControlled ? (open as boolean) : internalOpen;
   const setIsOpen = React.useCallback(
     (next: boolean) => {
+      // Once the hold has bloomed the menu, no incidental click/focus/pointer
+      // event may collapse it while the initiating pointer is still down.
+      if (!next && pressedRef.current && holdingRef.current) return;
       if (!isControlled) setInternalOpen(next);
       onOpenChange?.(next);
     },
@@ -354,19 +357,14 @@ export function GooeyActions({
     holdingRef.current = false;
     pressedRef.current = true;
     const origin = { x: e.clientX, y: e.clientY };
-    let lastStationaryPos = { x: e.clientX, y: e.clientY };
     let handedToDrag = false;
 
-    const startHoldTimer = () => {
-      clearHold();
-      holdTimerRef.current = window.setTimeout(() => {
-        if (!pressedRef.current) return;
-        holdingRef.current = true;
-        setIsOpen(true);
-      }, holdDelay);
-    };
-
-    startHoldTimer();
+    clearHold();
+    holdTimerRef.current = window.setTimeout(() => {
+      if (!pressedRef.current) return;
+      holdingRef.current = true;
+      setIsOpen(true);
+    }, holdDelay);
     onPressDrag?.(e.nativeEvent, 0);
 
     const onMove = (ev: PointerEvent) => {
@@ -374,13 +372,6 @@ export function GooeyActions({
       ev.preventDefault();
 
       const distFromOrigin = Math.hypot(ev.clientX - origin.x, ev.clientY - origin.y);
-      const distFromLast = Math.hypot(ev.clientX - lastStationaryPos.x, ev.clientY - lastStationaryPos.y);
-
-      if (distFromLast > 3) {
-        lastStationaryPos = { x: ev.clientX, y: ev.clientY };
-        if (!holdingRef.current) startHoldTimer();
-      }
-
       if (!holdingRef.current && !handedToDrag && distFromOrigin > 12) {
         if (onPressDrag?.(ev, distFromOrigin) === true) {
           handedToDrag = true;
