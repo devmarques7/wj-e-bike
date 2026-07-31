@@ -2105,8 +2105,53 @@ export type Database = {
         }
         Relationships: []
       }
+      staff_shift_breaks: {
+        Row: {
+          created_at: string
+          duration_seconds: number | null
+          ended_at: string | null
+          id: string
+          reason: string | null
+          shift_id: string
+          started_at: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          duration_seconds?: number | null
+          ended_at?: string | null
+          id?: string
+          reason?: string | null
+          shift_id: string
+          started_at?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          duration_seconds?: number | null
+          ended_at?: string | null
+          id?: string
+          reason?: string | null
+          shift_id?: string
+          started_at?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "staff_shift_breaks_shift_id_fkey"
+            columns: ["shift_id"]
+            isOneToOne: false
+            referencedRelation: "staff_shifts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       staff_shifts: {
         Row: {
+          break_minutes: number
           clock_in: string | null
           clock_out: string | null
           created_at: string
@@ -2120,6 +2165,7 @@ export type Database = {
           worked_minutes: number
         }
         Insert: {
+          break_minutes?: number
           clock_in?: string | null
           clock_out?: string | null
           created_at?: string
@@ -2133,6 +2179,7 @@ export type Database = {
           worked_minutes?: number
         }
         Update: {
+          break_minutes?: number
           clock_in?: string | null
           clock_out?: string | null
           created_at?: string
