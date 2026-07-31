@@ -536,7 +536,7 @@ export function GooeyActions({
             "focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-wj-green",
           )}
           style={{
-            left: "50%",
+            left: leftPct,
             top: topPct,
             width: CORE_PX,
             height: CORE_PX,
