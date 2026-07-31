@@ -140,7 +140,7 @@ export default function StaffOverview() {
           <div className="col-span-12 md:col-span-6 xl:col-span-4 min-h-[220px]">
             <ShiftTracker />
           </div>
-          <div className="col-span-12 md:col-span-6 xl:col-span-3">
+          <div className="col-span-12 md:col-span-6 xl:col-span-8">
             <WorkloadGauge
               pct={stats.currentLoadPct}
               completedToday={stats.completedToday}
@@ -149,9 +149,11 @@ export default function StaffOverview() {
               targetHours={stats.targetHours}
             />
           </div>
-          <div className="col-span-12 xl:col-span-5 min-h-[500px]">
-            <AppointmentsTableCard mineOnlyMechanicId={user?.id} />
-          </div>
+        </div>
+
+        {/* Full appointments table */}
+        <div className="min-h-[500px]">
+          <AppointmentsTableCard mineOnlyMechanicId={user?.id} />
         </div>
       </div>
     </RoleDashboardLayout>
