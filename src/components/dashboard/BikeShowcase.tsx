@@ -371,7 +371,7 @@ export default function BikeShowcase({ bikeId }: BikeShowcaseProps = {}) {
       </div>
 
       {/* Content Overlay */}
-      <div className="absolute inset-0 flex flex-col justify-end p-6 pointer-events-none">
+      <div className="absolute inset-0 z-30 flex flex-col justify-end p-6 pointer-events-none">
         <AnimatePresence mode="wait">
           <motion.div
             key={currentIndex}
