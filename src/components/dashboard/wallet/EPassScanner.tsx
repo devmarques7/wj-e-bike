@@ -59,13 +59,17 @@ export default function EPassScanner({ active, onNavigate }: Props) {
         return;
       }
       onNavigate?.();
+      // Remember where the scan started so the breadcrumb can return the rider
+      // to the exact garage view (and selected bike) they came from.
+      const returnTo = `${location.pathname}${location.search}`;
       navigate(
         isStaff
           ? `/dashboard/staff/garage/bike/${encodeURIComponent(bikeId)}`
           : `/dashboard/garage/bike/${encodeURIComponent(bikeId)}`,
+        { state: { returnTo } },
       );
     },
-    [isStaff, navigate, onNavigate],
+    [isStaff, navigate, onNavigate, location.pathname, location.search],
   );
 
   // Auto-redirect as soon as a valid E-Pass is identified.
