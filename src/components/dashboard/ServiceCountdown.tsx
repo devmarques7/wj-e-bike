@@ -350,7 +350,7 @@ export default function ServiceCountdown({ bikeId, externalBike, externalOwner }
       {/* Booking dialog — reuses the admin BookAppointmentDialog with the
           current user + selected bike preset, so members go straight to
           the service + real-time availability steps. */}
-      {user?.id && (
+      {(externalOwner?.userId ?? user?.id) && (
         <BookAppointmentDialog
           open={!!bookingBike}
           onOpenChange={(v) => !v && setBookingBike(null)}
@@ -359,9 +359,10 @@ export default function ServiceCountdown({ bikeId, externalBike, externalOwner }
             loadBikes();
           }}
           presetCustomer={{
-            user_id: user.id,
-            full_name: (user as any).full_name ?? (user as any).name ?? null,
-            email: user.email ?? null,
+            user_id: (externalOwner?.userId ?? user!.id) as string,
+            full_name:
+              externalOwner?.name ?? (user as any)?.full_name ?? (user as any)?.name ?? null,
+            email: externalOwner?.email ?? user?.email ?? null,
           }}
           presetBike={
             bookingBike
