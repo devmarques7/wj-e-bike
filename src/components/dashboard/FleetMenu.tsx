@@ -66,7 +66,6 @@ export default function FleetMenu() {
     const originY = event.clientY;
     const startX = x.get();
     const startY = y.get();
-    const rect = wrapper.getBoundingClientRect();
 
     const onMove = (moveEvent: PointerEvent) => {
       if (moveEvent.pointerId !== pointerId || menuOpenRef.current) return;
@@ -75,21 +74,17 @@ export default function FleetMenu() {
       const dy = moveEvent.clientY - originY;
       // Keep the draggable core visible while allowing movement anywhere in
       // the viewport. The large action field follows the same translation.
-      const nextLeft = rect.left + dx;
-      const nextTop = rect.top + dy;
-      const minVisible = 40;
+      const minVisible = 33;
       const clampedDx = Math.min(
-        window.innerWidth - minVisible - rect.left,
-        Math.max(minVisible - rect.right, dx),
+        window.innerWidth - minVisible - originX,
+        Math.max(minVisible - originX, dx),
       );
       const clampedDy = Math.min(
-        window.innerHeight - minVisible - rect.top,
-        Math.max(minVisible - rect.bottom, dy),
+        window.innerHeight - minVisible - originY,
+        Math.max(minVisible - originY, dy),
       );
       x.set(startX + clampedDx);
       y.set(startY + clampedDy);
-      void nextLeft;
-      void nextTop;
     };
 
     const cleanup = (endEvent: PointerEvent) => {
