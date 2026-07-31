@@ -126,9 +126,7 @@ export default function ScannedBikeDetail() {
     stateReturn && stateReturn.startsWith("/dashboard") && !stateReturn.includes("/bike/")
       ? stateReturn
       : garageHref;
-  const isOwnBike = !!owner?.userId && owner.userId === user?.id;
   const ownerName = owner?.name || owner?.email || "Unknown customer";
-  const shortId = (bike?.id ?? bikeId ?? "").slice(0, 8).toUpperCase();
 
   return (
     <RoleDashboardLayout>
@@ -139,34 +137,6 @@ export default function ScannedBikeDetail() {
           transition={{ duration: 0.3 }}
           className="space-y-3"
         >
-          <Breadcrumb>
-            <BreadcrumbList>
-              <BreadcrumbItem>
-                <BreadcrumbLink asChild>
-                  <Link to={returnTo}>Garage</Link>
-                </BreadcrumbLink>
-              </BreadcrumbItem>
-              <BreadcrumbSeparator />
-              <BreadcrumbItem>
-                {owner?.customerId && isStaff ? (
-                  <BreadcrumbLink asChild>
-                    <Link to={`/dashboard/admin/crm/${owner.customerId}`}>{ownerName}</Link>
-                  </BreadcrumbLink>
-                ) : !isStaff ? (
-                  <BreadcrumbLink asChild>
-                    <Link to={returnTo}>{isOwnBike ? "My bike" : "Back to my bike"}</Link>
-                  </BreadcrumbLink>
-                ) : (
-                  <span className="text-muted-foreground">{ownerName}</span>
-                )}
-              </BreadcrumbItem>
-              <BreadcrumbSeparator />
-              <BreadcrumbItem>
-                <BreadcrumbPage>Bike #{shortId}</BreadcrumbPage>
-              </BreadcrumbItem>
-            </BreadcrumbList>
-          </Breadcrumb>
-
           <div className="flex flex-wrap items-end justify-between gap-3">
             <div>
               <h1 className="text-xl sm:text-2xl font-light text-foreground">
