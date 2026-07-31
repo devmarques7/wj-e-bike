@@ -12,7 +12,12 @@ import useShift from "@/hooks/useShift";
  * workshop essentials: scan an E-Pass, book an appointment and the shift
  * start/pause toggle.
  */
-export default function FleetMenu() {
+export interface FleetMenuProps {
+  /** Staff-only: shows the shift start/pause action in the dial. */
+  showShift?: boolean;
+}
+
+export default function FleetMenu({ showShift = true }: FleetMenuProps) {
   const navigate = useNavigate();
   const [scanOpen, setScanOpen] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
@@ -74,14 +79,17 @@ export default function FleetMenu() {
   }, [clampIntoViewport]);
 
   // Memoised so unrelated re-renders never hand GooeyActions a fresh array.
-  const actions = useMemo(
-    () => [
+  const actions = useMemo(() => {
+    const base = [
       { id: "scan", label: "Scan E-Pass", icon: <QrCode /> },
       { id: "book", label: "New appointment", icon: <CalendarPlus /> },
+    ];
+    if (!showShift) return base;
+    return [
+      ...base,
       { id: "shift", label: shiftLabel, icon: shiftRunning ? <Pause /> : <Play /> },
-    ],
-    [shiftLabel, shiftRunning],
-  );
+    ];
+  }, [shiftLabel, shiftRunning, showShift]);
 
   const onSelect = (id: string) => {
     if (id === "scan") setScanOpen(true);
