@@ -20,6 +20,7 @@ import ActivityYearGrid from "@/components/dashboard/wallet/ActivityYearGrid";
 import ActivityMonthGrid from "@/components/dashboard/wallet/ActivityMonthGrid";
 import ActivityDayPanel from "@/components/dashboard/wallet/ActivityDayPanel";
 import ServiceRecordDialog from "@/components/dashboard/wallet/ServiceRecordDialog";
+import ArchivedBikesTable from "@/components/dashboard/wallet/ArchivedBikesTable";
 import { useActivityYear, type ActivityDay, type ActivityRecord } from "@/hooks/wallet/useActivityYear";
 
 type PointEntry = {
@@ -548,6 +549,13 @@ export default function MyWallet() {
         onOpenChange={(o) => !o && setEditingCardId(null)}
         themeId={editingCardId ? themeFor(editingCardId) : undefined}
         onSelect={(themeId) => editingCardId && applyTheme(editingCardId, themeId)}
+        bikeId={editingCardId}
+        onCancelled={(bikeId) => {
+          setLinkedBikes((prev) => prev.filter((b) => b.id !== bikeId));
+          setStackOrder((prev) => prev.filter((id) => id !== bikeId));
+          setEditingCardId(null);
+          setArchivedRefresh((n) => n + 1);
+        }}
         preview={{
           label: t("e_pass.member_card"),
           bikeName: activeBikeName !== t("e_pass.no_bike") ? activeBikeName : "WJ Vision",
