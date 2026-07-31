@@ -36,6 +36,32 @@ import { awardAppointmentPoints } from "@/lib/rewards/rewards";
 const BRIEFING_ID = "__briefing__";
 const DELIVERY_ID = "__delivery__";
 
+/* Session persistence: once a mechanic starts the control or checks delivery
+   items, that state survives closing/re-opening the drawer in the same tab. */
+const sessionKey = (id: string) => `wj_qc_session_${id}`;
+type QcSession = {
+  ack?: boolean;
+  delivery?: Record<string, boolean>;
+  assessDone?: boolean;
+};
+function readQcSession(id?: string | null): QcSession {
+  if (!id) return {};
+  try {
+    return JSON.parse(sessionStorage.getItem(sessionKey(id)) ?? "{}") as QcSession;
+  } catch {
+    return {};
+  }
+}
+function writeQcSession(id: string | null | undefined, patch: QcSession) {
+  if (!id) return;
+  try {
+    const next = { ...readQcSession(id), ...patch };
+    sessionStorage.setItem(sessionKey(id), JSON.stringify(next));
+  } catch {
+    /* ignore */
+  }
+}
+
 const DEFAULT_DELIVERY_ITEMS: DeliveryItem[] = [
   { id: "d_reported", label: "All reported points were reviewed with the customer", source: "default" },
   { id: "d_brakes", label: "Brakes and safety check after the intervention", source: "default" },
@@ -135,11 +161,25 @@ export default function AppointmentCompletionDrawer({
     return () => clearInterval(i);
   }, [open]);
 
-  // Reset the final assessment gate whenever a new job is opened.
+  // Restore the per-appointment session state whenever a job is opened.
   useEffect(() => {
-    setAssessDone(false);
+    if (!open || !appointment?.id) return;
+    const s = readQcSession(appointment.id);
+    setAssessDone(!!s.assessDone);
     setAssessOpen(false);
+    setBriefingAck(!!s.ack || !!(appointment as any)?.work_started_at);
+    setDeliveryChecked(s.delivery ?? {});
   }, [appointment?.id, open]);
+
+  // Persist checklist + gates in session storage.
+  useEffect(() => {
+    if (!open || !appointment?.id) return;
+    writeQcSession(appointment.id, {
+      ack: briefingAck,
+      delivery: deliveryChecked,
+      assessDone,
+    });
+  }, [open, appointment?.id, briefingAck, deliveryChecked, assessDone]);
 
   // Global appointment start (drives the live cumulative timer)
   const workStartedAtMs = useMemo(() => {
@@ -246,9 +286,15 @@ export default function AppointmentCompletionDrawer({
       });
       setProgress(map);
 
-      // pick first incomplete stage as active
-      // stage 0 is always the briefing
-      setActiveStageId(BRIEFING_ID);
+      // stage 0 is the briefing — skip it when it was already acknowledged
+      const acked =
+        !!readQcSession(appointment.id).ack || !!(appointment as any)?.work_started_at;
+      if (acked) {
+        const first = st.find((s) => !map[s.id]?.completed_at) ?? st[0];
+        setActiveStageId(first?.id ?? DELIVERY_ID);
+      } else {
+        setActiveStageId(BRIEFING_ID);
+      }
     } catch (e: any) {
       toast.error(e.message ?? t("workshop.drawer.load_error"));
     } finally {
@@ -465,7 +511,7 @@ export default function AppointmentCompletionDrawer({
                         ? "bg-wj-green/10 border-wj-green/40"
                         : briefingAck
                           ? "bg-muted/30 border-border/30"
-                          : "bg-amber-500/[0.06] border-amber-500/30",
+                          : "bg-transparent border-primary/60 ring-1 ring-primary/30",
                     )}
                   >
                     <div
@@ -473,7 +519,7 @@ export default function AppointmentCompletionDrawer({
                         "w-7 h-7 rounded-full flex items-center justify-center text-[11px] font-semibold shrink-0",
                         briefingAck
                           ? "bg-wj-green text-black"
-                          : "bg-amber-500/20 text-amber-400 border border-amber-500/40",
+                          : "bg-transparent text-primary border border-primary/60",
                       )}
                     >
                       {briefingAck ? <Check className="h-3.5 w-3.5" /> : 0}
@@ -663,7 +709,7 @@ export default function AppointmentCompletionDrawer({
                                       {task.label}
                                     </p>
                                     {task.is_required && (
-                                      <Badge className="text-[9px] h-4 px-1.5 bg-amber-500/15 text-amber-400 border-amber-500/30">
+                                      <Badge className="text-[9px] h-4 px-1.5 bg-transparent text-primary border border-primary/50">
                                         {t("workshop.drawer.required_badge")}
                                       </Badge>
                                     )}
@@ -738,7 +784,7 @@ export default function AppointmentCompletionDrawer({
                     "mt-3 rounded-2xl border p-3 flex items-center justify-between gap-3",
                     assessDone
                       ? "bg-wj-green/10 border-wj-green/30"
-                      : "bg-amber-500/[0.06] border-amber-500/30",
+                      : "bg-transparent border-primary/60 ring-1 ring-primary/30",
                   )}
                 >
                   <div className="min-w-0">
