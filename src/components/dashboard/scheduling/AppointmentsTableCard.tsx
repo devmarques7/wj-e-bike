@@ -110,10 +110,7 @@ const getStatusBadge = (status: string, t: (k: string) => string) => {
 /** An appointment row that may actually be a pending scheduling REQUEST. */
 type ApptRow = AppointmentRow & { isRequest?: boolean; requestStatus?: string };
 
-const isOverdue = (a: ApptRow) =>
-  !a.isRequest &&
-  ["pending", "confirmed", "rescheduled"].includes(a.status) &&
-  a.scheduled_date < new Date().toISOString().slice(0, 10);
+const isOverdue = (a: ApptRow) => isTaskOverdue(a);
 
 interface AppointmentsTableCardProps {
   /** Hide the actions column (read-only mode for non-managers). */
@@ -150,13 +147,13 @@ export default function AppointmentsTableCard({
   const isCustomer = !!customerUserId;
   const effectiveReadOnly = readOnly || isCustomer;
   const [activeTab, setActiveTab] = useState("day");
-  const [statusFilter, setStatusFilter] = useState<
-    "all" | "requested" | "pending" | "ongoing" | "completed" | "canceled" | "overdue"
-  >("all");
+  const [statusFilter, setStatusFilter] = useState<TaskFilter>("pending");
   const [groupBy, setGroupBy] = useState<
     "none" | "status" | "mechanic" | "service" | "plan"
   >("none");
   const [sortAsc, setSortAsc] = useState(true);
+  /** "priority" = global workshop order, "time" = plain chronological. */
+  const [sortMode, setSortMode] = useState<"priority" | "time">("priority");
   const [collapsedGroups, setCollapsedGroups] = useState<Record<string, boolean>>({});
   const [completionTarget, setCompletionTarget] = useState<AppointmentRow | null>(null);
   const [reviewTarget, setReviewTarget] = useState<AppointmentRow | null>(null);
