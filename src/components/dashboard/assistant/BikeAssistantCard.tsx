@@ -188,7 +188,7 @@ export default function BikeAssistantCard({
               </h3>
               <div className="mt-5 flex flex-wrap items-center justify-center gap-2">
                 {actions.map((action) => {
-                  const Icon = (action as { icon?: typeof Zap }).icon ?? Zap;
+                  const Icon = (action as { icon?: typeof Wrench }).icon ?? Wrench;
                   const { label, prompt, primary, onSelect } = action as {
                     label: string;
                     prompt: string;
