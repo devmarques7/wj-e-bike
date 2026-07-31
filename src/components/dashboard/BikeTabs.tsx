@@ -35,7 +35,7 @@ export default function BikeTabs({ bikes, activeId, onSelect, className = "" }: 
           <button
             key={b.id}
             onClick={() => onSelect(b.id)}
-            className={`inline-flex items-center gap-2 rounded-full border px-3 py-1.5 text-xs transition-colors ${
+            className={`shrink-0 inline-flex items-center gap-2 rounded-full border px-3 py-1.5 text-xs transition-colors ${
               active
                 ? "border-wj-green/50 bg-wj-green/10 text-foreground"
                 : "border-border/40 text-muted-foreground hover:text-foreground hover:border-border"
