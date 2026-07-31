@@ -12,6 +12,7 @@ import {
   Layers,
 } from "lucide-react";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { TableHeaderBar } from "@/components/ui/table-header-bar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
