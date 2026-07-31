@@ -127,7 +127,7 @@ export default function AppointmentCompletionDrawer({
 
   const elapsedFromStartSeconds = useMemo(() => {
     if (!workStartedAtMs) return 0;
-    return Math.max(0, Math.floor((Date.now() - workStartedAtMs) / 1000));
+    return Math.max(0, Math.floor((workNow() - workStartedAtMs) / 1000));
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [workStartedAtMs, tick]);
 
