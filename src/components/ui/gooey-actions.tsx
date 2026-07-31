@@ -385,6 +385,8 @@ export function GooeyActions({
   };
 
   const topPct = `${coreY * 100}%`;
+  const leftPct = `${coreX * 100}%`;
+
 
   return (
     <div
