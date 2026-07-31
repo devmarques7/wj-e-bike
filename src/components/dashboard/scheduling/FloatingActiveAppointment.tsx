@@ -3,6 +3,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { Clock, Wrench, ShieldCheck, ChevronUp } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import type { AppointmentRow } from "@/hooks/scheduling/useSchedulingData";
+import { useWorkPause } from "@/lib/workshop/workPause";
 
 interface Props {
   appointment: AppointmentRow | null;
@@ -18,6 +19,7 @@ const fmt = (s: number) => {
 
 export default function FloatingActiveAppointment({ appointment, onOpen }: Props) {
   const { t } = useTranslation();
+  const { isPaused, workNow } = useWorkPause();
   const [, setTick] = useState(0);
   useEffect(() => {
     if (!appointment?.work_started_at) return;
@@ -28,7 +30,7 @@ export default function FloatingActiveAppointment({ appointment, onOpen }: Props
   const since = appointment?.work_started_at
     ? new Date(appointment.work_started_at).getTime()
     : null;
-  const elapsed = since ? Math.max(0, Math.floor((Date.now() - since) / 1000)) : 0;
+  const elapsed = since ? Math.max(0, Math.floor((workNow() - since) / 1000)) : 0;
 
   return (
     <AnimatePresence>
@@ -47,12 +49,17 @@ export default function FloatingActiveAppointment({ appointment, onOpen }: Props
             {/* pulsing icon */}
             <div className="relative w-9 h-9 rounded-xl bg-wj-green/15 flex items-center justify-center shrink-0">
               <Wrench className="h-4 w-4 text-wj-green" />
-              <span className="absolute -top-0.5 -right-0.5 w-2.5 h-2.5 rounded-full bg-wj-green animate-pulse" />
+              <span
+                className={
+                  "absolute -top-0.5 -right-0.5 w-2.5 h-2.5 rounded-full " +
+                  (isPaused ? "bg-amber-400" : "bg-wj-green animate-pulse")
+                }
+              />
             </div>
 
             <div className="text-left min-w-0 max-w-[200px]">
               <p className="text-[10px] uppercase tracking-wider text-muted-foreground leading-none">
-                {t("workshop.floating.running")}
+                {isPaused ? "Paused" : t("workshop.floating.running")}
               </p>
               <p className="text-xs font-medium text-foreground truncate mt-0.5">
                 {appointment.customer_name ?? appointment.service_name ?? t("workshop.floating.appointment_fallback")}
