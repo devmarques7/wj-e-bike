@@ -28,7 +28,7 @@ export type BikePlan = {
   currentPeriodEnd: string | null;
 };
 
-const ACTIVE = ["trialing", "active", "past_due"];
+const ACTIVE = ["trialing", "active", "past_due"] as const;
 
 /**
  * Per-bike membership state. Every registered bike (E-Pass card) carries its
