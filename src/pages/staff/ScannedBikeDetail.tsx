@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { motion } from "framer-motion";
 import { Link, Navigate, useLocation, useNavigate, useParams } from "react-router-dom";
-import { Loader2, Mail, Phone, ScanLine, User } from "lucide-react";
+import { Loader2, ScanLine } from "lucide-react";
 import RoleDashboardLayout from "@/components/dashboard/RoleDashboardLayout";
 import GarageBikeCard from "@/components/dashboard/garage/GarageBikeCard";
 import BikeHealthGrid from "@/components/dashboard/garage/BikeHealthGrid";
@@ -243,32 +243,6 @@ export default function ScannedBikeDetail() {
                   isStaff ? setBookingOpen(true) : navigate("/dashboard/garage")
                 }
               />
-
-              <div className="rounded-3xl border border-border/30 bg-background/60 backdrop-blur-md p-5 space-y-3">
-                <p className="text-[10px] uppercase tracking-widest text-muted-foreground">Customer</p>
-                <div className="space-y-2 text-sm">
-                  <p className="flex items-center gap-2 text-foreground">
-                    <User className="h-4 w-4 text-muted-foreground" /> {ownerName}
-                  </p>
-                  {owner?.email && (
-                    <p className="flex items-center gap-2 text-muted-foreground truncate">
-                      <Mail className="h-4 w-4" /> {owner.email}
-                    </p>
-                  )}
-                  {owner?.phone && (
-                    <p className="flex items-center gap-2 text-muted-foreground">
-                      <Phone className="h-4 w-4" /> {owner.phone}
-                    </p>
-                  )}
-                </div>
-
-                <div className="grid grid-cols-2 gap-3">
-                  <Stat label="Total km" value={`${bike.km ?? 0}`} />
-                  <Stat label="Services" value={`${bike.services_completed ?? 0}`} />
-                  <Stat label="Health" value={`${health.overall}%`} />
-                  <Stat label="Color" value={bike.color ?? "—"} />
-                </div>
-              </div>
             </div>
 
             <div className="col-span-12 lg:col-span-8 flex flex-col gap-4 lg:gap-6">
@@ -334,11 +308,3 @@ export default function ScannedBikeDetail() {
   );
 }
 
-function Stat({ label, value }: { label: string; value: string }) {
-  return (
-    <div className="rounded-2xl border border-border/40 bg-card/40 px-3 py-2">
-      <p className="text-[10px] uppercase tracking-widest text-muted-foreground">{label}</p>
-      <p className="text-sm font-medium text-foreground truncate">{value}</p>
-    </div>
-  );
-}
