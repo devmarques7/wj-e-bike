@@ -271,20 +271,52 @@ export default function CatalogSearchCard({ className }: { className?: string })
               }}
             >
               <SelectTrigger>
-                <SelectValue placeholder="Select customer" />
+                <SelectValue
+                  placeholder={loadingCustomers ? "Loading members…" : "Select customer"}
+                />
               </SelectTrigger>
-              <SelectContent className="max-h-64">
-                {customers.map((c) => (
+              <SelectContent className="max-h-72">
+                <div className="p-2 sticky top-0 bg-popover z-10">
+                  <Input
+                    value={customerTerm}
+                    onChange={(e) => setCustomerTerm(e.target.value)}
+                    onKeyDown={(e) => e.stopPropagation()}
+                    placeholder="Search member by name or email…"
+                    className="h-8 text-xs rounded-full"
+                  />
+                </div>
+                {visibleCustomers.length === 0 && (
+                  <p className="px-3 py-4 text-xs text-muted-foreground text-center">
+                    {loadingCustomers ? "Loading members…" : "No registered members found."}
+                  </p>
+                )}
+                {visibleCustomers.map((c) => (
                   <SelectItem key={c.id} value={c.id}>
-                    {c.name}
+                    <span className="flex flex-col text-left">
+                      <span className="text-xs text-foreground">{c.name}</span>
+                      {c.email && (
+                        <span className="text-[10px] text-muted-foreground">{c.email}</span>
+                      )}
+                    </span>
                   </SelectItem>
                 ))}
               </SelectContent>
             </Select>
-            <Select value={bikeId} onValueChange={setBikeId} disabled={customerBikes.length === 0}>
+
+            <Select
+              value={bikeId}
+              onValueChange={setBikeId}
+              disabled={!customerId || customerBikes.length === 0}
+            >
               <SelectTrigger>
                 <SelectValue
-                  placeholder={customerBikes.length ? "Select bike (optional)" : "No bikes registered"}
+                  placeholder={
+                    !customerId
+                      ? "Select a customer first"
+                      : customerBikes.length
+                        ? "Select bike"
+                        : "No bikes registered for this member"
+                  }
                 />
               </SelectTrigger>
               <SelectContent>
@@ -295,6 +327,12 @@ export default function CatalogSearchCard({ className }: { className?: string })
                 ))}
               </SelectContent>
             </Select>
+            {selectedCustomer && (
+              <p className="text-[11px] text-muted-foreground">
+                {selectedCustomer.name} · {customerBikes.length} bike
+                {customerBikes.length === 1 ? "" : "s"} registered
+              </p>
+            )}
             <Textarea
               value={note}
               onChange={(e) => setNote(e.target.value)}
