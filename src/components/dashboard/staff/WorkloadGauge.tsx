@@ -41,7 +41,7 @@ export default function WorkloadGauge({
             <path
               d="M 20 92 A 70 70 0 0 1 160 92"
               fill="none"
-              className="stroke-muted/40"
+              className="stroke-muted-foreground/30"
               strokeWidth="16"
               strokeLinecap="round"
             />
