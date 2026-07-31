@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { motion } from "framer-motion";
 import { Link, Navigate, useLocation, useNavigate, useParams } from "react-router-dom";
-import { Loader2, Mail, Phone, ScanLine, User } from "lucide-react";
+import { Loader2, ScanLine } from "lucide-react";
 import RoleDashboardLayout from "@/components/dashboard/RoleDashboardLayout";
 import GarageBikeCard from "@/components/dashboard/garage/GarageBikeCard";
 import BikeHealthGrid from "@/components/dashboard/garage/BikeHealthGrid";
@@ -308,11 +308,3 @@ export default function ScannedBikeDetail() {
   );
 }
 
-function Stat({ label, value }: { label: string; value: string }) {
-  return (
-    <div className="rounded-2xl border border-border/40 bg-card/40 px-3 py-2">
-      <p className="text-[10px] uppercase tracking-widest text-muted-foreground">{label}</p>
-      <p className="text-sm font-medium text-foreground truncate">{value}</p>
-    </div>
-  );
-}
