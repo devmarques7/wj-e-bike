@@ -36,6 +36,8 @@ import BookAppointmentDialog from "@/components/dashboard/scheduling/BookAppoint
 import QualityControlManagerDialog from "@/components/dashboard/scheduling/QualityControlManagerDialog";
 import QualityControlPreviewCard from "@/components/dashboard/scheduling/QualityControlPreviewCard";
 import ServiceTypesManagerDialog from "@/components/dashboard/scheduling/ServiceTypesManagerDialog";
+import AppointmentsTableCard from "@/components/dashboard/scheduling/AppointmentsTableCard";
+import PendingRequestsCard from "@/components/dashboard/scheduling/PendingRequestsCard";
 import AppointmentActionsMenu from "@/components/dashboard/scheduling/AppointmentActionsMenu";
 import AppointmentCompletionDrawer from "@/components/dashboard/scheduling/AppointmentCompletionDrawer";
 import AppointmentReviewHistoryDialog from "@/components/dashboard/scheduling/AppointmentReviewHistoryDialog";

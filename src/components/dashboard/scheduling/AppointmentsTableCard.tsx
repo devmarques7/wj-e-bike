@@ -53,6 +53,7 @@ import {
   taskBucket,
   type TaskFilter,
 } from "@/lib/scheduling/taskPriority";
+import { statusMeta } from "@/lib/scheduling/statusModel";
 import AppointmentActionsMenu from "@/components/dashboard/scheduling/AppointmentActionsMenu";
 import CustomerAppointmentActionsMenu from "@/components/dashboard/scheduling/CustomerAppointmentActionsMenu";
 import AppointmentCompletionDrawer from "@/components/dashboard/scheduling/AppointmentCompletionDrawer";
@@ -90,22 +91,11 @@ const formatAbsolute = (iso: string | null, locale: string) =>
 
 const getStatusBadge = (status: string, t: (k: string) => string) => {
   const base = "border font-normal text-[10px] gap-1 pl-1.5 pr-2 py-0.5";
-  const dot = "inline-block w-1.5 h-1.5 rounded-full";
-  const dotColor: Record<string, string> = {
-    completed: "bg-wj-green",
-    confirmed: "bg-wj-green/70",
-    in_progress: "bg-wj-green animate-pulse",
-    pending: "bg-amber-400",
-    rescheduled: "bg-amber-400",
-    canceled: "bg-red-500",
-    no_show: "bg-red-500/70",
-    requested: "bg-sky-400",
-    overdue: "bg-orange-500",
-  };
+  const meta = statusMeta(status);
   return (
     <Badge className={`${base} bg-muted/30 text-foreground/80 border-border/40`}>
-      <span className={`${dot} ${dotColor[status] ?? "bg-muted-foreground/60"}`} />
-      {t(`workshop.status.${status}`) ?? status}
+      <span className={`inline-block w-1.5 h-1.5 rounded-full ${meta.dot}`} />
+      {t(meta.labelKey) ?? status}
     </Badge>
   );
 };
