@@ -25,6 +25,8 @@ export interface GooeyActionsProps
   magnetRange?: number;
   /** Accessible name + core caption. */
   label?: string;
+  /** Glyph rendered in the core (defaults to the label text). */
+  coreIcon?: React.ReactNode;
   open?: boolean;
   defaultOpen?: boolean;
   onOpenChange?: (open: boolean) => void;
@@ -96,6 +98,7 @@ export function GooeyActions({
   damping = 13,
   magnetRange = 56,
   label = "Actions",
+  coreIcon,
   open,
   defaultOpen = false,
   onOpenChange,
@@ -122,6 +125,7 @@ export function GooeyActions({
   const hoverIdxRef = React.useRef(-1);
   const holdTimerRef = React.useRef<number | null>(null);
   const holdingRef = React.useRef(false);
+  const pressedRef = React.useRef(false);
 
   const uid = React.useId().replace(/[^a-zA-Z0-9]/g, "");
   const filterId = `wj-goo-${uid}`;
@@ -250,6 +254,23 @@ export function GooeyActions({
       const staggerSec = cfg.stagger / 1000;
 
       let hoverAny = -1;
+      // Nearest-satellite pick uses REST positions (not the magnet-pulled
+      // animated ones) so the magnet can't feed back into the hover test and
+      // make satellites flicker in and out.
+      if (opened && p.inside && cfg.magnetRange > 0) {
+        let best = Infinity;
+        for (let i = 0; i < satsRef.current.length; i++) {
+          const s = satsRef.current[i];
+          const rx = c.x + Math.cos(s.ang) * cfg.radius;
+          const ry = c.y + Math.sin(s.ang) * cfg.radius;
+          const d = Math.hypot(p.x - rx, p.y - ry);
+          if (d < cfg.magnetRange && d < best) {
+            best = d;
+            hoverAny = i;
+          }
+        }
+      }
+
       for (let i = 0; i < satsRef.current.length; i++) {
         const s = satsRef.current[i];
         const mounted = opened && t - toggleAtRef.current >= i * staggerSec;
@@ -257,17 +278,14 @@ export function GooeyActions({
         let ty = mounted ? Math.sin(s.ang) * cfg.radius : 0;
         let ts = mounted ? 1 : 0.6;
 
-        if (opened && p.inside && cfg.magnetRange > 0) {
-          const dx = p.x - (c.x + s.x.x);
-          const dy = p.y - (c.y + s.y.x);
+        if (mounted && hoverAny === i) {
+          const dx = p.x - (c.x + tx);
+          const dy = p.y - (c.y + ty);
           const d = Math.hypot(dx, dy);
-          if (d < cfg.magnetRange) {
-            const pull = 1 - d / cfg.magnetRange;
-            tx += dx * MAGNET_PULL * pull;
-            ty += dy * MAGNET_PULL * pull;
-            ts = 1 + 0.16 * pull;
-            if (hoverAny < 0) hoverAny = i;
-          }
+          const pull = Math.max(0, 1 - d / cfg.magnetRange);
+          tx += dx * MAGNET_PULL * pull;
+          ty += dy * MAGNET_PULL * pull;
+          ts = 1 + 0.16 * pull;
         }
 
         spring(s.x, tx, cfg.stiffness, cfg.damping, dt);
@@ -281,7 +299,7 @@ export function GooeyActions({
       else hideLabel();
       hoverIdxRef.current = hoverAny;
 
-      spring(breathe, opened ? 1.06 : 1 + Math.sin(t * 1.6) * 0.035, 200, 18, dt);
+      spring(breathe, opened ? 1.06 : 1, 200, 18, dt);
       const coreTr = `translate(-50%,-50%) scale(${breathe.x.toFixed(3)})`;
       if (coreBlobRef.current) coreBlobRef.current.style.transform = coreTr;
       if (fabRef.current) fabRef.current.style.transform = coreTr;
@@ -299,6 +317,7 @@ export function GooeyActions({
     pointerRef.current = { x: e.clientX - r.left, y: e.clientY - r.top, inside: true };
   };
   const release = () => {
+    if (pressedRef.current) return;
     pointerRef.current = { x: -1e4, y: -1e4, inside: false };
   };
 
@@ -315,44 +334,47 @@ export function GooeyActions({
     e.preventDefault();
     e.stopPropagation();
     const rootEl = rootRef.current;
-    const target = e.currentTarget as HTMLElement;
-    try {
-      target.setPointerCapture(e.pointerId);
-    } catch {
-      /* noop */
-    }
     if (rootEl) {
       const r = rootEl.getBoundingClientRect();
       pointerRef.current = { x: e.clientX - r.left, y: e.clientY - r.top, inside: true };
     }
     holdingRef.current = false;
+    pressedRef.current = true;
     clearHold();
     holdTimerRef.current = window.setTimeout(() => {
+      if (!pressedRef.current) return;
       holdingRef.current = true;
       setIsOpen(true);
     }, holdDelay);
-  };
 
-  const onCorePointerMove = (e: React.PointerEvent) => {
-    if (!holdToOpen) return;
-    track(e);
-  };
-
-  const onCorePointerUp = (e: React.PointerEvent) => {
-    if (!holdToOpen) return;
-    clearHold();
-    try {
-      (e.currentTarget as HTMLElement).releasePointerCapture(e.pointerId);
-    } catch {
-      /* noop */
-    }
-    if (holdingRef.current) {
-      const idx = hoverIdxRef.current;
-      if (idx >= 0 && actions[idx]) onSelect?.(actions[idx].id);
-      holdingRef.current = false;
-      setIsOpen(false);
+    // Track the finger on the window so the gesture survives leaving the core,
+    // crossing the satellites or any overlay — the menu only closes on release.
+    const onMove = (ev: PointerEvent) => {
+      if (ev.pointerId !== e.pointerId) return;
+      ev.preventDefault();
+      const root = rootRef.current;
+      if (!root) return;
+      const r = root.getBoundingClientRect();
+      pointerRef.current = { x: ev.clientX - r.left, y: ev.clientY - r.top, inside: true };
+    };
+    const onUp = (ev: PointerEvent) => {
+      if (ev.pointerId !== e.pointerId) return;
+      window.removeEventListener("pointermove", onMove);
+      window.removeEventListener("pointerup", onUp);
+      window.removeEventListener("pointercancel", onUp);
+      clearHold();
+      pressedRef.current = false;
+      if (holdingRef.current) {
+        const idx = hoverIdxRef.current;
+        if (idx >= 0 && actions[idx]) onSelect?.(actions[idx].id);
+        holdingRef.current = false;
+        setIsOpen(false);
+      }
       release();
-    }
+    };
+    window.addEventListener("pointermove", onMove, { passive: false });
+    window.addEventListener("pointerup", onUp);
+    window.addEventListener("pointercancel", onUp);
   };
 
   React.useEffect(() => clearHold, [clearHold]);
@@ -531,9 +553,6 @@ export function GooeyActions({
             }
           }}
           onPointerDown={onCorePointerDown}
-          onPointerMove={onCorePointerMove}
-          onPointerUp={onCorePointerUp}
-          onPointerCancel={onCorePointerUp}
           className={cn(
             "pointer-events-auto absolute grid cursor-pointer place-items-center rounded-full border-0 p-0",
             "text-primary-foreground text-xs font-medium tracking-[0.18em] uppercase touch-none",
@@ -549,7 +568,7 @@ export function GooeyActions({
             willChange: "transform",
           }}
         >
-          {label}
+          {coreIcon ?? label}
         </button>
       </div>
 
