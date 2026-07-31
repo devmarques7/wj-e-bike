@@ -82,9 +82,7 @@ export default function GarageAssistantCard({ className }: { className?: string 
     >
       <div className="flex items-center justify-between gap-3 px-5 py-4 border-b border-border/20">
         <div className="flex items-center gap-3">
-          <div className="w-9 h-9">
-            <AgentOrb active={busy} />
-          </div>
+          <AgentOrb state={busy ? "thinking" : "idle"} size={36} />
           <div>
             <p className="text-sm text-foreground">Garage Assistant</p>
             <p className="text-[11px] text-muted-foreground">
