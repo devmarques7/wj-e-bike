@@ -8,7 +8,6 @@ import KPICarousel from "@/components/dashboard/KPICarousel";
 import GarageAssistantCard from "@/components/dashboard/garage/GarageAssistantCard";
 import CatalogSearchCard from "@/components/dashboard/garage/CatalogSearchCard";
 import AppointmentsTableCard from "@/components/dashboard/scheduling/AppointmentsTableCard";
-import FleetMenu from "@/components/dashboard/FleetMenu";
 import { useAuth } from "@/contexts/AuthContext";
 import { useStaffGarageStats, GARAGE_PERIODS, type GaragePeriod } from "@/hooks/staff/useStaffGarageStats";
 import { cn } from "@/lib/utils";
@@ -173,7 +172,6 @@ export default function StaffGarage() {
           </div>
         </div>
       </div>
-      <FleetMenu />
     </RoleDashboardLayout>
   );
 }
