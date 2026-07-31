@@ -112,6 +112,17 @@ type ApptRow = AppointmentRow & { isRequest?: boolean; requestStatus?: string };
 
 const isOverdue = (a: ApptRow) => isTaskOverdue(a);
 
+/** Status dot colour per global filter bucket. */
+const FILTER_DOT: Record<TaskFilter, string> = {
+  pending: "bg-amber-400",
+  requested: "bg-sky-400",
+  ongoing: "bg-wj-green animate-pulse",
+  unassigned: "bg-violet-400",
+  overdue: "bg-orange-500",
+  canceled: "bg-red-500",
+  completed: "bg-wj-green",
+};
+
 interface AppointmentsTableCardProps {
   /** Hide the actions column (read-only mode for non-managers). */
   readOnly?: boolean;
