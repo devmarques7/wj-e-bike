@@ -109,10 +109,17 @@ export default function BikeAssistantCard({
     if (!busy) inputRef.current?.focus();
   }, [busy]);
 
+  const submitLockRef = useRef(false);
+
   const submit = async (text: string) => {
-    if (!text.trim() || busy) return;
+    if (!text.trim() || busy || submitLockRef.current) return;
+    submitLockRef.current = true;
     setValue("");
-    await send(text);
+    try {
+      await send(text);
+    } finally {
+      submitLockRef.current = false;
+    }
   };
 
   const lastAssistantId = [...messages].reverse().find((m) => m.role === "assistant")?.id ?? null;

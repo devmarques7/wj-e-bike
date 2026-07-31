@@ -115,6 +115,7 @@ export function useBikeAssistant(options: BikeAssistantOptions = {}) {
   const diagnosisRef = useRef<DiagnosisSession | null>(null);
   const [booking, setBooking] = useState<BookingSession | null>(null);
   const bookingRef = useRef<BookingSession | null>(null);
+  const bookingSubmitRef = useRef(false);
   const abortRef = useRef<AbortController | null>(null);
 
   useEffect(() => {
@@ -315,6 +316,8 @@ export function useBikeAssistant(options: BikeAssistantOptions = {}) {
         }
         const slot = matchSlot(session, answer);
         if (!slot || !session.date) return askBooking(session, "That time isn't in the list.");
+        if (bookingSubmitRef.current) return;
+        bookingSubmitRef.current = true;
         try {
           await bookSlot({
             userId: user!.id,
@@ -329,10 +332,24 @@ export function useBikeAssistant(options: BikeAssistantOptions = {}) {
             `Booked — **${dayLabel(session.date)} at ${slot.start}** for ${session.serviceName}. Your repair briefing is attached to the appointment.`,
             { action: { type: "navigate", to: "/dashboard/garage", label: "See my appointment" } },
           );
-        } catch {
-          const next = { ...session, phase: "day" as const, date: null };
+        } catch (error) {
+          const availability = await fetchAvailability(session.serviceTypeId, 7);
+          const next = {
+            ...session,
+            availability,
+            phase: availability.length ? "day" as const : "request_period" as const,
+            date: null,
+          };
           setBookingSession(next);
-          askBooking(next, "That slot was just taken. Let's pick another one.");
+          const message = error instanceof Error ? error.message : String(error);
+          askBooking(
+            next,
+            /SLOT_TAKEN|SLOT_UNAVAILABLE|WORKSHOP_FULL/i.test(message)
+              ? "That time changed while I was booking it. I've refreshed the live availability."
+              : "I couldn't complete that booking. I've refreshed the availability so you can try again.",
+          );
+        } finally {
+          bookingSubmitRef.current = false;
         }
         return;
       }

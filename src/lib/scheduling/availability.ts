@@ -151,27 +151,22 @@ export interface BookSlotInput {
 
 export async function bookSlot(input: BookSlotInput) {
   const subscriptionId = await fetchActiveSubscriptionId(input.userId);
-  const { data, error } = await supabase
-    .from("appointments")
-    .insert({
-      user_id: input.userId,
-      bike_id: input.bikeId ?? getBikeScope()?.id ?? null,
-      service_type_id: input.serviceTypeId,
-      assigned_mechanic_id: input.slot.mechanicId,
-      subscription_id: subscriptionId,
-      scheduled_date: input.date,
-      scheduled_start_time: `${input.slot.start}:00`,
-      scheduled_end_time: `${input.slot.end}:00`,
-      duration_minutes: input.durationMinutes ?? null,
-      status: "pending",
-      // DB CHECK: priority ∈ (normal | vip | emergency), booked_via ∈ (portal | admin | phone | walk_in)
-      priority: input.urgent ? "emergency" : "normal",
-      priority_score: input.urgent ? 100 : 50,
-      booked_via: "portal",
-      notes: input.notes ?? null,
-    } as any)
-    .select("id, scheduled_date, scheduled_start_time")
-    .single();
+  if (!input.slot.mechanicId) throw new Error("SLOT_UNAVAILABLE: no mechanic assigned");
+
+  // The RPC rechecks availability and inserts under one database lock. It is
+  // also idempotent, so a repeated chat click returns the existing booking.
+  const { data, error } = await supabase.rpc("book_available_slot", {
+    p_user_id: input.userId,
+    p_bike_id: input.bikeId ?? getBikeScope()?.id ?? null,
+    p_service_type_id: input.serviceTypeId,
+    p_subscription_id: subscriptionId,
+    p_date: input.date,
+    p_start_time: `${input.slot.start}:00`,
+    p_end_time: `${input.slot.end}:00`,
+    p_mechanic_id: input.slot.mechanicId,
+    p_urgent: input.urgent ?? false,
+    p_notes: input.notes ?? null,
+  } as any);
   if (error) throw error;
   return data;
 }
