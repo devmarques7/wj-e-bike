@@ -15,6 +15,7 @@ import useShift from "@/hooks/useShift";
 export default function FleetMenu() {
   const navigate = useNavigate();
   const [scanOpen, setScanOpen] = useState(false);
+  const [menuOpen, setMenuOpen] = useState(false);
   const { status, start, pause, resume, working } = useShift();
 
   const shiftRunning = status === "active";
@@ -48,19 +49,24 @@ export default function FleetMenu() {
   return (
     <>
       <motion.div
-        drag
+        drag={!menuOpen}
         dragMomentum={false}
         dragElastic={0.08}
         whileDrag={{ scale: 1.03 }}
-        className="fixed bottom-4 right-2 z-50 cursor-grab active:cursor-grabbing"
+        className="fixed bottom-4 right-2 z-[2147483000] cursor-grab active:cursor-grabbing"
       >
         <GooeyActions
           label="Fleet"
           actions={actions}
-          radius={104}
-          arc={[-190, -10]}
-          coreY={0.68}
-          style={{ width: 260, height: 220 }}
+          holdToOpen
+          holdDelay={1000}
+          radius={74}
+          arc={[-186, -14]}
+          magnetRange={46}
+          coreY={0.72}
+          open={menuOpen}
+          onOpenChange={setMenuOpen}
+          style={{ width: 210, height: 170 }}
           onSelect={onSelect}
         />
       </motion.div>

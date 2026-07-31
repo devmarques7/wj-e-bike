@@ -32,6 +32,10 @@ export interface GooeyActionsProps
   /** Vertical anchor of the core inside the box (0–1). */
   coreY?: number;
   reducedMotion?: boolean;
+  /** Require a press-and-hold on the core before the satellites bloom. */
+  holdToOpen?: boolean;
+  /** Hold duration in ms before opening (default 1000). */
+  holdDelay?: number;
 }
 
 /* ---------------------------------- physics -------------------------------- */
@@ -96,6 +100,8 @@ export function GooeyActions({
   onSelect,
   coreY = 0.62,
   reducedMotion,
+  holdToOpen = false,
+  holdDelay = 1000,
   className,
   style,
   ...props
@@ -110,6 +116,9 @@ export function GooeyActions({
   const focusedRef = React.useRef(-1);
   const nowRef = React.useRef(0);
   const toggleAtRef = React.useRef(-1e4);
+  const hoverIdxRef = React.useRef(-1);
+  const holdTimerRef = React.useRef<number | null>(null);
+  const holdingRef = React.useRef(false);
 
   const uid = React.useId().replace(/[^a-zA-Z0-9]/g, "");
   const filterId = `wj-goo-${uid}`;
@@ -266,6 +275,7 @@ export function GooeyActions({
       if (hoverAny >= 0) showLabelFor(hoverAny);
       else if (focusedRef.current >= 0) showLabelFor(focusedRef.current);
       else hideLabel();
+      hoverIdxRef.current = hoverAny;
 
       spring(breathe, opened ? 1.06 : 1 + Math.sin(t * 1.6) * 0.035, 200, 18, dt);
       const coreTr = `translate(-50%,-50%) scale(${breathe.x.toFixed(3)})`;
@@ -287,6 +297,61 @@ export function GooeyActions({
   const release = () => {
     pointerRef.current = { x: -1e4, y: -1e4, inside: false };
   };
+
+  const clearHold = React.useCallback(() => {
+    if (holdTimerRef.current !== null) {
+      window.clearTimeout(holdTimerRef.current);
+      holdTimerRef.current = null;
+    }
+  }, []);
+
+  // Press-and-hold on the core, then drag sideways onto an action and release.
+  const onCorePointerDown = (e: React.PointerEvent) => {
+    if (!holdToOpen) return;
+    e.preventDefault();
+    e.stopPropagation();
+    const rootEl = rootRef.current;
+    const target = e.currentTarget as HTMLElement;
+    try {
+      target.setPointerCapture(e.pointerId);
+    } catch {
+      /* noop */
+    }
+    if (rootEl) {
+      const r = rootEl.getBoundingClientRect();
+      pointerRef.current = { x: e.clientX - r.left, y: e.clientY - r.top, inside: true };
+    }
+    holdingRef.current = false;
+    clearHold();
+    holdTimerRef.current = window.setTimeout(() => {
+      holdingRef.current = true;
+      setIsOpen(true);
+    }, holdDelay);
+  };
+
+  const onCorePointerMove = (e: React.PointerEvent) => {
+    if (!holdToOpen) return;
+    track(e);
+  };
+
+  const onCorePointerUp = (e: React.PointerEvent) => {
+    if (!holdToOpen) return;
+    clearHold();
+    try {
+      (e.currentTarget as HTMLElement).releasePointerCapture(e.pointerId);
+    } catch {
+      /* noop */
+    }
+    if (holdingRef.current) {
+      const idx = hoverIdxRef.current;
+      if (idx >= 0 && actions[idx]) onSelect?.(actions[idx].id);
+      holdingRef.current = false;
+      setIsOpen(false);
+      release();
+    }
+  };
+
+  React.useEffect(() => clearHold, [clearHold]);
 
   const focusSat = (i: number) => {
     setActiveIdx(i);
@@ -447,6 +512,7 @@ export function GooeyActions({
           aria-controls={menuId}
           aria-label={label}
           onClick={(event) => {
+            if (holdToOpen) return;
             const next = !isOpen;
             setIsOpen(next);
             if (next && event.detail === 0) {
@@ -454,9 +520,13 @@ export function GooeyActions({
               requestAnimationFrame(() => satBtnsRef.current[0]?.focus());
             }
           }}
+          onPointerDown={onCorePointerDown}
+          onPointerMove={onCorePointerMove}
+          onPointerUp={onCorePointerUp}
+          onPointerCancel={onCorePointerUp}
           className={cn(
             "pointer-events-auto absolute grid cursor-pointer place-items-center rounded-full border-0 p-0",
-            "text-primary-foreground text-xs font-medium tracking-[0.18em] uppercase",
+            "text-primary-foreground text-xs font-medium tracking-[0.18em] uppercase touch-none",
             "focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-wj-green",
           )}
           style={{
