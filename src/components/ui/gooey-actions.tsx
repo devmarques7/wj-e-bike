@@ -491,7 +491,7 @@ export function GooeyActions({
                 staticMode && "transition-opacity duration-200",
               )}
               style={{
-                left: "50%",
+                left: leftPct,
                 top: topPct,
                 width: SAT_PX,
                 height: SAT_PX,
