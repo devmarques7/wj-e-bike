@@ -13,14 +13,6 @@ import AppointmentsTableCard from "@/components/dashboard/scheduling/Appointment
 import BikeAssistantCard from "@/components/dashboard/assistant/BikeAssistantCard";
 import BikeAssessmentDialog from "@/components/dashboard/garage/BikeAssessmentDialog";
 import { useBikeAssessment } from "@/hooks/garage/useBikeAssessment";
-import {
-  Breadcrumb,
-  BreadcrumbItem,
-  BreadcrumbLink,
-  BreadcrumbList,
-  BreadcrumbPage,
-  BreadcrumbSeparator,
-} from "@/components/ui/breadcrumb";
 import { useAuth } from "@/contexts/AuthContext";
 import { useBikeById } from "@/hooks/garage/useBikeById";
 import { useServiceBriefing } from "@/hooks/staff/useServiceBriefing";
