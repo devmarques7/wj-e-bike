@@ -602,6 +602,9 @@ const en = {
     appts: {
       title: "Appointments",
       day: "Today", week: "Week", month: "Month",
+      empty_title: "No appointments yet",
+      empty_sub: "Nothing booked for this view. Create an appointment to get a bike into the workshop.",
+      empty_cta: "Create appointment",
       pending: "Pending", requested: "Requested", ongoing: "In progress",
       unassigned: "Unassigned", overdue: "Overdue", canceled: "Canceled",
       completed: "Completed",
