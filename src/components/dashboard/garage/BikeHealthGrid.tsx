@@ -1,6 +1,8 @@
+import { useState } from "react";
 import { motion } from "framer-motion";
-import { ClipboardCheck } from "lucide-react";
+import { ClipboardCheck, History } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import AssessmentHistoryDialog from "@/components/dashboard/garage/AssessmentHistoryDialog";
 import type { HealthMetric } from "@/hooks/garage/useGarageBike";
 
 /** Circular gauge in the system green. */
@@ -65,10 +67,20 @@ interface BikeHealthGridProps {
     condition_label: string;
     created_at: string;
   } | null;
+  /** Bike used to load the review history shown to the customer. */
+  bikeId?: string | null;
+  bikeModel?: string | null;
 }
 
 /** Bike health board — one card per wear criterion, scored in percent. */
-export default function BikeHealthGrid({ metrics, onAssess, assessment }: BikeHealthGridProps) {
+export default function BikeHealthGrid({
+  metrics,
+  onAssess,
+  assessment,
+  bikeId,
+  bikeModel,
+}: BikeHealthGridProps) {
+  const [historyOpen, setHistoryOpen] = useState(false);
   // Metrics arrive already merged with the assessment (mergeAssessedHealth);
   // only override here when a raw telemetry list is passed in.
   const shown = metrics.map((m) =>
@@ -78,7 +90,7 @@ export default function BikeHealthGrid({ metrics, onAssess, assessment }: BikeHe
   );
   return (
     <div className="space-y-3 lg:space-y-4">
-      {onAssess && (
+      {(onAssess || bikeId) && (
         <div className="flex flex-wrap items-center justify-between gap-3 rounded-3xl border border-border/30 bg-background/60 backdrop-blur-md px-4 py-3">
           <div>
             <p className="text-xs text-foreground">Condition assessment</p>
@@ -88,11 +100,31 @@ export default function BikeHealthGrid({ metrics, onAssess, assessment }: BikeHe
                 : "No assessment registered for this bike yet."}
             </p>
           </div>
-          <Button size="sm" onClick={onAssess} className="rounded-full">
-            <ClipboardCheck className="h-4 w-4" /> Assess bike
-          </Button>
+          <div className="flex flex-wrap items-center gap-2">
+            {bikeId && (
+              <Button
+                size="sm"
+                variant="outline"
+                onClick={() => setHistoryOpen(true)}
+                className="rounded-full"
+              >
+                <History className="h-4 w-4" /> Review history
+              </Button>
+            )}
+            {onAssess && (
+              <Button size="sm" onClick={onAssess} className="rounded-full">
+                <ClipboardCheck className="h-4 w-4" /> Assess bike
+              </Button>
+            )}
+          </div>
         </div>
       )}
+      <AssessmentHistoryDialog
+        bikeId={bikeId}
+        bikeModel={bikeModel}
+        open={historyOpen}
+        onOpenChange={setHistoryOpen}
+      />
       <div className="grid grid-cols-2 lg:grid-cols-3 gap-3 lg:gap-4">
       {shown.map((m, i) => (
         <motion.div
