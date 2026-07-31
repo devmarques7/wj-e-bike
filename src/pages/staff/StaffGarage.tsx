@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { motion } from "framer-motion";
 import { Navigate } from "react-router-dom";
-import { Bike, Wrench, AlertTriangle, CheckCircle2, Clock, Gauge, CalendarDays, UserCheck } from "lucide-react";
+import { Bike, Wrench, AlertTriangle, CheckCircle2, Clock, Gauge, CalendarDays } from "lucide-react";
 import RoleDashboardLayout from "@/components/dashboard/RoleDashboardLayout";
 import StaffKPICard from "@/components/dashboard/StaffKPICard";
 import KPICarousel from "@/components/dashboard/KPICarousel";
@@ -26,11 +26,18 @@ export default function StaffGarage() {
   const { user, isAuthenticated, isLoading } = useAuth();
   const [period, setPeriod] = useState<GaragePeriod>("today");
   const [myTasksOnly, setMyTasksOnly] = useState(false);
-  const { stats } = useStaffGarageStats(period);
+  const { stats } = useStaffGarageStats(period, myTasksOnly ? user?.id : undefined);
 
   if (isLoading) return null;
   if (!isAuthenticated) return <Navigate to="/auth" replace />;
   if (user?.role !== "staff" && user?.role !== "admin") return <Navigate to="/dashboard" replace />;
+
+  const initials = (user?.name || user?.email || "ME")
+    .split(/[\s@._-]+/)
+    .filter(Boolean)
+    .slice(0, 2)
+    .map((p: string) => p[0]?.toUpperCase())
+    .join("");
 
   const serviceDelta =
     stats.avgRepairMinutes != null ? stats.avgRepairMinutes - stats.targetMinutes : null;
@@ -107,15 +114,14 @@ export default function StaffGarage() {
                     type="button"
                     onClick={() => setMyTasksOnly((v) => !v)}
                     className={cn(
-                      "flex items-center gap-2 rounded-full border px-3 py-1.5 text-xs transition-colors",
+                      "flex h-9 w-9 items-center justify-center rounded-full border text-[11px] font-medium tracking-wide transition-all",
                       myTasksOnly
-                        ? "border-wj-green/50 bg-wj-green text-white hover:bg-wj-green/90"
+                        ? "border-wj-green/60 bg-wj-green text-white shadow-[0_0_0_3px_hsl(var(--wj-green)/0.18)]"
                         : "border-border/30 bg-background/60 backdrop-blur-md text-muted-foreground hover:text-foreground hover:border-wj-green/40",
                     )}
                     aria-pressed={myTasksOnly}
                   >
-                    <UserCheck className="h-3.5 w-3.5" />
-                    <span className="hidden sm:inline">My tasks</span>
+                    {initials || "ME"}
                   </button>
                 </TooltipTrigger>
                 <TooltipContent side="bottom" className="max-w-xs text-xs">
