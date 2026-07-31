@@ -5,7 +5,8 @@ import { cn } from "@/lib/utils";
  * Reusable responsive header for table cards.
  * Row 1: title + primary controls, Row 2: scrollable filters, Row 3: controls.
  */
-export interface TableHeaderBarProps extends React.HTMLAttributes<HTMLDivElement> {
+export interface TableHeaderBarProps
+  extends Omit<React.HTMLAttributes<HTMLDivElement>, "title"> {
   title?: React.ReactNode;
   primary?: React.ReactNode;
   filters?: React.ReactNode;
