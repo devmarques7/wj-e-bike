@@ -133,6 +133,7 @@ export type Database = {
       }
       appointment_waitlist: {
         Row: {
+          bike_id: string | null
           booked_appointment_id: string | null
           created_at: string
           expires_at: string | null
@@ -150,6 +151,7 @@ export type Database = {
           user_id: string
         }
         Insert: {
+          bike_id?: string | null
           booked_appointment_id?: string | null
           created_at?: string
           expires_at?: string | null
@@ -167,6 +169,7 @@ export type Database = {
           user_id: string
         }
         Update: {
+          bike_id?: string | null
           booked_appointment_id?: string | null
           created_at?: string
           expires_at?: string | null
@@ -184,6 +187,13 @@ export type Database = {
           user_id?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "appointment_waitlist_bike_id_fkey"
+            columns: ["bike_id"]
+            isOneToOne: false
+            referencedRelation: "customer_bikes"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "appointment_waitlist_booked_appointment_id_fkey"
             columns: ["booked_appointment_id"]
@@ -218,6 +228,7 @@ export type Database = {
         Row: {
           actual_duration_minutes: number | null
           assigned_mechanic_id: string | null
+          bike_id: string | null
           booked_via: string
           confirmation_sent_at: string | null
           created_at: string
@@ -246,6 +257,7 @@ export type Database = {
         Insert: {
           actual_duration_minutes?: number | null
           assigned_mechanic_id?: string | null
+          bike_id?: string | null
           booked_via?: string
           confirmation_sent_at?: string | null
           created_at?: string
@@ -274,6 +286,7 @@ export type Database = {
         Update: {
           actual_duration_minutes?: number | null
           assigned_mechanic_id?: string | null
+          bike_id?: string | null
           booked_via?: string
           confirmation_sent_at?: string | null
           created_at?: string
@@ -300,6 +313,13 @@ export type Database = {
           work_started_at?: string | null
         }
         Relationships: [
+          {
+            foreignKeyName: "appointments_bike_id_fkey"
+            columns: ["bike_id"]
+            isOneToOne: false
+            referencedRelation: "customer_bikes"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "appointments_reschedule_of_fkey"
             columns: ["reschedule_of"]

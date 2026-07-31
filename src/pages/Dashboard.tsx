@@ -7,13 +7,13 @@ import AppointmentsTableCard from "@/components/dashboard/scheduling/Appointment
 import AccessoryCarousel from "@/components/dashboard/AccessoryCarousel";
 import BikeAssistantCard from "@/components/dashboard/assistant/BikeAssistantCard";
 import BikeTabs from "@/components/dashboard/BikeTabs";
-import { useGarageBike } from "@/hooks/garage/useGarageBike";
+import { useSelectedBike } from "@/contexts/SelectedBikeContext";
 import { useAuth } from "@/contexts/AuthContext";
 import { Navigate } from "react-router-dom";
 
 export default function Dashboard() {
   const { user, isAuthenticated, isLoading } = useAuth();
-  const { bikes, bike, selectBike } = useGarageBike();
+  const { bikes, bike, selectBike } = useSelectedBike();
 
   if (isLoading) return null;
   if (!isAuthenticated) {
@@ -58,7 +58,7 @@ export default function Dashboard() {
           {/* Middle Section - Columns 6-8 */}
           <div className="col-span-12 lg:col-span-3 grid grid-rows-2 gap-4 lg:gap-6">
             <ServiceRequestCard bike={bike ? { id: bike.id, model: bike.model, serial: bike.serial } : null} />
-            <WalletCard />
+            <WalletCard bike={bike ? { id: bike.id, model: bike.model, serial: bike.serial } : null} />
           </div>
 
           {/* Service Countdown - Columns 9-12 */}
@@ -80,7 +80,12 @@ export default function Dashboard() {
         {/* Appointments - full width */}
         <div className="w-full lg:h-[420px] xl:h-[480px]">
           {user?.id ? (
-            <AppointmentsTableCard customerUserId={user.id} includeRequests />
+            <AppointmentsTableCard
+              customerUserId={user.id}
+              bikeId={bike?.id ?? null}
+              includeRequests
+              title={bike ? `Appointments — ${bike.model}` : undefined}
+            />
           ) : null}
         </div>
       </div>
