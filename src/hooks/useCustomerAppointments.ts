@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
+import { useAppointmentsRealtime } from "@/hooks/scheduling/useAppointmentsRealtime";
 
 export type QcProgress = {
   id: string;
@@ -150,25 +151,16 @@ export function useCustomerAppointments() {
     fetchAll();
   }, [fetchAll]);
 
-  // Realtime: refetch on any change to this user's appointments or their qc progress.
+  // Realtime: shared global bus — any appointment change (booked by the rider,
+  // by an admin or by a mechanic) refreshes the table immediately.
+  useAppointmentsRealtime(fetchAll, !!uid);
+
+  // Also refresh when the tab regains focus (socket may have dropped).
   useEffect(() => {
     if (!uid) return;
-    const channel = supabase
-      .channel(`customer-appointments-${uid}`)
-      .on(
-        "postgres_changes",
-        { event: "*", schema: "public", table: "appointments", filter: `user_id=eq.${uid}` },
-        () => fetchAll(),
-      )
-      .on(
-        "postgres_changes",
-        { event: "*", schema: "public", table: "appointment_qc_progress" },
-        () => fetchAll(),
-      )
-      .subscribe();
-    return () => {
-      supabase.removeChannel(channel);
-    };
+    const onFocus = () => fetchAll();
+    window.addEventListener("focus", onFocus);
+    return () => window.removeEventListener("focus", onFocus);
   }, [uid, fetchAll]);
 
   return { loading, appointments, refetch: fetchAll };
