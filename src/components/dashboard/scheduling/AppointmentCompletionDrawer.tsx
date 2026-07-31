@@ -339,7 +339,7 @@ export default function AppointmentCompletionDrawer({
     // jump to next incomplete
     const idx = stages.findIndex((s) => s.id === activeStage.id);
     const next = stages.slice(idx + 1).find((s) => !progress[s.id]?.completed_at);
-    if (next) setActiveStageId(next.id);
+    setActiveStageId(next ? next.id : DELIVERY_ID);
   };
 
   const completeAppointment = async () => {
@@ -379,28 +379,43 @@ export default function AppointmentCompletionDrawer({
           <div className="flex-1 flex items-center justify-center gap-2 text-xs text-muted-foreground">
             <Loader2 className="h-4 w-4 animate-spin" /> {t("workshop.drawer.loading")}
           </div>
-        ) : stages.length === 0 ? (
-          <div className="flex-1 flex flex-col items-center justify-center gap-3 px-6 text-center">
-            <ListChecks className="h-8 w-8 text-muted-foreground/40" />
-            <p className="text-sm text-muted-foreground">
-              {t("workshop.drawer.no_template")}
-            </p>
-            <Button
-              size="sm"
-              className="bg-wj-green hover:bg-wj-green/90 text-black"
-              onClick={completeAppointment}
-              disabled={saving}
-            >
-              {saving ? <Loader2 className="h-3.5 w-3.5 mr-1 animate-spin" /> : <CheckCircle2 className="h-3.5 w-3.5 mr-1" />}
-              {t("workshop.drawer.complete_anyway")}
-            </Button>
-          </div>
         ) : (
           <div className="flex-1 grid grid-cols-12 gap-4 px-4 sm:px-6 pb-6 overflow-hidden">
             {/* Stages sidebar */}
             <div className="col-span-12 md:col-span-4 lg:col-span-3 overflow-hidden">
               <ScrollArea className="h-full pr-2">
                 <div className="space-y-1.5">
+                  {/* Stage 0 — briefing */}
+                  <button
+                    onClick={() => setActiveStageId(BRIEFING_ID)}
+                    className={cn(
+                      "w-full text-left rounded-xl border p-3 transition-all flex items-center gap-3",
+                      activeStageId === BRIEFING_ID
+                        ? "bg-wj-green/10 border-wj-green/40"
+                        : briefingAck
+                          ? "bg-muted/30 border-border/30"
+                          : "bg-amber-500/[0.06] border-amber-500/30",
+                    )}
+                  >
+                    <div
+                      className={cn(
+                        "w-7 h-7 rounded-full flex items-center justify-center text-[11px] font-semibold shrink-0",
+                        briefingAck
+                          ? "bg-wj-green text-black"
+                          : "bg-amber-500/20 text-amber-400 border border-amber-500/40",
+                      )}
+                    >
+                      {briefingAck ? <Check className="h-3.5 w-3.5" /> : 0}
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-xs font-medium truncate">Bike briefing</p>
+                      <p className="text-[10px] text-muted-foreground">
+                        {(briefing?.reportedPoints?.length ?? 0)} reported point(s)
+                      </p>
+                    </div>
+                    <ChevronRight className="h-3.5 w-3.5 text-muted-foreground/50" />
+                  </button>
+
                   {stages.map((s, i) => {
                     const p = progress[s.id];
                     const done = !!p?.completed_at;
@@ -408,9 +423,11 @@ export default function AppointmentCompletionDrawer({
                     return (
                       <button
                         key={s.id}
+                        disabled={!briefingAck}
                         onClick={() => setActiveStageId(s.id)}
                         className={cn(
                           "w-full text-left rounded-xl border p-3 transition-all flex items-center gap-3",
+                          !briefingAck && "opacity-40 cursor-not-allowed",
                           active
                             ? "bg-wj-green/10 border-wj-green/40"
                             : done
@@ -442,6 +459,37 @@ export default function AppointmentCompletionDrawer({
                       </button>
                     );
                   })}
+
+                  {/* Final — delivery checklist */}
+                  <button
+                    disabled={!briefingAck}
+                    onClick={() => setActiveStageId(DELIVERY_ID)}
+                    className={cn(
+                      "w-full text-left rounded-xl border p-3 transition-all flex items-center gap-3",
+                      !briefingAck && "opacity-40 cursor-not-allowed",
+                      activeStageId === DELIVERY_ID
+                        ? "bg-wj-green/10 border-wj-green/40"
+                        : "bg-background/60 border-border/30 hover:bg-muted/30",
+                    )}
+                  >
+                    <div
+                      className={cn(
+                        "w-7 h-7 rounded-full flex items-center justify-center text-[11px] font-semibold shrink-0",
+                        allDeliveryChecked
+                          ? "bg-wj-green text-black"
+                          : "bg-muted/50 text-muted-foreground",
+                      )}
+                    >
+                      {allDeliveryChecked ? <Check className="h-3.5 w-3.5" /> : <ListChecks className="h-3.5 w-3.5" />}
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-xs font-medium truncate">Delivery handover</p>
+                      <p className="text-[10px] text-muted-foreground">
+                        {deliveryItems.filter((i) => deliveryChecked[i.id]).length}/{deliveryItems.length} confirmed
+                      </p>
+                    </div>
+                    <ChevronRight className="h-3.5 w-3.5 text-muted-foreground/50" />
+                  </button>
                 </div>
               </ScrollArea>
             </div>
