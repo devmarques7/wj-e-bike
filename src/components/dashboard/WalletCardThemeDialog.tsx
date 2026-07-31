@@ -8,6 +8,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { WALLET_CARD_THEMES } from "@/lib/wallet/cardThemes";
+import { meshPaletteFor, tierFromPlan } from "./CardMeshBackground";
 import { cn } from "@/lib/utils";
 import WalletMemberCard from "@/components/dashboard/WalletMemberCard";
 
@@ -73,6 +74,9 @@ export default function WalletCardThemeDialog({
         <div className="grid grid-cols-4 gap-3 pt-1">
           {WALLET_CARD_THEMES.map((t) => {
             const active = t.id === themeId;
+            // Swatch mirrors the tier-graded mesh the card will actually render.
+            const palette = meshPaletteFor(tierFromPlan(preview?.planName), t.hues);
+            const swatch = `linear-gradient(135deg, ${palette.colors[0]} 0%, ${palette.colors[2]} 55%, ${palette.colors[4]} 100%)`;
             return (
               <button
                 key={t.id}
@@ -88,7 +92,7 @@ export default function WalletCardThemeDialog({
                     "h-10 w-10 rounded-full border-2 flex items-center justify-center",
                     active ? "border-primary" : "border-border",
                   )}
-                  style={{ background: t.swatch }}
+                  style={{ background: swatch }}
                 >
                   {active && <Check className="h-4 w-4 text-background drop-shadow" />}
                 </span>

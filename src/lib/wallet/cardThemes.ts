@@ -17,6 +17,8 @@ export interface WalletCardTheme {
   panelInk: string;
   /** Swatch shown in the picker. */
   swatch: string;
+  /** Dual base hues used to build the animated mesh background. */
+  hues: [string, string];
 }
 
 /**
@@ -26,6 +28,7 @@ export interface WalletCardTheme {
 export const WALLET_CARD_THEMES: WalletCardTheme[] = [
   {
     id: "wj-green",
+    hues: ["#058c42", "#0a1a10"] as [string, string],
     label: "WJ Green",
     background: "linear-gradient(135deg, #0a1a10 0%, #05421f 55%, #058c42 100%)",
     panel: "#050c08",
@@ -36,6 +39,7 @@ export const WALLET_CARD_THEMES: WalletCardTheme[] = [
   },
   {
     id: "volt",
+    hues: ["#7ed321", "#12240f"] as [string, string],
     label: "Volt",
     background: "linear-gradient(135deg, #0b0f0a 0%, #12240f 50%, #2f5c1a 100%)",
     panel: "#060806",
@@ -46,6 +50,7 @@ export const WALLET_CARD_THEMES: WalletCardTheme[] = [
   },
   {
     id: "graphite",
+    hues: ["#6b7280", "#0d0f0e"] as [string, string],
     label: "Graphite",
     background: "linear-gradient(135deg, #1c1f1d 0%, #0d0f0e 60%, #06100a 100%)",
     panel: "#000000",
@@ -56,6 +61,7 @@ export const WALLET_CARD_THEMES: WalletCardTheme[] = [
   },
   {
     id: "sand",
+    hues: ["#b8892f", "#2e2416"] as [string, string],
     label: "Bronze",
     background: "linear-gradient(135deg, #1d1810 0%, #2e2416 55%, #4a3a1d 100%)",
     panel: "#0c0a06",
@@ -66,6 +72,7 @@ export const WALLET_CARD_THEMES: WalletCardTheme[] = [
   },
   {
     id: "cobalt",
+    hues: ["#1d6fd1", "#0b1c3d"] as [string, string],
     label: "Cobalt",
     background: "linear-gradient(135deg, #060d1c 0%, #0b1c3d 55%, #113a6b 100%)",
     panel: "#03070f",
@@ -76,6 +83,7 @@ export const WALLET_CARD_THEMES: WalletCardTheme[] = [
   },
   {
     id: "ember",
+    hues: ["#d1521d", "#2e1109"] as [string, string],
     label: "Ember",
     background: "linear-gradient(135deg, #170b06 0%, #2e1109 55%, #6b2a12 100%)",
     panel: "#0a0403",
@@ -86,6 +94,7 @@ export const WALLET_CARD_THEMES: WalletCardTheme[] = [
   },
   {
     id: "orchid",
+    hues: ["#7c3fd1", "#1d0f33"] as [string, string],
     label: "Orchid",
     background: "linear-gradient(135deg, #0f0818 0%, #1d0f33 55%, #3b1f6b 100%)",
     panel: "#070310",
@@ -96,6 +105,7 @@ export const WALLET_CARD_THEMES: WalletCardTheme[] = [
   },
   {
     id: "ice",
+    hues: ["#17a37f", "#08251f"] as [string, string],
     label: "Teal",
     background: "linear-gradient(135deg, #04120f 0%, #08251f 55%, #0f4a3c 100%)",
     panel: "#020a08",
