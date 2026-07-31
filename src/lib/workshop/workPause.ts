@@ -74,6 +74,26 @@ export function clearWorkPause() {
   setPausedAt(null);
 }
 
+/**
+ * Keep the work-timer pause in sync with the shift status, whatever the entry
+ * point was (pill, tracker card, another device, page reload). A paused shift
+ * always means a frozen job timer.
+ */
+export async function syncWorkPauseWithShift(
+  status: "idle" | "active" | "paused" | "completed",
+  userId: string,
+) {
+  if (status === "paused") {
+    if (!pausedAt) setPausedAt(Date.now());
+    return;
+  }
+  if (status === "active") {
+    if (pausedAt) await resumeWork(userId);
+    return;
+  }
+  if (pausedAt) setPausedAt(null);
+}
+
 /** Reference "now" for work timers — frozen while the shift is paused. */
 export const workNow = () => pausedAt ?? Date.now();
 

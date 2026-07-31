@@ -247,7 +247,7 @@ export default function ShiftTracker() {
                       disabled={working}
                       variant="outline"
                       size="sm"
-                      className="flex-1 h-9 text-xs border-amber-500/30 text-amber-500 hover:bg-amber-500/10"
+                      className="flex-1 h-9 text-xs bg-transparent border-amber-500/40 text-amber-600 dark:text-amber-400 hover:bg-amber-500/10 hover:text-amber-600 dark:hover:text-amber-300"
                     >
                       <Pause className="h-3.5 w-3.5 mr-1.5" />
                       Pause
@@ -258,7 +258,7 @@ export default function ShiftTracker() {
                       disabled={working}
                       variant="outline"
                       size="sm"
-                      className="flex-1 h-9 text-xs border-white/40 text-white hover:bg-white/15"
+                      className="flex-1 h-9 text-xs bg-white/10 border-white/50 text-white hover:bg-white/20 hover:text-white"
                     >
                       <Play className="h-3.5 w-3.5 mr-1.5" />
                       Resume
@@ -269,7 +269,12 @@ export default function ShiftTracker() {
                     disabled={working}
                     variant="outline"
                     size="sm"
-                    className="flex-1 h-9 text-xs border-destructive/30 text-destructive hover:bg-destructive/10"
+                    className={cn(
+                      "flex-1 h-9 text-xs",
+                      isPaused
+                        ? "bg-white/10 border-white/50 text-white hover:bg-white/20 hover:text-white"
+                        : "bg-transparent border-destructive/40 text-destructive hover:bg-destructive/10 hover:text-destructive",
+                    )}
                   >
                     <StopCircle className="h-3.5 w-3.5 mr-1.5" />
                     End

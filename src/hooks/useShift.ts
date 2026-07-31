@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
-import { pauseWork, resumeWork, clearWorkPause } from "@/lib/workshop/workPause";
+import { pauseWork, resumeWork, clearWorkPause, syncWorkPauseWithShift } from "@/lib/workshop/workPause";
 
 export type ShiftStatus = "idle" | "active" | "paused" | "completed";
 
@@ -250,6 +250,13 @@ export function useShift() {
     }
     return base;
   }, [state.row, now, status]);
+
+  // A paused shift must always freeze the running job timer — and resuming the
+  // shift must always release it, no matter where the pause came from.
+  useEffect(() => {
+    if (!userId || state.loading) return;
+    void syncWorkPauseWithShift(status, userId);
+  }, [status, userId, state.loading]);
 
   return {
     userId,
