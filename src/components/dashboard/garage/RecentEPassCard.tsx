@@ -47,7 +47,7 @@ export default function RecentEPassCard({ className }: { className?: string }) {
 
       <button
         type="button"
-        onClick={() => navigate(`/dashboard/staff/bike/${last.bikeId}`)}
+        onClick={() => navigate(`/dashboard/staff/garage/bike/${last.bikeId}`)}
         className="group w-full flex items-center gap-3 rounded-2xl border border-border/30 bg-background/40 p-3 text-left transition-colors hover:border-wj-green/50 hover:bg-wj-green/5"
       >
         <div className="h-12 w-12 shrink-0 overflow-hidden rounded-xl border border-border/30 bg-muted/30 flex items-center justify-center">
@@ -83,7 +83,7 @@ export default function RecentEPassCard({ className }: { className?: string }) {
             <button
               key={v.bikeId}
               type="button"
-              onClick={() => navigate(`/dashboard/staff/bike/${v.bikeId}`)}
+              onClick={() => navigate(`/dashboard/staff/garage/bike/${v.bikeId}`)}
               className="rounded-lg border border-border/30 px-2 py-1 text-[10px] text-muted-foreground transition-colors hover:border-wj-green/50 hover:text-foreground"
             >
               {v.model ?? v.serial ?? "Bike"}
