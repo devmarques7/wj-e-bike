@@ -63,7 +63,12 @@ export default function FleetMenu() {
           coreIcon={<Plus className="h-6 w-6" strokeWidth={2.2} />}
           actions={actions}
           holdToOpen
-          holdDelay={1000}
+          holdDelay={500}
+          onPressDrag={(event) => {
+            if (menuOpen) return false;
+            dragControls.start(event);
+            return true;
+          }}
           radius={74}
           arc={[-160, -80]}
           magnetRange={46}
