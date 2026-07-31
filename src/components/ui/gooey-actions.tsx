@@ -41,9 +41,9 @@ export interface GooeyActionsProps
   /** Hold duration in ms before opening (default 500). */
   holdDelay?: number;
   /**
-   * Fired while the core is pressed but the menu has NOT opened yet, once the
-   * finger travels past a small threshold. Lets the host start a drag gesture
-   * instead of the bloom (returning true cancels the pending hold).
+   * Fired immediately when the core is pressed. The host can start a manual
+   * drag gesture while this component keeps tracking the same pointer for the
+   * pending hold. When the hold completes, `open` lets the host pause dragging.
    */
   onPressDrag?: (event: PointerEvent, distance: number) => boolean | void;
 }
@@ -340,71 +340,86 @@ export function GooeyActions({
     if (!holdToOpen) return;
     e.preventDefault();
     e.stopPropagation();
-    // Keep every subsequent event for this pointer on the core: without capture
-    // the scaling core / changing pointer-events under the finger makes the
-    // browser retarget the gesture and emit `pointercancel`, which closed the
-    // menu one frame after it bloomed (the open/close flicker).
+
     try {
       (e.currentTarget as HTMLElement).setPointerCapture(e.pointerId);
-    } catch {
-      /* no-op */
-    }
+    } catch { /* no-op */ }
+
     const rootEl = rootRef.current;
     if (rootEl) {
       const r = rootEl.getBoundingClientRect();
       pointerRef.current = { x: e.clientX - r.left, y: e.clientY - r.top, inside: true };
     }
+
     holdingRef.current = false;
     pressedRef.current = true;
     const origin = { x: e.clientX, y: e.clientY };
+    let lastStationaryPos = { x: e.clientX, y: e.clientY };
     let handedToDrag = false;
-    clearHold();
-    holdTimerRef.current = window.setTimeout(() => {
-      if (!pressedRef.current) return;
-      holdingRef.current = true;
-      setIsOpen(true);
-    }, holdDelay);
 
-    // Track the finger on the window so the gesture survives leaving the core,
-    // crossing the satellites or any overlay — the menu only closes on release.
+    const startHoldTimer = () => {
+      clearHold();
+      holdTimerRef.current = window.setTimeout(() => {
+        if (!pressedRef.current) return;
+        holdingRef.current = true;
+        setIsOpen(true);
+      }, holdDelay);
+    };
+
+    startHoldTimer();
+    onPressDrag?.(e.nativeEvent, 0);
+
     const onMove = (ev: PointerEvent) => {
       if (ev.pointerId !== e.pointerId) return;
       ev.preventDefault();
-      const root = rootRef.current;
-      if (!root) return;
-      if (!holdingRef.current && !handedToDrag && onPressDrag) {
-        const dist = Math.hypot(ev.clientX - origin.x, ev.clientY - origin.y);
-        if (dist > 12 && onPressDrag(ev, dist) === true) {
+
+      const distFromOrigin = Math.hypot(ev.clientX - origin.x, ev.clientY - origin.y);
+      const distFromLast = Math.hypot(ev.clientX - lastStationaryPos.x, ev.clientY - lastStationaryPos.y);
+
+      if (distFromLast > 3) {
+        lastStationaryPos = { x: ev.clientX, y: ev.clientY };
+        if (!holdingRef.current) startHoldTimer();
+      }
+
+      if (!holdingRef.current && !handedToDrag && distFromOrigin > 12) {
+        if (onPressDrag?.(ev, distFromOrigin) === true) {
           handedToDrag = true;
-          clearHold();
-          pressedRef.current = false;
-          cleanup();
-          release();
-          return;
         }
       }
-      const r = root.getBoundingClientRect();
-      pointerRef.current = { x: ev.clientX - r.left, y: ev.clientY - r.top, inside: true };
+
+      const root = rootRef.current;
+      if (root) {
+        const r = root.getBoundingClientRect();
+        pointerRef.current = { x: ev.clientX - r.left, y: ev.clientY - r.top, inside: true };
+      }
     };
+
     const cleanup = () => {
       window.removeEventListener("pointermove", onMove);
       window.removeEventListener("pointerup", onUp);
+      window.removeEventListener("pointercancel", onCancel);
     };
-    const onUp = (ev: PointerEvent) => {
+
+    const finish = (ev: PointerEvent, selectAction: boolean) => {
       if (ev.pointerId !== e.pointerId) return;
       cleanup();
       clearHold();
       pressedRef.current = false;
       if (holdingRef.current) {
         const idx = hoverIdxRef.current;
-        if (idx >= 0 && actions[idx]) onSelect?.(actions[idx].id);
+        if (selectAction && idx >= 0 && actions[idx]) onSelect?.(actions[idx].id);
         holdingRef.current = false;
         setIsOpen(false);
       }
       release();
     };
+
+    const onUp = (ev: PointerEvent) => finish(ev, true);
+    const onCancel = (ev: PointerEvent) => finish(ev, false);
+
     window.addEventListener("pointermove", onMove, { passive: false });
     window.addEventListener("pointerup", onUp);
+    window.addEventListener("pointercancel", onCancel);
   };
 
   React.useEffect(() => clearHold, [clearHold]);
@@ -583,11 +598,6 @@ export function GooeyActions({
             }
           }}
           onPointerDown={onCorePointerDown}
-          onPointerDownCapture={(e) => {
-            // React capture runs before framer-motion's native listener on any
-            // ancestor, so the wrapper can't hijack the press into a drag.
-            if (holdToOpen) e.nativeEvent.stopPropagation();
-          }}
           className={cn(
             "pointer-events-auto absolute grid cursor-pointer place-items-center rounded-full border-0 p-0",
             "text-primary-foreground text-xs font-medium tracking-[0.18em] uppercase touch-none",
