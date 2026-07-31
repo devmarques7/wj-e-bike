@@ -1,6 +1,5 @@
 import { useCallback, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { motion } from "framer-motion";
 import { Camera, RefreshCw, SwitchCamera, ScanLine, ArrowRight, Sparkles, ZoomIn } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Slider } from "@/components/ui/slider";
@@ -56,15 +55,6 @@ export default function EPassScanner({ active, onNavigate }: Props) {
             <div className="absolute inset-0 rounded-[26px] ring-1 ring-inset ring-primary/30" />
             <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,transparent_38%,hsl(var(--background)/0.55)_100%)]" />
 
-            {/* Concentric radar rings across the full container */}
-            {[0.95, 0.7, 0.45, 0.22].map((s) => (
-              <div
-                key={s}
-                className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 rounded-full border border-primary/20"
-                style={{ width: `${s * 100}%`, height: `${s * 100}%` }}
-              />
-            ))}
-
             {/* Corner brackets */}
             {[
               "left-4 top-4 border-l-2 border-t-2 rounded-tl-xl",
@@ -74,16 +64,6 @@ export default function EPassScanner({ active, onNavigate }: Props) {
             ].map((c) => (
               <div key={c} className={`absolute h-10 w-10 border-primary/80 ${c}`} />
             ))}
-
-            {/* Simple top-to-bottom scan line with upward gradient */}
-            {scanning && (
-              <motion.div
-                className="absolute inset-x-0 h-[2px] rounded-full bg-gradient-to-t from-transparent via-primary to-primary"
-                initial={{ top: "0%" }}
-                animate={{ top: ["0%", "100%", "0%"] }}
-                transition={{ duration: 2.5, repeat: Infinity, ease: "linear" }}
-              />
-            )}
 
             {(scanning || aiBusy) && (
               <div className="absolute inset-x-0 bottom-4 flex justify-center">
