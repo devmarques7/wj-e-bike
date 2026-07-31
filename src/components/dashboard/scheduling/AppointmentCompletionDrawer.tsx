@@ -161,11 +161,25 @@ export default function AppointmentCompletionDrawer({
     return () => clearInterval(i);
   }, [open]);
 
-  // Reset the final assessment gate whenever a new job is opened.
+  // Restore the per-appointment session state whenever a job is opened.
   useEffect(() => {
-    setAssessDone(false);
+    if (!open || !appointment?.id) return;
+    const s = readQcSession(appointment.id);
+    setAssessDone(!!s.assessDone);
     setAssessOpen(false);
+    setBriefingAck(!!s.ack || !!(appointment as any)?.work_started_at);
+    setDeliveryChecked(s.delivery ?? {});
   }, [appointment?.id, open]);
+
+  // Persist checklist + gates in session storage.
+  useEffect(() => {
+    if (!open || !appointment?.id) return;
+    writeQcSession(appointment.id, {
+      ack: briefingAck,
+      delivery: deliveryChecked,
+      assessDone,
+    });
+  }, [open, appointment?.id, briefingAck, deliveryChecked, assessDone]);
 
   // Global appointment start (drives the live cumulative timer)
   const workStartedAtMs = useMemo(() => {
