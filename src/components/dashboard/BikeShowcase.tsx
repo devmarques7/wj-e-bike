@@ -94,6 +94,7 @@ interface BikeShowcaseProps {
 
 export default function BikeShowcase({ bikeId }: BikeShowcaseProps = {}) {
   const { user } = useAuth();
+  const { theme } = useTheme();
   const [currentIndex, setCurrentIndex] = useState(0);
   const [imagesLoaded, setImagesLoaded] = useState(false);
   const [registeredBikes, setRegisteredBikes] = useState<LinkedBike[]>([]);
