@@ -355,12 +355,17 @@ export function useShift() {
 
   const elapsedSec = useMemo(() => {
     const row = state.row;
-    const base = (row?.worked_minutes ?? 0) * 60;
-    if (status === "active" && row?.clock_in) {
-      return base + Math.max(0, Math.floor((now - new Date(row.clock_in).getTime()) / 1000));
-    }
-    return base;
-  }, [state.row, now, status]);
+    if (!row) return 0;
+    if (status === "completed") return (row.worked_minutes ?? 0) * 60;
+    return netWorkedSeconds(row, state.breaks, now);
+  }, [state.row, state.breaks, now, status]);
+
+  /** Paused seconds so far today (open break counts live). */
+  const breakSec = useMemo(() => {
+    const open = openBreakOf(state.breaks);
+    const live = open ? Math.max(0, Math.floor((now - new Date(open.started_at).getTime()) / 1000)) : 0;
+    return closedBreakSeconds(state.breaks) + live;
+  }, [state.breaks, now]);
 
   // A paused shift must always freeze the running job timer — and resuming the
   // shift must always release it, no matter where the pause came from.
@@ -372,6 +377,9 @@ export function useShift() {
   return {
     userId,
     row: state.row,
+    breaks: state.breaks,
+    breakSec,
+    breakCount: state.breaks.length,
     loading: state.loading,
     working: state.working,
     status,
