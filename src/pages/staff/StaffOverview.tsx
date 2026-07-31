@@ -132,15 +132,15 @@ export default function StaffOverview() {
         </div>
 
         {/* Row 2 — appointments table with shift + today's workload alongside */}
-        <div className="grid grid-cols-12 gap-4 lg:gap-6 items-start">
-          <div className="col-span-12 xl:col-span-8 order-2 xl:order-1 min-h-[500px]">
+        <div className="grid grid-cols-12 gap-4 lg:gap-6 items-stretch">
+          <div className="col-span-12 xl:col-span-8 order-2 xl:order-1 min-h-[500px] h-full flex">
             <AppointmentsTableCard mineOnlyMechanicId={user?.id} />
           </div>
-          <div className="col-span-12 xl:col-span-4 order-1 xl:order-2 flex flex-col gap-4 lg:gap-6">
-            <div className="min-h-[260px]">
+          <div className="col-span-12 xl:col-span-4 order-1 xl:order-2 flex flex-col gap-4 lg:gap-6 h-full">
+            <div className="min-h-[260px] flex-1">
               <ShiftTracker />
             </div>
-            <div className="min-h-[260px]">
+            <div className="min-h-[260px] flex-1">
               <WorkloadGauge
                 pct={stats.currentLoadPct}
                 completedToday={stats.completedToday}
