@@ -27,7 +27,9 @@ interface ServiceRequestCardProps {
 export default function ServiceRequestCard({ bike }: ServiceRequestCardProps = {}) {
   const navigate = useNavigate();
   const { user } = useAuth();
+  const { theme } = useTheme();
   const [isCompleted, setIsCompleted] = useState(false);
+
   const [videoOpacity, setVideoOpacity] = useState(1);
   const [planLoading, setPlanLoading] = useState(true);
   const [hasUrgentService, setHasUrgentService] = useState(false);
