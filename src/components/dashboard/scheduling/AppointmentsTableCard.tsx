@@ -2,6 +2,7 @@ import { Fragment, useEffect, useMemo, useState } from "react";
 import { cn } from "@/lib/utils";
 import { motion } from "framer-motion";
 import { useTranslation } from "react-i18next";
+import { useNavigate } from "react-router-dom";
 import {
   Clock,
   Loader2,
@@ -157,6 +158,7 @@ export default function AppointmentsTableCard({
   className,
 }: AppointmentsTableCardProps) {
   const { t, i18n } = useTranslation();
+  const navigate = useNavigate();
   const { user: authUser } = useAuth();
   const isCustomer = !!customerUserId;
   // Staff already get the running job inside the floating shift pill (ShiftTag).
