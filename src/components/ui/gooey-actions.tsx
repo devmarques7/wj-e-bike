@@ -340,49 +340,67 @@ export function GooeyActions({
     if (!holdToOpen) return;
     e.preventDefault();
     e.stopPropagation();
-    // Keep every subsequent event for this pointer on the core: without capture
-    // the scaling core / changing pointer-events under the finger makes the
-    // browser retarget the gesture and emit `pointercancel`, which closed the
-    // menu one frame after it bloomed (the open/close flicker).
+
     try {
       (e.currentTarget as HTMLElement).setPointerCapture(e.pointerId);
-    } catch {
-      /* no-op */
-    }
+    } catch { /* no-op */ }
+
     const rootEl = rootRef.current;
     if (rootEl) {
       const r = rootEl.getBoundingClientRect();
       pointerRef.current = { x: e.clientX - r.left, y: e.clientY - r.top, inside: true };
     }
+
     holdingRef.current = false;
     pressedRef.current = true;
-    clearHold();
-    // Start host dragging from the original pointer event. Crucially, keep our
-    // listeners and hold timer alive: moving the Fleet button must not cancel
-    // the long press that later changes the same gesture into action picking.
-    onPressDrag?.(e.nativeEvent, 0);
-    holdTimerRef.current = window.setTimeout(() => {
-      if (!pressedRef.current) return;
-      holdingRef.current = true;
-      setIsOpen(true);
-    }, holdDelay);
+    const origin = { x: e.clientX, y: e.clientY };
+    let lastStationaryPos = { x: e.clientX, y: e.clientY };
+    let handedToDrag = false;
 
-    // Track the finger on the window so the gesture survives leaving the core,
-    // crossing the satellites or any overlay — the menu only closes on release.
+    const startHoldTimer = () => {
+      clearHold();
+      holdTimerRef.current = window.setTimeout(() => {
+        if (!pressedRef.current) return;
+        holdingRef.current = true;
+        setIsOpen(true);
+      }, holdDelay);
+    };
+
+    startHoldTimer();
+    onPressDrag?.(e.nativeEvent, 0);
+
     const onMove = (ev: PointerEvent) => {
       if (ev.pointerId !== e.pointerId) return;
       ev.preventDefault();
+
+      const distFromOrigin = Math.hypot(ev.clientX - origin.x, ev.clientY - origin.y);
+      const distFromLast = Math.hypot(ev.clientX - lastStationaryPos.x, ev.clientY - lastStationaryPos.y);
+
+      if (distFromLast > 3) {
+        lastStationaryPos = { x: ev.clientX, y: ev.clientY };
+        if (!holdingRef.current) startHoldTimer();
+      }
+
+      if (!holdingRef.current && !handedToDrag && distFromOrigin > 12) {
+        if (onPressDrag?.(ev, distFromOrigin) === true) {
+          handedToDrag = true;
+        }
+      }
+
       const root = rootRef.current;
-      if (!root) return;
-      const r = root.getBoundingClientRect();
-      pointerRef.current = { x: ev.clientX - r.left, y: ev.clientY - r.top, inside: true };
+      if (root) {
+        const r = root.getBoundingClientRect();
+        pointerRef.current = { x: ev.clientX - r.left, y: ev.clientY - r.top, inside: true };
+      }
     };
+
     const cleanup = () => {
       window.removeEventListener("pointermove", onMove);
       window.removeEventListener("pointerup", onUp);
       window.removeEventListener("pointercancel", onCancel);
     };
-    const finishGesture = (ev: PointerEvent, selectAction: boolean) => {
+
+    const finish = (ev: PointerEvent, selectAction: boolean) => {
       if (ev.pointerId !== e.pointerId) return;
       cleanup();
       clearHold();
@@ -395,8 +413,10 @@ export function GooeyActions({
       }
       release();
     };
-    const onUp = (ev: PointerEvent) => finishGesture(ev, true);
-    const onCancel = (ev: PointerEvent) => finishGesture(ev, false);
+
+    const onUp = (ev: PointerEvent) => finish(ev, true);
+    const onCancel = (ev: PointerEvent) => finish(ev, false);
+
     window.addEventListener("pointermove", onMove, { passive: false });
     window.addEventListener("pointerup", onUp);
     window.addEventListener("pointercancel", onCancel);
