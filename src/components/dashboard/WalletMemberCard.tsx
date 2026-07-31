@@ -76,7 +76,7 @@ export default function WalletMemberCard({
 
       {/* Colour side */}
       <div className="relative flex-1 min-w-0 flex flex-col">
-        <CardMeshBackground tier={tier ?? tierFromPlan(planName)} />
+        <CardMeshBackground tier={tier ?? tierFromPlan(planName)} themeId={themeId} />
 
         {/* Oversized wordmark */}
         <span
@@ -212,7 +212,7 @@ export function WalletCardBack({
 
       {/* Colour side — details */}
       <div className="relative flex-1 min-w-0 flex flex-col p-4 sm:p-5">
-        <CardMeshBackground tier={tier ?? tierFromPlan(planName)} />
+        <CardMeshBackground tier={tier ?? tierFromPlan(planName)} themeId={themeId} />
 
         <div className="relative z-10">
           <p className="text-[9px] uppercase tracking-[0.22em] font-medium" style={{ color: theme.inkMuted }}>
