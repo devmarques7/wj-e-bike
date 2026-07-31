@@ -367,41 +367,50 @@ export default function AppointmentsTableCard({
           filters={
             <Tabs
               value={statusFilter}
-              onValueChange={(v) => setStatusFilter(v as typeof statusFilter)}
+              onValueChange={(v) => setStatusFilter(v as TaskFilter)}
             >
               <TabsList className="bg-muted/40 h-8 w-max">
-                <TabsTrigger value="all" className="text-[11px] h-6 px-2.5">
-                  {t("workshop.appts.all")}
-                </TabsTrigger>
-                <TabsTrigger value="requested" className="text-[11px] h-6 px-2.5 whitespace-nowrap">
-                  <span className="inline-block w-1.5 h-1.5 rounded-full bg-sky-400 mr-1.5" />
-                  {t("workshop.appts.requested", "Requested")}
-                </TabsTrigger>
-                <TabsTrigger value="pending" className="text-[11px] h-6 px-2.5 whitespace-nowrap">
-                  <span className="inline-block w-1.5 h-1.5 rounded-full bg-amber-400 mr-1.5" />
-                  {t("workshop.appts.pending")}
-                </TabsTrigger>
-                <TabsTrigger value="ongoing" className="text-[11px] h-6 px-2.5 whitespace-nowrap">
-                  <span className="inline-block w-1.5 h-1.5 rounded-full bg-wj-green animate-pulse mr-1.5" />
-                  {t("workshop.appts.ongoing")}
-                </TabsTrigger>
-                <TabsTrigger value="completed" className="text-[11px] h-6 px-2.5 whitespace-nowrap">
-                  <span className="inline-block w-1.5 h-1.5 rounded-full bg-wj-green mr-1.5" />
-                  {t("workshop.appts.completed")}
-                </TabsTrigger>
-                <TabsTrigger value="overdue" className="text-[11px] h-6 px-2.5 whitespace-nowrap">
-                  <span className="inline-block w-1.5 h-1.5 rounded-full bg-orange-500 mr-1.5" />
-                  {t("workshop.appts.overdue", "Overdue")}
-                </TabsTrigger>
-                <TabsTrigger value="canceled" className="text-[11px] h-6 px-2.5 whitespace-nowrap">
-                  <span className="inline-block w-1.5 h-1.5 rounded-full bg-red-500 mr-1.5" />
-                  {t("workshop.appts.canceled", "Canceled")}
-                </TabsTrigger>
+                {TASK_FILTERS.filter((f) => !(isCustomer && f === "unassigned")).map((f) => (
+                  <TabsTrigger
+                    key={f}
+                    value={f}
+                    className="text-[11px] h-6 px-2.5 whitespace-nowrap"
+                  >
+                    <span
+                      className={cn(
+                        "inline-block w-1.5 h-1.5 rounded-full mr-1.5",
+                        FILTER_DOT[f],
+                      )}
+                    />
+                    {t(`workshop.appts.${f}`)}
+                    {counts[f] > 0 && (
+                      <span className="ml-1.5 text-[10px] text-muted-foreground tabular-nums">
+                        {counts[f]}
+                      </span>
+                    )}
+                  </TabsTrigger>
+                ))}
               </TabsList>
             </Tabs>
           }
           controls={
             <>
+              {!isCustomer && canClaim && (
+                <Button
+                  size="sm"
+                  variant="outline"
+                  className="h-8 text-[11px] border-border/40 gap-1.5 whitespace-nowrap"
+                  disabled={dispatching}
+                  onClick={() => dispatch()}
+                >
+                  {dispatching ? (
+                    <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                  ) : (
+                    <Wand2 className="h-3.5 w-3.5" />
+                  )}
+                  {t("workshop.appts.auto_dispatch")}
+                </Button>
+              )}
               <div className="flex items-center gap-1.5 flex-1 min-w-[160px] sm:flex-none">
                 <Layers className="h-3.5 w-3.5 text-muted-foreground" />
                 <Select value={groupBy} onValueChange={(v) => setGroupBy(v as typeof groupBy)}>
@@ -421,10 +430,21 @@ export default function AppointmentsTableCard({
                 size="sm"
                 variant="outline"
                 className="h-8 text-[11px] border-border/40 gap-1.5 whitespace-nowrap"
-                onClick={() => setSortAsc((v) => !v)}
+                onClick={() => {
+                  if (sortMode === "priority") {
+                    setSortMode("time");
+                    setSortAsc(true);
+                  } else if (sortAsc) {
+                    setSortAsc(false);
+                  } else {
+                    setSortMode("priority");
+                  }
+                }}
               >
                 <ArrowUpDown className="h-3.5 w-3.5" />
-                {t("workshop.appts.sort_time")} {sortAsc ? "↑" : "↓"}
+                {sortMode === "priority"
+                  ? t("workshop.appts.sort_priority")
+                  : `${t("workshop.appts.sort_time")} ${sortAsc ? "↑" : "↓"}`}
               </Button>
             </>
           }
