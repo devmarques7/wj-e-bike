@@ -157,7 +157,6 @@ export default function StaffGarage() {
           <div className="col-span-12">
             <AppointmentsTableCard
               title="Bikes in the workshop"
-              className="h-[640px]"
               mineOnlyMechanicId={myTasksOnly ? user?.id : undefined}
             />
           </div>

@@ -336,7 +336,7 @@ export default function AppointmentsTableCard({
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.2 }}
-        className={cn("bg-background/60 backdrop-blur-md border border-border/30 rounded-2xl overflow-hidden h-full flex flex-col", className)}
+        className={cn("bg-background/60 backdrop-blur-md border border-border/30 rounded-2xl overflow-hidden min-h-[320px] max-h-[640px] flex flex-col", className)}
       >
         <div className="p-4 border-b border-border/30">
           <Tabs value={activeTab} onValueChange={setActiveTab}>
@@ -415,7 +415,7 @@ export default function AppointmentsTableCard({
           </div>
         </div>
 
-        <div className="overflow-x-auto max-h-[228px] overflow-y-auto flex-1 flex flex-col">
+        <div className="overflow-x-auto overflow-y-auto flex-1 min-h-0">
           {loading ? (
             <div className="flex-1 flex items-center justify-center gap-2 text-sm text-muted-foreground">
               <Loader2 className="h-4 w-4 animate-spin" /> {t("workshop.appts.loading")}
@@ -425,7 +425,7 @@ export default function AppointmentsTableCard({
               {t("workshop.appts.empty")}
             </div>
           ) : (
-            <Table className="h-full">
+            <Table>
               <TableHeader>
                 <TableRow className="border-border/30 hover:bg-transparent">
                   <TableHead className="text-muted-foreground text-[10px] uppercase tracking-wider font-medium w-[80px]">{t("workshop.cols.time")}</TableHead>
