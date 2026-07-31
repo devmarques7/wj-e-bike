@@ -125,6 +125,12 @@ export default function AppointmentCompletionDrawer({
     return () => clearInterval(i);
   }, [open]);
 
+  // Reset the final assessment gate whenever a new job is opened.
+  useEffect(() => {
+    setAssessDone(false);
+    setAssessOpen(false);
+  }, [appointment?.id, open]);
+
   // Global appointment start (drives the live cumulative timer)
   const workStartedAtMs = useMemo(() => {
     const v = (appointment as any)?.work_started_at;
@@ -677,6 +683,7 @@ export default function AppointmentCompletionDrawer({
                     total: stages.length,
                   })}
                   {!allDeliveryChecked && " · delivery checklist pending"}
+                  {allDeliveryChecked && assessBikeId && !assessDone && " · final condition rating pending"}
                 </div>
                 <Button
                   size="sm"
@@ -684,6 +691,12 @@ export default function AppointmentCompletionDrawer({
                   onClick={() => {
                     if (!allDeliveryChecked) {
                       setActiveStageId(DELIVERY_ID);
+                      return;
+                    }
+                    /* Close the job with the same guided SSBike condition
+                       assessment used on the E-Pass page. */
+                    if (assessBikeId && !assessDone) {
+                      setAssessOpen(true);
                       return;
                     }
                     completeAppointment();
@@ -700,11 +713,27 @@ export default function AppointmentCompletionDrawer({
                   ) : (
                     <CheckCircle2 className="h-3.5 w-3.5 mr-1" />
                   )}
-                  {t("workshop.drawer.complete_appointment")}
+                  {assessBikeId && !assessDone
+                    ? "Rate bike & complete"
+                    : t("workshop.drawer.complete_appointment")}
                 </Button>
               </div>
             </div>
           </div>
+        )}
+
+        {assessBikeId && (
+          <BikeAssessmentDialog
+            open={assessOpen}
+            onOpenChange={setAssessOpen}
+            bikeId={assessBikeId}
+            bikeModel={briefing?.bike?.model ?? null}
+            onSaved={() => {
+              setAssessDone(true);
+              setAssessOpen(false);
+              void completeAppointment();
+            }}
+          />
         )}
       </SheetContent>
     </Sheet>
