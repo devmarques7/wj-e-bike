@@ -52,9 +52,25 @@ export function useBikeById(identifier?: string | null) {
     const { data, error: bikeError } = await query.maybeSingle();
 
     if (bikeError || !data) {
-      setBike(null);
-      setOwner(null);
-      setError(bikeError?.message ?? "No bike found for this E-Pass.");
+      // Direct read is blocked by RLS (customer scanning someone else's E-Pass):
+      // fall back to the secure lookup that returns a privacy-safe payload.
+      const { data: rpcRows } = await supabase.rpc("get_epass_bike", { _identifier: id });
+      const rpc = Array.isArray(rpcRows) ? rpcRows[0] : null;
+      if (!rpc) {
+        setBike(null);
+        setOwner(null);
+        setError(bikeError?.message ?? "No bike found for this E-Pass.");
+        setLoading(false);
+        return;
+      }
+      setBike(rpc as unknown as GarageBike & { customer_id: string });
+      setOwner({
+        customerId: rpc.owner_customer_id,
+        userId: rpc.owner_user_id ?? null,
+        name: rpc.owner_name ?? null,
+        email: rpc.owner_email ?? null,
+        phone: rpc.owner_phone ?? null,
+      });
       setLoading(false);
       return;
     }

@@ -47,6 +47,11 @@ export default function EPassScanner({ active, onNavigate }: Props) {
           .maybeSingle();
         bikeId = data?.id ?? null;
       }
+      if (!bikeId) {
+        // Serial owned by another rider: resolve through the secure E-Pass lookup.
+        const { data: rows } = await supabase.rpc("get_epass_bike", { _identifier: code });
+        bikeId = (Array.isArray(rows) ? rows[0]?.id : null) ?? null;
+      }
       setResolving(false);
       if (!bikeId) {
         setNotFound(true);
@@ -56,7 +61,7 @@ export default function EPassScanner({ active, onNavigate }: Props) {
       navigate(
         isStaff
           ? `/dashboard/staff/garage/bike/${encodeURIComponent(bikeId)}`
-          : `/dashboard/garage?bike=${encodeURIComponent(bikeId)}`,
+          : `/dashboard/garage/bike/${encodeURIComponent(bikeId)}`,
       );
     },
     [isStaff, navigate, onNavigate],

@@ -2566,6 +2566,27 @@ export type Database = {
           start_time: string
         }[]
       }
+      get_epass_bike: {
+        Args: { _identifier: string }
+        Returns: {
+          color: string
+          customer_id: string
+          id: string
+          image_url: string
+          km: number
+          last_service_at: string
+          model: string
+          next_service_at: string
+          owner_customer_id: string
+          owner_email: string
+          owner_name: string
+          owner_phone: string
+          owner_user_id: string
+          purchased_at: string
+          serial: string
+          services_completed: number
+        }[]
+      }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]

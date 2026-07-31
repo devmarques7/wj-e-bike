@@ -104,6 +104,7 @@ const App = () => (
               <Route path="/dashboard/v-id" element={<MyWallet />} />
               <Route path="/dashboard/bike" element={<BikeCatalog />} />
               <Route path="/dashboard/garage" element={<Garage />} />
+              <Route path="/dashboard/garage/bike/:bikeId" element={<ScannedBikeDetail />} />
               <Route path="/dashboard/membership" element={<Membership />} />
               <Route path="/dashboard/favorites" element={<Favorites />} />
               <Route path="/dashboard/vip" element={<Membership />} />
