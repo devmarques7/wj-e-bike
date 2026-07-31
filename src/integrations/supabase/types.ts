@@ -2392,6 +2392,7 @@ export type Database = {
       }
       subscriptions: {
         Row: {
+          bike_id: string | null
           cancel_at_period_end: boolean
           canceled_at: string | null
           created_at: string
@@ -2401,6 +2402,8 @@ export type Database = {
           payment_method:
             | Database["public"]["Enums"]["payment_method_enum"]
             | null
+          pending_plan_version_id: string | null
+          pending_since: string | null
           plan_version_id: string
           started_at: string
           status: Database["public"]["Enums"]["subscription_status_enum"]
@@ -2410,6 +2413,7 @@ export type Database = {
           user_id: string
         }
         Insert: {
+          bike_id?: string | null
           cancel_at_period_end?: boolean
           canceled_at?: string | null
           created_at?: string
@@ -2419,6 +2423,8 @@ export type Database = {
           payment_method?:
             | Database["public"]["Enums"]["payment_method_enum"]
             | null
+          pending_plan_version_id?: string | null
+          pending_since?: string | null
           plan_version_id: string
           started_at?: string
           status?: Database["public"]["Enums"]["subscription_status_enum"]
@@ -2428,6 +2434,7 @@ export type Database = {
           user_id: string
         }
         Update: {
+          bike_id?: string | null
           cancel_at_period_end?: boolean
           canceled_at?: string | null
           created_at?: string
@@ -2437,6 +2444,8 @@ export type Database = {
           payment_method?:
             | Database["public"]["Enums"]["payment_method_enum"]
             | null
+          pending_plan_version_id?: string | null
+          pending_since?: string | null
           plan_version_id?: string
           started_at?: string
           status?: Database["public"]["Enums"]["subscription_status_enum"]
@@ -2446,6 +2455,27 @@ export type Database = {
           user_id?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "subscriptions_bike_id_fkey"
+            columns: ["bike_id"]
+            isOneToOne: false
+            referencedRelation: "customer_bikes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "subscriptions_pending_plan_version_id_fkey"
+            columns: ["pending_plan_version_id"]
+            isOneToOne: false
+            referencedRelation: "plan_versions"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "subscriptions_pending_plan_version_id_fkey"
+            columns: ["pending_plan_version_id"]
+            isOneToOne: false
+            referencedRelation: "v_subscriber_summary"
+            referencedColumns: ["plan_version_id"]
+          },
           {
             foreignKeyName: "subscriptions_plan_version_id_fkey"
             columns: ["plan_version_id"]
@@ -2723,9 +2753,10 @@ export type Database = {
           isSetofReturn: false
         }
       }
-      fn_cancel_subscription: {
-        Args: { p_at_period_end?: boolean; p_subscription_id: string }
+      fn_cancel_pending_bike_plan: {
+        Args: { p_bike_id: string }
         Returns: {
+          bike_id: string | null
           cancel_at_period_end: boolean
           canceled_at: string | null
           created_at: string
@@ -2735,6 +2766,38 @@ export type Database = {
           payment_method:
             | Database["public"]["Enums"]["payment_method_enum"]
             | null
+          pending_plan_version_id: string | null
+          pending_since: string | null
+          plan_version_id: string
+          started_at: string
+          status: Database["public"]["Enums"]["subscription_status_enum"]
+          stripe_customer_id: string | null
+          stripe_subscription_id: string | null
+          updated_at: string
+          user_id: string
+        }
+        SetofOptions: {
+          from: "*"
+          to: "subscriptions"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
+      fn_cancel_subscription: {
+        Args: { p_at_period_end?: boolean; p_subscription_id: string }
+        Returns: {
+          bike_id: string | null
+          cancel_at_period_end: boolean
+          canceled_at: string | null
+          created_at: string
+          current_period_end: string | null
+          current_period_start: string
+          id: string
+          payment_method:
+            | Database["public"]["Enums"]["payment_method_enum"]
+            | null
+          pending_plan_version_id: string | null
+          pending_since: string | null
           plan_version_id: string
           started_at: string
           status: Database["public"]["Enums"]["subscription_status_enum"]
@@ -2753,6 +2816,7 @@ export type Database = {
       fn_change_subscription_plan: {
         Args: { p_new_plan_version_id: string; p_subscription_id: string }
         Returns: {
+          bike_id: string | null
           cancel_at_period_end: boolean
           canceled_at: string | null
           created_at: string
@@ -2762,6 +2826,8 @@ export type Database = {
           payment_method:
             | Database["public"]["Enums"]["payment_method_enum"]
             | null
+          pending_plan_version_id: string | null
+          pending_since: string | null
           plan_version_id: string
           started_at: string
           status: Database["public"]["Enums"]["subscription_status_enum"]
@@ -2940,6 +3006,40 @@ export type Database = {
           isOneToOne: true
           isSetofReturn: false
         }
+      }
+      fn_request_bike_plan_change: {
+        Args: { p_bike_id: string; p_plan_version_id: string }
+        Returns: {
+          bike_id: string | null
+          cancel_at_period_end: boolean
+          canceled_at: string | null
+          created_at: string
+          current_period_end: string | null
+          current_period_start: string
+          id: string
+          payment_method:
+            | Database["public"]["Enums"]["payment_method_enum"]
+            | null
+          pending_plan_version_id: string | null
+          pending_since: string | null
+          plan_version_id: string
+          started_at: string
+          status: Database["public"]["Enums"]["subscription_status_enum"]
+          stripe_customer_id: string | null
+          stripe_subscription_id: string | null
+          updated_at: string
+          user_id: string
+        }
+        SetofOptions: {
+          from: "*"
+          to: "subscriptions"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
+      fn_sync_bike_subscriptions: {
+        Args: { p_user_id: string }
+        Returns: number
       }
       get_appointment_staff: {
         Args: { _appointment_ids: string[] }
