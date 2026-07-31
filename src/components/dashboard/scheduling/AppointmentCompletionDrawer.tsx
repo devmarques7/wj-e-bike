@@ -31,6 +31,7 @@ import BikeBriefingPanel from "./BikeBriefingPanel";
 import DeliveryChecklistPanel, { type DeliveryItem } from "./DeliveryChecklistPanel";
 import { useWorkPause } from "@/lib/workshop/workPause";
 import { ensureShiftActive } from "@/hooks/useShift";
+import { awardAppointmentPoints } from "@/lib/rewards/rewards";
 
 const BRIEFING_ID = "__briefing__";
 const DELIVERY_ID = "__delivery__";
@@ -393,7 +394,7 @@ export default function AppointmentCompletionDrawer({
     setActiveStageId(next ? next.id : DELIVERY_ID);
   };
 
-  const completeAppointment = async () => {
+  const completeAppointment = async (conditionScore?: number | null) => {
     if (!appointment) return;
     setSaving(true);
     const { data: auth } = await supabase.auth.getUser();
@@ -411,11 +412,17 @@ export default function AppointmentCompletionDrawer({
           : { assigned_mechanic_id: meId }),
       })
       .eq("id", appointment.id);
-    setSaving(false);
     if (error) {
+      setSaving(false);
       toast.error(error.message);
       return;
     }
+
+    /* Award the E-Pass points for this revision: service points + condition
+       bonus + extra items purchased, using the database reward rules. */
+    const { points } = await awardAppointmentPoints(appointment.id, conditionScore ?? null);
+    setSaving(false);
+    if (points > 0) toast.success(`+${points} E-Pass points awarded`);
     toast.success(t("workshop.drawer.done_toast"));
     onCompleted();
     onOpenChange(false);
@@ -746,7 +753,7 @@ export default function AppointmentCompletionDrawer({
                       setAssessOpen(true);
                       return;
                     }
-                    completeAppointment();
+                    void completeAppointment(null);
                   }}
                   className={cn(
                     "h-9 text-xs",
@@ -769,19 +776,19 @@ export default function AppointmentCompletionDrawer({
           </div>
         )}
 
-        {assessBikeId && (
+        {assessBikeId ? (
           <BikeAssessmentDialog
             open={assessOpen}
             onOpenChange={setAssessOpen}
             bikeId={assessBikeId}
             bikeModel={briefing?.bike?.model ?? null}
-            onSaved={() => {
+            onSaved={(res) => {
               setAssessDone(true);
               setAssessOpen(false);
-              void completeAppointment();
+              void completeAppointment(res?.overall ?? null);
             }}
           />
-        )}
+        ) : null}
       </SheetContent>
     </Sheet>
   );

@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { useEffect, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useAuth } from "@/contexts/AuthContext";
+import { useRewards } from "@/contexts/RewardsContext";
 import RoleDashboardLayout from "@/components/dashboard/RoleDashboardLayout";
 import { supabase } from "@/integrations/supabase/client";
 import StyledEPassQR from "@/components/dashboard/StyledEPassQR";
@@ -193,7 +194,14 @@ export default function MyWallet() {
     return () => { cancelled = true; };
   }, [user?.id]);
 
-  const totalPoints = useMemo(() => history.reduce((s, h) => s + h.points, 0), [history]);
+  /* E-Pass points come from the reward ledger (service + condition bonus +
+     extras). Falls back to the service reward points while the ledger is
+     still empty for legacy appointments. */
+  const { total: ledgerPoints } = useRewards();
+  const totalPoints = useMemo(
+    () => (ledgerPoints > 0 ? ledgerPoints : history.reduce((s, h) => s + h.points, 0)),
+    [ledgerPoints, history],
+  );
 
   const totalPages = useMemo(() => Math.max(1, Math.ceil(history.length / HISTORY_PAGE_SIZE)), [history]);
   const paginatedHistory = useMemo(() => {

@@ -1970,6 +1970,120 @@ export type Database = {
         }
         Relationships: []
       }
+      reward_points_ledger: {
+        Row: {
+          appointment_id: string | null
+          base_points: number
+          bike_id: string | null
+          condition_score: number | null
+          created_at: string
+          created_by: string | null
+          description: string | null
+          id: string
+          metadata: Json
+          multiplier: number
+          points: number
+          rule_code: string | null
+          source_id: string | null
+          source_type: string
+          user_id: string
+        }
+        Insert: {
+          appointment_id?: string | null
+          base_points?: number
+          bike_id?: string | null
+          condition_score?: number | null
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          id?: string
+          metadata?: Json
+          multiplier?: number
+          points?: number
+          rule_code?: string | null
+          source_id?: string | null
+          source_type?: string
+          user_id: string
+        }
+        Update: {
+          appointment_id?: string | null
+          base_points?: number
+          bike_id?: string | null
+          condition_score?: number | null
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          id?: string
+          metadata?: Json
+          multiplier?: number
+          points?: number
+          rule_code?: string | null
+          source_id?: string | null
+          source_type?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "reward_points_ledger_appointment_id_fkey"
+            columns: ["appointment_id"]
+            isOneToOne: false
+            referencedRelation: "appointments"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "reward_points_ledger_bike_id_fkey"
+            columns: ["bike_id"]
+            isOneToOne: false
+            referencedRelation: "customer_bikes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      reward_rules: {
+        Row: {
+          base_points: number
+          code: string
+          created_at: string
+          description: string | null
+          id: string
+          is_active: boolean
+          kind: string
+          label: string
+          min_condition_score: number | null
+          multiplier: number
+          points_per_eur: number
+          updated_at: string
+        }
+        Insert: {
+          base_points?: number
+          code: string
+          created_at?: string
+          description?: string | null
+          id?: string
+          is_active?: boolean
+          kind?: string
+          label: string
+          min_condition_score?: number | null
+          multiplier?: number
+          points_per_eur?: number
+          updated_at?: string
+        }
+        Update: {
+          base_points?: number
+          code?: string
+          created_at?: string
+          description?: string | null
+          id?: string
+          is_active?: boolean
+          kind?: string
+          label?: string
+          min_condition_score?: number | null
+          multiplier?: number
+          points_per_eur?: number
+          updated_at?: string
+        }
+        Relationships: []
+      }
       service_types: {
         Row: {
           base_price: number | null
@@ -2581,6 +2695,10 @@ export type Database = {
           isOneToOne: true
           isSetofReturn: false
         }
+      }
+      fn_award_appointment_points: {
+        Args: { p_appointment_id: string; p_condition_score?: number }
+        Returns: number
       }
       fn_cancel_bike_subscription: {
         Args: { p_bike_id: string; p_reason?: string }

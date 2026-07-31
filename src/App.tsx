@@ -9,6 +9,7 @@ import { ThemeProvider } from "@/contexts/ThemeContext";
 import { SystemStatusProvider } from "@/hooks/useSystemStatus";
 import { SelectedBikeProvider } from "@/contexts/SelectedBikeContext";
 import { SchedulingAvailabilityProvider } from "@/contexts/SchedulingAvailabilityContext";
+import { RewardsProvider } from "@/contexts/RewardsContext";
 import Index from "./pages/Index";
 import Gallery from "./pages/Gallery";
 import ProductDetail from "./pages/ProductDetail";
@@ -73,6 +74,7 @@ const App = () => (
     <AuthProvider>
       <CartProvider>
         <SystemStatusProvider>
+        <RewardsProvider>
         <TooltipProvider>
           <Toaster />
           <Sonner />
@@ -148,6 +150,7 @@ const App = () => (
             </SelectedBikeProvider>
           </BrowserRouter>
         </TooltipProvider>
+        </RewardsProvider>
         </SystemStatusProvider>
       </CartProvider>
     </AuthProvider>
