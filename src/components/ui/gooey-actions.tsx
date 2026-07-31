@@ -445,7 +445,7 @@ export function GooeyActions({
             }}
             className="absolute rounded-full bg-wj-green"
             style={{
-              left: "50%",
+              left: leftPct,
               top: topPct,
               width: SAT_PX,
               height: SAT_PX,
