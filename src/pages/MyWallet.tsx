@@ -22,6 +22,7 @@ import ActivityDayPanel from "@/components/dashboard/wallet/ActivityDayPanel";
 import ServiceRecordDialog from "@/components/dashboard/wallet/ServiceRecordDialog";
 import ArchivedBikesTable from "@/components/dashboard/wallet/ArchivedBikesTable";
 import { useActivityYear, type ActivityDay, type ActivityRecord } from "@/hooks/wallet/useActivityYear";
+import { parseEntitlements, type PlanEntitlements } from "@/lib/plans/entitlements";
 
 type PointEntry = {
   id: string;
