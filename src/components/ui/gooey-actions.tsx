@@ -317,6 +317,7 @@ export function GooeyActions({
     pointerRef.current = { x: e.clientX - r.left, y: e.clientY - r.top, inside: true };
   };
   const release = () => {
+    if (pressedRef.current) return;
     pointerRef.current = { x: -1e4, y: -1e4, inside: false };
   };
 
