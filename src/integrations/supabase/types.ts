@@ -2052,6 +2052,13 @@ export type Database = {
             foreignKeyName: "subscription_events_from_plan_version_id_fkey"
             columns: ["from_plan_version_id"]
             isOneToOne: false
+            referencedRelation: "plan_versions_public"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "subscription_events_from_plan_version_id_fkey"
+            columns: ["from_plan_version_id"]
+            isOneToOne: false
             referencedRelation: "v_subscriber_summary"
             referencedColumns: ["plan_version_id"]
           },
@@ -2074,6 +2081,13 @@ export type Database = {
             columns: ["to_plan_version_id"]
             isOneToOne: false
             referencedRelation: "plan_versions"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "subscription_events_to_plan_version_id_fkey"
+            columns: ["to_plan_version_id"]
+            isOneToOne: false
+            referencedRelation: "plan_versions_public"
             referencedColumns: ["id"]
           },
           {
@@ -2146,6 +2160,13 @@ export type Database = {
             columns: ["plan_version_id"]
             isOneToOne: false
             referencedRelation: "plan_versions"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "subscriptions_plan_version_id_fkey"
+            columns: ["plan_version_id"]
+            isOneToOne: false
+            referencedRelation: "plan_versions_public"
             referencedColumns: ["id"]
           },
           {
@@ -2234,6 +2255,70 @@ export type Database = {
       }
     }
     Views: {
+      plan_versions_public: {
+        Row: {
+          currency: string | null
+          effective_from: string | null
+          features: Json | null
+          id: string | null
+          interval: Database["public"]["Enums"]["plan_interval_enum"] | null
+          plan_id: string | null
+          price: number | null
+          status: Database["public"]["Enums"]["plan_version_status_enum"] | null
+          trial_days: number | null
+          urgent_service_fee: number | null
+          urgent_service_included: boolean | null
+          version_number: number | null
+        }
+        Insert: {
+          currency?: string | null
+          effective_from?: string | null
+          features?: Json | null
+          id?: string | null
+          interval?: Database["public"]["Enums"]["plan_interval_enum"] | null
+          plan_id?: string | null
+          price?: number | null
+          status?:
+            | Database["public"]["Enums"]["plan_version_status_enum"]
+            | null
+          trial_days?: number | null
+          urgent_service_fee?: number | null
+          urgent_service_included?: boolean | null
+          version_number?: number | null
+        }
+        Update: {
+          currency?: string | null
+          effective_from?: string | null
+          features?: Json | null
+          id?: string | null
+          interval?: Database["public"]["Enums"]["plan_interval_enum"] | null
+          plan_id?: string | null
+          price?: number | null
+          status?:
+            | Database["public"]["Enums"]["plan_version_status_enum"]
+            | null
+          trial_days?: number | null
+          urgent_service_fee?: number | null
+          urgent_service_included?: boolean | null
+          version_number?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "plan_versions_plan_id_fkey"
+            columns: ["plan_id"]
+            isOneToOne: false
+            referencedRelation: "plans"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "plan_versions_plan_id_fkey"
+            columns: ["plan_id"]
+            isOneToOne: false
+            referencedRelation: "v_plan_kpis"
+            referencedColumns: ["plan_id"]
+          },
+        ]
+      }
       v_mrr_timeseries: {
         Row: {
           month: string | null
