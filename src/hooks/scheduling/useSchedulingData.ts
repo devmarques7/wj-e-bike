@@ -2,6 +2,7 @@ import { useCallback, useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { ensureShiftActive } from "@/hooks/useShift";
+import { useAppointmentsRealtime } from "@/hooks/scheduling/useAppointmentsRealtime";
 
 /* ------------------------------------------------------------------ */
 /* Types                                                              */
@@ -320,25 +321,9 @@ export function useSchedulingData(opts?: { date?: string; customerUserId?: strin
     fetchAll();
   }, [fetchAll]);
 
-  // Realtime: refresh whenever this scope's appointments change
-  useEffect(() => {
-    const channel = supabase
-      .channel(`sched-${customerUserId ?? "all"}-${bikeId ?? "any"}-${date}`)
-      .on(
-        "postgres_changes",
-        {
-          event: "*",
-          schema: "public",
-          table: "appointments",
-          ...(customerUserId ? { filter: `user_id=eq.${customerUserId}` } : {}),
-        },
-        () => fetchAll(),
-      )
-      .subscribe();
-    return () => {
-      supabase.removeChannel(channel);
-    };
-  }, [customerUserId, bikeId, date, fetchAll]);
+  // Realtime: shared global bus — staff and admins see new bookings instantly,
+  // whatever date or customer they were created for.
+  useAppointmentsRealtime(fetchAll);
 
   /* ------------------- mutations ------------------- */
 
