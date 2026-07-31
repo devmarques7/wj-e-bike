@@ -40,6 +40,8 @@ type PlanInfo = {
   interval: string;
   features: string[];
   description: string | null;
+  /** Rights granted by this plan, seeded per plan version in the database. */
+  entitlements: PlanEntitlements;
 };
 
 
@@ -103,7 +105,7 @@ export default function MyWallet() {
       // 1. Active plans
       const { data: allPlans } = await supabase
         .from("plans")
-        .select("id, slug, name, tier_level, description, is_active, plan_versions:plan_versions(id, price, currency, interval, features, status, version_number)")
+        .select("id, slug, name, tier_level, description, is_active, plan_versions:plan_versions(id, price, currency, interval, features, entitlements, status, version_number)")
         .eq("is_active", true)
         .order("tier_level", { ascending: true });
 
@@ -122,6 +124,7 @@ export default function MyWallet() {
             interval: v.interval || "monthly",
             features: Array.isArray(v.features) ? v.features : [],
             description: p.description,
+            entitlements: parseEntitlements(v.entitlements),
           } as PlanInfo;
         })
         .filter(Boolean) as PlanInfo[];
