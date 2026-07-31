@@ -1,6 +1,6 @@
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
-import { Menu, Home } from "lucide-react";
+import { Menu, Home, LogOut, Moon, Sun } from "lucide-react";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -11,6 +11,8 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { cn } from "@/lib/utils";
 import { useDashboardNav, type DashboardNavItem } from "@/hooks/useDashboardNav";
+import { useTheme } from "@/contexts/ThemeContext";
+import { useAuth } from "@/contexts/AuthContext";
 
 /**
  * Mobile floating pill nav, identical visual shell for every role.
@@ -20,6 +22,8 @@ export default function UnifiedFloatingNav() {
   const location = useLocation();
   const navigate = useNavigate();
   const nav = useDashboardNav();
+  const { theme, toggleTheme } = useTheme();
+  const { logout } = useAuth();
 
   const isActive = (href: string) =>
     href === nav.homeHref
@@ -72,8 +76,7 @@ export default function UnifiedFloatingNav() {
             />
           )}
 
-          {more.length > 0 && (
-            <DropdownMenu>
+          <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <button
                   className={cn(
@@ -86,7 +89,7 @@ export default function UnifiedFloatingNav() {
                 </button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end" side="top" className="mb-2 w-52">
-                <DropdownMenuLabel>More</DropdownMenuLabel>
+                {more.length > 0 && <DropdownMenuLabel>More</DropdownMenuLabel>}
                 {more.map((m) => (
                   <DropdownMenuItem
                     key={m.href}
@@ -97,15 +100,32 @@ export default function UnifiedFloatingNav() {
                     {m.label}
                   </DropdownMenuItem>
                 ))}
-                <DropdownMenuSeparator />
+                {more.length > 0 && <DropdownMenuSeparator />}
+                <DropdownMenuItem
+                  onSelect={(e) => {
+                    e.preventDefault();
+                    toggleTheme();
+                  }}
+                  className="gap-2"
+                >
+                  {theme === "dark" ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
+                  {theme === "dark" ? "Light mode" : "Dark mode"}
+                </DropdownMenuItem>
                 <DropdownMenuItem asChild>
                   <Link to="/" className="gap-2">
                     Back to site
                   </Link>
                 </DropdownMenuItem>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem
+                  onClick={() => logout()}
+                  className="gap-2 text-destructive focus:text-destructive"
+                >
+                  <LogOut className="h-4 w-4" />
+                  Log out
+                </DropdownMenuItem>
               </DropdownMenuContent>
-            </DropdownMenu>
-          )}
+          </DropdownMenu>
         </div>
       </motion.nav>
     </>
