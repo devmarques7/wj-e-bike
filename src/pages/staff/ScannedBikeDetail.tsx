@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { motion } from "framer-motion";
-import { Navigate, useLocation, useNavigate, useParams } from "react-router-dom";
+import { Navigate, useNavigate, useParams } from "react-router-dom";
 import { Loader2, ScanLine } from "lucide-react";
 import RoleDashboardLayout from "@/components/dashboard/RoleDashboardLayout";
 import GarageBikeCard from "@/components/dashboard/garage/GarageBikeCard";
@@ -24,7 +24,6 @@ import { useServiceBriefing } from "@/hooks/staff/useServiceBriefing";
  */
 export default function ScannedBikeDetail() {
   const { bikeId } = useParams<{ bikeId: string }>();
-  const location = useLocation();
   const navigate = useNavigate();
   const { user, isAuthenticated, isLoading } = useAuth();
   const { bike, owner, loading, error, health, nextRevision, daysToRevision, refetch } =
@@ -110,7 +109,6 @@ export default function ScannedBikeDetail() {
   if (!isAuthenticated) return <Navigate to="/auth" replace />;
 
   const isStaff = user?.role === "staff" || user?.role === "admin";
-  const garageHref = isStaff ? "/dashboard/staff/garage" : "/dashboard/garage";
   const ownerName = owner?.name || owner?.email || "Unknown customer";
 
   return (
