@@ -51,7 +51,6 @@ export default function StaffGarage() {
       change: `${stats.today} in today · ${stats.tomorrow} tomorrow`,
       trend: "neutral" as const,
       icon: Bike,
-      pending: stats.inGarage > 0,
     },
     {
       label: "Bikes for repair",
