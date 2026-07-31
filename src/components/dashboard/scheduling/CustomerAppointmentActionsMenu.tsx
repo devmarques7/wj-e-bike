@@ -61,6 +61,8 @@ interface Props {
     durationMinutes?: number | null,
   ) => Promise<boolean>;
   onCancel: (id: string) => Promise<boolean>;
+  /** "menu" (default) renders the dropdown; "reschedule" renders a single CTA. */
+  variant?: "menu" | "reschedule";
 }
 
 function timeSlots(): string[] {
@@ -82,6 +84,7 @@ export default function CustomerAppointmentActionsMenu({
   onViewDetails,
   onReschedule,
   onCancel,
+  variant = "menu",
 }: Props) {
   const { t, i18n } = useTranslation();
   const dateLocale = i18n.language === "pt" ? pt : enGB;
@@ -101,6 +104,21 @@ export default function CustomerAppointmentActionsMenu({
 
   return (
     <>
+      {variant === "reschedule" ? (
+        <Button
+          size="sm"
+          variant="outline"
+          disabled={isTerminal}
+          onClick={(e) => {
+            e.stopPropagation();
+            setRescheduleOpen(true);
+          }}
+          className="h-6 px-2 text-[10px] gap-1 border-wj-green/40 text-wj-green hover:bg-wj-green/10"
+        >
+          <CalendarClock className="h-3 w-3" />
+          {t("workshop.actions.reschedule", "Reschedule")}
+        </Button>
+      ) : (
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
           <Button size="sm" variant="ghost" className="h-7 w-7 p-0 hover:bg-muted/60">
@@ -135,6 +153,7 @@ export default function CustomerAppointmentActionsMenu({
           </DropdownMenuItem>
         </DropdownMenuContent>
       </DropdownMenu>
+      )}
 
       {/* Reschedule */}
       <Dialog open={rescheduleOpen} onOpenChange={setRescheduleOpen}>
