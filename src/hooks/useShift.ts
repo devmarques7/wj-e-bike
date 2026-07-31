@@ -14,10 +14,22 @@ export type ShiftRow = {
   worked_minutes: number;
   scheduled_minutes: number;
   status: string;
+  /** Total paused minutes accumulated today (closed breaks only). */
+  break_minutes: number;
+};
+
+export type ShiftBreak = {
+  id: string;
+  started_at: string;
+  ended_at: string | null;
+  duration_seconds: number | null;
+  reason: string | null;
 };
 
 const SELECT_COLS =
-  "id, shift_date, clock_in, clock_out, worked_minutes, scheduled_minutes, status";
+  "id, shift_date, clock_in, clock_out, worked_minutes, scheduled_minutes, status, break_minutes";
+
+const BREAK_COLS = "id, started_at, ended_at, duration_seconds, reason";
 
 const ymd = (d: Date) => d.toISOString().slice(0, 10);
 const parseHM = (t: string | null) => {
@@ -29,12 +41,13 @@ const parseHM = (t: string | null) => {
 // ---- Module-level shared store so every consumer (ShiftTag, ShiftTracker, ...) stays in sync ----
 type State = {
   row: ShiftRow | null;
+  breaks: ShiftBreak[];
   loading: boolean;
   working: boolean;
   userId: string;
 };
 
-let state: State = { row: null, loading: true, working: false, userId: "" };
+let state: State = { row: null, breaks: [], loading: true, working: false, userId: "" };
 const listeners = new Set<() => void>();
 const emit = () => listeners.forEach((l) => l());
 const setState = (patch: Partial<State>) => {
@@ -51,7 +64,53 @@ async function loadFor(userId: string) {
     .eq("user_id", userId)
     .eq("shift_date", today)
     .maybeSingle();
-  setState({ row: (data as ShiftRow | null) ?? null, loading: false });
+  const row = (data as ShiftRow | null) ?? null;
+  let breaks: ShiftBreak[] = [];
+  if (row) {
+    const { data: br } = await supabase
+      .from("staff_shift_breaks")
+      .select(BREAK_COLS)
+      .eq("shift_id", row.id)
+      .order("started_at", { ascending: true });
+    breaks = (br as ShiftBreak[] | null) ?? [];
+  }
+  setState({ row, breaks, loading: false });
+}
+
+/** Seconds of *closed* breaks for the current shift. */
+function closedBreakSeconds(breaks: ShiftBreak[]) {
+  return breaks
+    .filter((b) => b.ended_at)
+    .reduce(
+      (acc, b) =>
+        acc +
+        (b.duration_seconds ??
+          Math.max(
+            0,
+            Math.floor(
+              (new Date(b.ended_at as string).getTime() - new Date(b.started_at).getTime()) / 1000,
+            ),
+          )),
+      0,
+    );
+}
+
+const openBreakOf = (breaks: ShiftBreak[]) => breaks.find((b) => !b.ended_at) ?? null;
+
+/**
+ * Net worked seconds = (reference − first clock-in) − paused time.
+ * `clock_in` is written once (first entry of the day) and never overwritten.
+ */
+function netWorkedSeconds(row: ShiftRow | null, breaks: ShiftBreak[], nowMs: number) {
+  if (!row?.clock_in) return (row?.worked_minutes ?? 0) * 60;
+  const open = openBreakOf(breaks);
+  const endMs = row.clock_out
+    ? new Date(row.clock_out).getTime()
+    : open
+      ? new Date(open.started_at).getTime()
+      : nowMs;
+  const gross = Math.max(0, Math.floor((endMs - new Date(row.clock_in).getTime()) / 1000));
+  return Math.max(0, gross - closedBreakSeconds(breaks));
 }
 
 async function getScheduledMinutesForToday(userId: string) {
@@ -87,7 +146,7 @@ async function start(userId: string) {
       .select(SELECT_COLS)
       .single();
     if (error) throw error;
-    setState({ row: data as ShiftRow });
+    setState({ row: data as ShiftRow, breaks: [] });
     clearWorkPause();
     toast.success("Shift started");
   } catch (e: any) {
@@ -102,14 +161,36 @@ async function resume() {
   if (!row || state.working) return;
   setState({ working: true });
   try {
+    // Close the open break (if any) and roll its duration into break_minutes.
+    const open = openBreakOf(state.breaks);
+    let breaks = state.breaks;
+    let breakMinutes = row.break_minutes ?? 0;
+    if (open) {
+      const endedAt = new Date();
+      const dur = Math.max(
+        0,
+        Math.floor((endedAt.getTime() - new Date(open.started_at).getTime()) / 1000),
+      );
+      await supabase
+        .from("staff_shift_breaks")
+        .update({ ended_at: endedAt.toISOString(), duration_seconds: dur })
+        .eq("id", open.id);
+      breaks = state.breaks.map((b) =>
+        b.id === open.id
+          ? { ...b, ended_at: endedAt.toISOString(), duration_seconds: dur }
+          : b,
+      );
+      breakMinutes = Math.round(closedBreakSeconds(breaks) / 60);
+    }
+
     const { data, error } = await supabase
       .from("staff_shifts")
-      .update({ clock_in: new Date().toISOString(), status: "active" })
+      .update({ status: "active", break_minutes: breakMinutes })
       .eq("id", row.id)
       .select(SELECT_COLS)
       .single();
     if (error) throw error;
-    setState({ row: data as ShiftRow });
+    setState({ row: data as ShiftRow, breaks });
     await resumeWork(state.userId);
     toast.success("Shift resumed");
   } catch (e: any) {
@@ -124,21 +205,30 @@ async function pause() {
   if (!row || state.working || row.status !== "active") return;
   setState({ working: true });
   try {
-    const added = row.clock_in
-      ? Math.max(0, Math.floor((Date.now() - new Date(row.clock_in).getTime()) / 60000))
-      : 0;
+    const startedAt = new Date();
+    const { data: brk } = await supabase
+      .from("staff_shift_breaks")
+      .insert({
+        shift_id: row.id,
+        user_id: state.userId,
+        started_at: startedAt.toISOString(),
+      })
+      .select(BREAK_COLS)
+      .single();
+    const breaks = brk ? [...state.breaks, brk as ShiftBreak] : state.breaks;
+
+    const worked = Math.floor(netWorkedSeconds(row, breaks, startedAt.getTime()) / 60);
     const { data, error } = await supabase
       .from("staff_shifts")
       .update({
-        worked_minutes: (row.worked_minutes ?? 0) + added,
-        clock_in: null,
+        worked_minutes: worked,
         status: "paused",
       })
       .eq("id", row.id)
       .select(SELECT_COLS)
       .single();
     if (error) throw error;
-    setState({ row: data as ShiftRow });
+    setState({ row: data as ShiftRow, breaks });
     await pauseWork(state.userId);
     toast.success("Shift paused — running job on hold");
   } catch (e: any) {
@@ -153,25 +243,46 @@ async function finish() {
   if (!row || state.working) return;
   setState({ working: true });
   try {
-    const added =
-      row.status === "active" && row.clock_in
-        ? Math.max(0, Math.floor((Date.now() - new Date(row.clock_in).getTime()) / 60000))
-        : 0;
+    const endedAt = new Date();
+    // Close a still-open break so the paused time counts in the daily total.
+    let breaks = state.breaks;
+    const open = openBreakOf(breaks);
+    if (open) {
+      const dur = Math.max(
+        0,
+        Math.floor((endedAt.getTime() - new Date(open.started_at).getTime()) / 1000),
+      );
+      await supabase
+        .from("staff_shift_breaks")
+        .update({ ended_at: endedAt.toISOString(), duration_seconds: dur })
+        .eq("id", open.id);
+      breaks = breaks.map((b) =>
+        b.id === open.id ? { ...b, ended_at: endedAt.toISOString(), duration_seconds: dur } : b,
+      );
+    }
+    const breakSec = closedBreakSeconds(breaks);
+    const gross = row.clock_in
+      ? Math.max(0, Math.floor((endedAt.getTime() - new Date(row.clock_in).getTime()) / 1000))
+      : (row.worked_minutes ?? 0) * 60 + breakSec;
+    const worked = Math.max(0, Math.floor((gross - breakSec) / 60));
+
     const { data, error } = await supabase
       .from("staff_shifts")
       .update({
-        worked_minutes: (row.worked_minutes ?? 0) + added,
-        clock_out: new Date().toISOString(),
-        clock_in: null,
+        worked_minutes: worked,
+        break_minutes: Math.round(breakSec / 60),
+        clock_out: endedAt.toISOString(),
         status: "completed",
       })
       .eq("id", row.id)
       .select(SELECT_COLS)
       .single();
     if (error) throw error;
-    setState({ row: data as ShiftRow });
+    setState({ row: data as ShiftRow, breaks });
     clearWorkPause();
-    toast.success("Shift finished");
+    toast.success(
+      `Shift finished — ${Math.floor(worked / 60)}h${String(worked % 60).padStart(2, "0")} worked, ${Math.round(breakSec / 60)}m paused`,
+    );
   } catch (e: any) {
     toast.error(e.message ?? "Failed to finish");
   } finally {
@@ -244,12 +355,17 @@ export function useShift() {
 
   const elapsedSec = useMemo(() => {
     const row = state.row;
-    const base = (row?.worked_minutes ?? 0) * 60;
-    if (status === "active" && row?.clock_in) {
-      return base + Math.max(0, Math.floor((now - new Date(row.clock_in).getTime()) / 1000));
-    }
-    return base;
-  }, [state.row, now, status]);
+    if (!row) return 0;
+    if (status === "completed") return (row.worked_minutes ?? 0) * 60;
+    return netWorkedSeconds(row, state.breaks, now);
+  }, [state.row, state.breaks, now, status]);
+
+  /** Paused seconds so far today (open break counts live). */
+  const breakSec = useMemo(() => {
+    const open = openBreakOf(state.breaks);
+    const live = open ? Math.max(0, Math.floor((now - new Date(open.started_at).getTime()) / 1000)) : 0;
+    return closedBreakSeconds(state.breaks) + live;
+  }, [state.breaks, now]);
 
   // A paused shift must always freeze the running job timer — and resuming the
   // shift must always release it, no matter where the pause came from.
@@ -261,6 +377,9 @@ export function useShift() {
   return {
     userId,
     row: state.row,
+    breaks: state.breaks,
+    breakSec,
+    breakCount: state.breaks.length,
     loading: state.loading,
     working: state.working,
     status,
