@@ -382,7 +382,11 @@ export function useSchedulingData(opts?: { date?: string; customerUserId?: strin
   const updateAppointmentStatus = useCallback(
     async (id: string, status: AppointmentRow["status"]) => {
       const patch: any = { status };
-      if (status === "in_progress") patch.work_started_at = new Date().toISOString();
+      if (status === "in_progress") {
+        // Starting a job implies the mechanic is on the clock: start/resume shift.
+        await ensureShiftActive();
+        patch.work_started_at = new Date().toISOString();
+      }
       if (status === "completed") patch.work_ended_at = new Date().toISOString();
       const { error } = await supabase.from("appointments").update(patch).eq("id", id);
       if (error) {
