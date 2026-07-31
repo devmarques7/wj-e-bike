@@ -29,6 +29,8 @@ export interface GooeyActionsProps
   defaultOpen?: boolean;
   onOpenChange?: (open: boolean) => void;
   onSelect?: (id: string) => void;
+  /** Horizontal anchor of the core inside the box (0–1). */
+  coreX?: number;
   /** Vertical anchor of the core inside the box (0–1). */
   coreY?: number;
   reducedMotion?: boolean;
