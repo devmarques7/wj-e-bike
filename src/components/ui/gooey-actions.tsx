@@ -166,7 +166,7 @@ export function GooeyActions({
   const center = React.useCallback(() => {
     const root = rootRef.current;
     if (!root) return { x: 0, y: 0 };
-    return { x: root.clientWidth / 2, y: root.clientHeight * params.current.coreY };
+    return { x: root.clientWidth * params.current.coreX, y: root.clientHeight * params.current.coreY };
   }, []);
 
   const applyOne = React.useCallback((i: number) => {
