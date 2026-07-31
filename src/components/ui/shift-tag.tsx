@@ -31,6 +31,8 @@ export function ShiftTag() {
     working,
     status,
     elapsedSec,
+    breakSec,
+    breakCount,
     start: handleStart,
     pause: handlePause,
     resume: handleResume,
