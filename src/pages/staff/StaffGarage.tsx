@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { motion } from "framer-motion";
 import { Navigate } from "react-router-dom";
-import { Bike, Wrench, AlertTriangle, CheckCircle2, Clock, Gauge, CalendarDays } from "lucide-react";
+import { Bike, Wrench, AlertTriangle, CheckCircle2, Clock, Gauge, CalendarDays, UserCheck } from "lucide-react";
 import RoleDashboardLayout from "@/components/dashboard/RoleDashboardLayout";
 import StaffKPICard from "@/components/dashboard/StaffKPICard";
 import KPICarousel from "@/components/dashboard/KPICarousel";
@@ -10,6 +10,12 @@ import AppointmentsTableCard from "@/components/dashboard/scheduling/Appointment
 import { useAuth } from "@/contexts/AuthContext";
 import { useStaffGarageStats, GARAGE_PERIODS, type GaragePeriod } from "@/hooks/staff/useStaffGarageStats";
 import { cn } from "@/lib/utils";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 
 const fmtMin = (m: number | null) =>
   m == null
