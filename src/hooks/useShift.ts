@@ -32,7 +32,7 @@ const SELECT_COLS =
 
 const BREAK_COLS = "id, started_at, ended_at, duration_seconds, reason";
 
-const ymd = (d: Date) => d.toISOString().slice(0, 10);
+import { localYmd as ymd } from "@/lib/scheduling/localDate";
 const parseHM = (t: string | null) => {
   if (!t) return 0;
   const [h, m] = t.slice(0, 5).split(":").map(Number);

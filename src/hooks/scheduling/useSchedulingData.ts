@@ -109,7 +109,8 @@ export interface AppointmentRowFull extends AppointmentRow {
 /* Helpers                                                             */
 /* ------------------------------------------------------------------ */
 
-const todayISO = () => new Date().toISOString().slice(0, 10);
+import { localYmd } from "@/lib/scheduling/localDate";
+const todayISO = () => localYmd(new Date());
 
 /** Keep the most recent currently-valid row per day_of_week. */
 function pickLatestPerDay(rows: BusinessHour[]): BusinessHour[] {
@@ -187,8 +188,8 @@ export function useSchedulingData(opts?: { date?: string; customerUserId?: strin
         const { data: weekAppts } = await supabase
           .from("appointments")
           .select("assigned_mechanic_id")
-          .gte("scheduled_date", weekStart.toISOString().slice(0, 10))
-          .lte("scheduled_date", weekEnd.toISOString().slice(0, 10))
+          .gte("scheduled_date", localYmd(weekStart))
+          .lte("scheduled_date", localYmd(weekEnd))
           .in("status", ["pending", "confirmed", "in_progress", "completed"]);
 
         const counts = new Map<string, number>();

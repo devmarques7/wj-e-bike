@@ -35,8 +35,9 @@ import { useTranslation } from "react-i18next";
 
 const DAY_KEYS = ["sun", "mon", "tue", "wed", "thu", "fri", "sat"] as const;
 const trim = (t: string | null | undefined) => (t ? t.slice(0, 5) : "");
-const todayISO = () => new Date().toISOString().slice(0, 10);
-const ymd = (d: Date) => d.toISOString().slice(0, 10);
+import { localYmd } from "@/lib/scheduling/localDate";
+const todayISO = () => localYmd(new Date());
+import { localYmd as ymd } from "@/lib/scheduling/localDate";
 
 type DraftRow = {
   day_of_week: number;

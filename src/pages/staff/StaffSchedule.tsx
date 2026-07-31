@@ -35,6 +35,8 @@ import MyShiftWeekCompact from "@/components/dashboard/scheduling/MyShiftWeekCom
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { useSchedulingAvailability } from "@/contexts/SchedulingAvailabilityContext";
 import { dateKey } from "@/lib/scheduling/availabilityGuard";
+import { localYmd } from "@/lib/scheduling/localDate";
+import TodayProgressList from "@/components/dashboard/staff/TodayProgressList";
 import { useStaffWeekWorkload } from "@/hooks/staff/useStaffWeekWorkload";
 
 const DAY_KEYS = ["sun", "mon", "tue", "wed", "thu", "fri", "sat"] as const;
@@ -91,7 +93,7 @@ export default function StaffSchedule() {
     ? ["#0a0a0a", "#0d2818", "#058c42", "#10b981", "#022c1a"]
     : ["#f5f7f5", "#dff5e8", "#058c42", "#86efac", "#ecfdf5"];
 
-  const dateStr = (selectedDate ?? new Date()).toISOString().slice(0, 10);
+  const dateStr = localYmd(selectedDate ?? new Date());
   const {
     loading,
     exceptions,
@@ -116,7 +118,7 @@ export default function StaffSchedule() {
   // Load my working hours (staff_schedules) to derive real weekly availability
   useEffect(() => {
     if (!mineUserId) return;
-    const today = new Date().toISOString().slice(0, 10);
+    const today = localYmd(new Date());
     (async () => {
       const { data, error } = await supabase
         .from("staff_schedules")
@@ -339,40 +341,10 @@ export default function StaffSchedule() {
                 {dayList.filter((a) => a.status === "completed").length}/{dayList.length}
               </Badge>
             </div>
-            {dayList.length === 0 ? (
-              <p className="text-xs text-muted-foreground">No appointments scheduled for today.</p>
-            ) : (
-              <div className="flex-1 flex flex-col gap-2 overflow-y-auto max-h-[180px] pr-1">
-                {dayList.slice(0, 4).map((a) => (
-                  <div
-                    key={a.id}
-                    className="flex items-center gap-2 p-2 rounded-lg bg-muted/30"
-                  >
-                    <div
-                      className={cn(
-                        "w-1.5 h-6 rounded-full shrink-0",
-                        a.status === "completed"
-                          ? "bg-wj-green"
-                          : a.status === "in_progress"
-                            ? "bg-wj-green animate-pulse"
-                            : "bg-amber-400",
-                      )}
-                    />
-                    <div className="flex-1 min-w-0">
-                      <p className="text-[11px] font-medium text-foreground truncate">
-                        {a.customer_name ?? a.customer_email ?? "—"}
-                      </p>
-                      <p className="text-[10px] text-muted-foreground truncate">
-                        {a.service_name ?? "—"}
-                      </p>
-                    </div>
-                    <Badge variant="outline" className="text-[10px] shrink-0">
-                      {a.scheduled_start_time.slice(0, 5)}
-                    </Badge>
-                  </div>
-                ))}
-              </div>
-            )}
+            <TodayProgressList
+              appointments={dayList}
+              onChanged={() => setScheduleVersion((v) => v + 1)}
+            />
           </motion.div>
 
           {/* Row 2 — My Weekly Schedule (reusing team week with [me]) */}
