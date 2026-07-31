@@ -10,6 +10,8 @@ import {
   ChevronLeft,
   ArrowUpDown,
   Layers,
+  UserPlus,
+  Wand2,
 } from "lucide-react";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { TableHeaderBar } from "@/components/ui/table-header-bar";
@@ -40,6 +42,16 @@ import {
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useSchedulingData, type AppointmentRow } from "@/hooks/scheduling/useSchedulingData";
+import { useAutoDispatch } from "@/hooks/scheduling/useAutoDispatch";
+import {
+  TASK_FILTERS,
+  compareTasks,
+  isTaskOverdue,
+  isTodayScope,
+  matchesFilter,
+  taskBucket,
+  type TaskFilter,
+} from "@/lib/scheduling/taskPriority";
 import AppointmentActionsMenu from "@/components/dashboard/scheduling/AppointmentActionsMenu";
 import CustomerAppointmentActionsMenu from "@/components/dashboard/scheduling/CustomerAppointmentActionsMenu";
 import AppointmentCompletionDrawer from "@/components/dashboard/scheduling/AppointmentCompletionDrawer";
@@ -98,10 +110,18 @@ const getStatusBadge = (status: string, t: (k: string) => string) => {
 /** An appointment row that may actually be a pending scheduling REQUEST. */
 type ApptRow = AppointmentRow & { isRequest?: boolean; requestStatus?: string };
 
-const isOverdue = (a: ApptRow) =>
-  !a.isRequest &&
-  ["pending", "confirmed", "rescheduled"].includes(a.status) &&
-  a.scheduled_date < new Date().toISOString().slice(0, 10);
+const isOverdue = (a: ApptRow) => isTaskOverdue(a);
+
+/** Status dot colour per global filter bucket. */
+const FILTER_DOT: Record<TaskFilter, string> = {
+  pending: "bg-amber-400",
+  requested: "bg-sky-400",
+  ongoing: "bg-wj-green animate-pulse",
+  unassigned: "bg-violet-400",
+  overdue: "bg-orange-500",
+  canceled: "bg-red-500",
+  completed: "bg-wj-green",
+};
 
 interface AppointmentsTableCardProps {
   /** Hide the actions column (read-only mode for non-managers). */
@@ -138,13 +158,13 @@ export default function AppointmentsTableCard({
   const isCustomer = !!customerUserId;
   const effectiveReadOnly = readOnly || isCustomer;
   const [activeTab, setActiveTab] = useState("day");
-  const [statusFilter, setStatusFilter] = useState<
-    "all" | "requested" | "pending" | "ongoing" | "completed" | "canceled" | "overdue"
-  >("all");
+  const [statusFilter, setStatusFilter] = useState<TaskFilter>("pending");
   const [groupBy, setGroupBy] = useState<
     "none" | "status" | "mechanic" | "service" | "plan"
   >("none");
   const [sortAsc, setSortAsc] = useState(true);
+  /** "priority" = global workshop order, "time" = plain chronological. */
+  const [sortMode, setSortMode] = useState<"priority" | "time">("priority");
   const [collapsedGroups, setCollapsedGroups] = useState<Record<string, boolean>>({});
   const [completionTarget, setCompletionTarget] = useState<AppointmentRow | null>(null);
   const [reviewTarget, setReviewTarget] = useState<AppointmentRow | null>(null);
@@ -161,6 +181,13 @@ export default function AppointmentsTableCard({
     deleteAppointment,
     refetch,
   } = useSchedulingData({ customerUserId, bikeId });
+
+  /* Global dispatch role: balances today's unassigned jobs automatically and
+     lets a mechanic claim whatever could not be placed. */
+  const { running: dispatching, dispatch, claimTask, canClaim } = useAutoDispatch({
+    enabled: !isCustomer,
+    onChanged: refetch,
+  });
 
   /* Scheduling requests (waitlist) — shown alongside real appointments. */
   const [requestRows, setRequestRows] = useState<ApptRow[]>([]);
@@ -256,34 +283,38 @@ export default function AppointmentsTableCard({
   const activeAppointment =
     appointments.find((a) => a.status === "in_progress" && a.work_started_at) ?? null;
 
+  /** Rows in scope for this surface, before the status filter is applied. */
+  const scopedRows = useMemo(
+    () =>
+      ([...appointments, ...requestRows] as ApptRow[])
+        .filter((a) =>
+          mineOnlyMechanicId
+            ? a.assigned_mechanic_id === mineOnlyMechanicId || !a.assigned_mechanic_id
+            : true,
+        )
+        .filter((a) => (isCustomer ? true : isTodayScope(a))),
+    [appointments, requestRows, mineOnlyMechanicId, isCustomer],
+  );
+
+  const counts = useMemo(() => {
+    const c = Object.fromEntries(TASK_FILTERS.map((f) => [f, 0])) as Record<TaskFilter, number>;
+    for (const a of scopedRows) {
+      for (const f of TASK_FILTERS) if (matchesFilter(a, f)) c[f] += 1;
+    }
+    return c;
+  }, [scopedRows]);
+
   const filteredSorted = useMemo(() => {
-    const matchStatus = (a: ApptRow) => {
-      const s = a.status as string;
-      if (statusFilter === "all") return true;
-      if (statusFilter === "requested") return s === "requested";
-      if (statusFilter === "overdue") return isOverdue(a);
-      if (statusFilter === "pending")
-        return ["pending", "confirmed", "rescheduled"].includes(s) && !isOverdue(a);
-      if (statusFilter === "ongoing") return s === "in_progress";
-      if (statusFilter === "completed") return s === "completed";
-      if (statusFilter === "canceled") return ["canceled", "no_show"].includes(s);
-      return true;
-    };
-    const arr = ([...appointments, ...requestRows] as ApptRow[])
-      // Staff view: own jobs + anything not assigned yet (so unassigned work is
-      // never invisible to the workshop).
-      .filter((a) =>
-        mineOnlyMechanicId
-          ? a.assigned_mechanic_id === mineOnlyMechanicId || !a.assigned_mechanic_id
-          : true,
-      )
-      .filter(matchStatus);
+    const arr = scopedRows.filter((a) => matchesFilter(a, statusFilter));
     arr.sort((a, b) => {
-      const cmp = a.scheduled_start_time.localeCompare(b.scheduled_start_time);
+      if (sortMode === "priority") return compareTasks(a, b);
+      const cmp =
+        a.scheduled_date.localeCompare(b.scheduled_date) ||
+        a.scheduled_start_time.localeCompare(b.scheduled_start_time);
       return sortAsc ? cmp : -cmp;
     });
     return arr;
-  }, [appointments, requestRows, statusFilter, sortAsc, mineOnlyMechanicId]);
+  }, [scopedRows, statusFilter, sortAsc, sortMode]);
 
   /* Pagination: at most 5 rows per page; the viewport shows ~3 and scrolls. */
   const PAGE_SIZE = 5;
@@ -294,7 +325,7 @@ export default function AppointmentsTableCard({
   }, [totalPages]);
   useEffect(() => {
     setPage(0);
-  }, [statusFilter, groupBy, sortAsc]);
+  }, [statusFilter, groupBy, sortAsc, sortMode]);
   const pagedRows = useMemo(
     () => filteredSorted.slice(page * PAGE_SIZE, page * PAGE_SIZE + PAGE_SIZE),
     [filteredSorted, page],
@@ -306,7 +337,7 @@ export default function AppointmentsTableCard({
     const labelFor = (a: ApptRow): { key: string; label: string } => {
       switch (groupBy) {
         case "status":
-          return { key: a.status, label: t(`workshop.status.${a.status}`, a.status) };
+          return { key: taskBucket(a), label: t(`workshop.appts.${taskBucket(a)}`) };
         case "mechanic":
           return {
             key: a.assigned_mechanic_id ?? "none",
@@ -357,41 +388,50 @@ export default function AppointmentsTableCard({
           filters={
             <Tabs
               value={statusFilter}
-              onValueChange={(v) => setStatusFilter(v as typeof statusFilter)}
+              onValueChange={(v) => setStatusFilter(v as TaskFilter)}
             >
               <TabsList className="bg-muted/40 h-8 w-max">
-                <TabsTrigger value="all" className="text-[11px] h-6 px-2.5">
-                  {t("workshop.appts.all")}
-                </TabsTrigger>
-                <TabsTrigger value="requested" className="text-[11px] h-6 px-2.5 whitespace-nowrap">
-                  <span className="inline-block w-1.5 h-1.5 rounded-full bg-sky-400 mr-1.5" />
-                  {t("workshop.appts.requested", "Requested")}
-                </TabsTrigger>
-                <TabsTrigger value="pending" className="text-[11px] h-6 px-2.5 whitespace-nowrap">
-                  <span className="inline-block w-1.5 h-1.5 rounded-full bg-amber-400 mr-1.5" />
-                  {t("workshop.appts.pending")}
-                </TabsTrigger>
-                <TabsTrigger value="ongoing" className="text-[11px] h-6 px-2.5 whitespace-nowrap">
-                  <span className="inline-block w-1.5 h-1.5 rounded-full bg-wj-green animate-pulse mr-1.5" />
-                  {t("workshop.appts.ongoing")}
-                </TabsTrigger>
-                <TabsTrigger value="completed" className="text-[11px] h-6 px-2.5 whitespace-nowrap">
-                  <span className="inline-block w-1.5 h-1.5 rounded-full bg-wj-green mr-1.5" />
-                  {t("workshop.appts.completed")}
-                </TabsTrigger>
-                <TabsTrigger value="overdue" className="text-[11px] h-6 px-2.5 whitespace-nowrap">
-                  <span className="inline-block w-1.5 h-1.5 rounded-full bg-orange-500 mr-1.5" />
-                  {t("workshop.appts.overdue", "Overdue")}
-                </TabsTrigger>
-                <TabsTrigger value="canceled" className="text-[11px] h-6 px-2.5 whitespace-nowrap">
-                  <span className="inline-block w-1.5 h-1.5 rounded-full bg-red-500 mr-1.5" />
-                  {t("workshop.appts.canceled", "Canceled")}
-                </TabsTrigger>
+                {TASK_FILTERS.filter((f) => !(isCustomer && f === "unassigned")).map((f) => (
+                  <TabsTrigger
+                    key={f}
+                    value={f}
+                    className="text-[11px] h-6 px-2.5 whitespace-nowrap"
+                  >
+                    <span
+                      className={cn(
+                        "inline-block w-1.5 h-1.5 rounded-full mr-1.5",
+                        FILTER_DOT[f],
+                      )}
+                    />
+                    {t(`workshop.appts.${f}`)}
+                    {counts[f] > 0 && (
+                      <span className="ml-1.5 text-[10px] text-muted-foreground tabular-nums">
+                        {counts[f]}
+                      </span>
+                    )}
+                  </TabsTrigger>
+                ))}
               </TabsList>
             </Tabs>
           }
           controls={
             <>
+              {!isCustomer && canClaim && (
+                <Button
+                  size="sm"
+                  variant="outline"
+                  className="h-8 text-[11px] border-border/40 gap-1.5 whitespace-nowrap"
+                  disabled={dispatching}
+                  onClick={() => dispatch()}
+                >
+                  {dispatching ? (
+                    <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                  ) : (
+                    <Wand2 className="h-3.5 w-3.5" />
+                  )}
+                  {t("workshop.appts.auto_dispatch")}
+                </Button>
+              )}
               <div className="flex items-center gap-1.5 flex-1 min-w-[160px] sm:flex-none">
                 <Layers className="h-3.5 w-3.5 text-muted-foreground" />
                 <Select value={groupBy} onValueChange={(v) => setGroupBy(v as typeof groupBy)}>
@@ -411,10 +451,21 @@ export default function AppointmentsTableCard({
                 size="sm"
                 variant="outline"
                 className="h-8 text-[11px] border-border/40 gap-1.5 whitespace-nowrap"
-                onClick={() => setSortAsc((v) => !v)}
+                onClick={() => {
+                  if (sortMode === "priority") {
+                    setSortMode("time");
+                    setSortAsc(true);
+                  } else if (sortAsc) {
+                    setSortAsc(false);
+                  } else {
+                    setSortMode("priority");
+                  }
+                }}
               >
                 <ArrowUpDown className="h-3.5 w-3.5" />
-                {t("workshop.appts.sort_time")} {sortAsc ? "↑" : "↓"}
+                {sortMode === "priority"
+                  ? t("workshop.appts.sort_priority")
+                  : `${t("workshop.appts.sort_time")} ${sortAsc ? "↑" : "↓"}`}
               </Button>
             </>
           }
@@ -562,7 +613,29 @@ export default function AppointmentsTableCard({
                             </div>
                           </TableCell>
                           <TableCell className="text-xs text-muted-foreground align-middle">
-                            {apt.mechanic_name ?? (
+                            {apt.mechanic_name ? (
+                              apt.mechanic_name
+                            ) : !apt.isRequest && canClaim && !effectiveReadOnly ? (
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                className="h-6 px-2 text-[10px] gap-1 border-wj-green/40 text-wj-green hover:bg-wj-green/10"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  void claimTask({
+                                    id: apt.id,
+                                    scheduled_date: apt.scheduled_date,
+                                    scheduled_start_time: apt.scheduled_start_time,
+                                    duration_minutes: apt.duration_minutes,
+                                    assigned_mechanic_id: null,
+                                    status: apt.status as string,
+                                  });
+                                }}
+                              >
+                                <UserPlus className="h-3 w-3" />
+                                {t("workshop.appts.assign_me")}
+                              </Button>
+                            ) : (
                               <span className="text-muted-foreground/60 italic">
                                 {t("workshop.cols.unassigned")}
                               </span>

@@ -602,7 +602,11 @@ const en = {
     appts: {
       title: "Appointments",
       day: "Today", week: "Week", month: "Month",
-      all: "All", pending: "Pending", ongoing: "In progress", completed: "Completed",
+      pending: "Pending", requested: "Requested", ongoing: "In progress",
+      unassigned: "Unassigned", overdue: "Overdue", canceled: "Canceled",
+      completed: "Completed",
+      auto_dispatch: "Auto-assign", assign_me: "Assign to me",
+      sort_priority: "Priority",
       group_placeholder: "Group",
       group_none: "No grouping",
       group_status: "By status",

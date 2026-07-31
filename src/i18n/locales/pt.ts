@@ -593,7 +593,11 @@ const pt = {
     appts: {
       title: "Agendamentos",
       day: "Hoje", week: "Semana", month: "Mês",
-      all: "Todos", pending: "Pendentes", ongoing: "Em curso", completed: "Concluídos",
+      pending: "Pendentes", requested: "Solicitados", ongoing: "Em curso",
+      unassigned: "Sem mecânico", overdue: "Atrasados", canceled: "Cancelados",
+      completed: "Concluídos",
+      auto_dispatch: "Distribuir", assign_me: "Atribuir a mim",
+      sort_priority: "Prioridade",
       group_placeholder: "Agrupar",
       group_none: "Sem agrupamento",
       group_status: "Por estado",
