@@ -318,6 +318,17 @@ export default function ScannedBikeDetail() {
             initialNotes={bike ? `[${bike.model}]` : undefined}
           />
         )}
+
+        {bike && (
+          <BikeAssessmentDialog
+            open={assessOpen}
+            onOpenChange={setAssessOpen}
+            bikeId={bike.id}
+            bikeModel={bike.model}
+            customerId={owner?.customerId ?? null}
+            onSaved={() => void refetchAssessment()}
+          />
+        )}
       </div>
     </RoleDashboardLayout>
   );
