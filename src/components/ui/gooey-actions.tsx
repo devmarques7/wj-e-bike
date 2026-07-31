@@ -113,7 +113,8 @@ export function GooeyActions({
   coreY = 0.62,
   reducedMotion,
   holdToOpen = false,
-  holdDelay = 1000,
+  holdDelay = 500,
+  onPressDrag,
   className,
   style,
   ...props
