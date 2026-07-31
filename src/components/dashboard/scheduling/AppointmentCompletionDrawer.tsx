@@ -243,7 +243,7 @@ export default function AppointmentCompletionDrawer({
   const activeProgress = activeStageId ? progress[activeStageId] : null;
 
   const allStagesCompleted =
-    stages.length > 0 && stages.every((s) => !!progress[s.id]?.completed_at);
+    stages.length === 0 || stages.every((s) => !!progress[s.id]?.completed_at);
 
   // For the active stage we show the live cumulative timer from work_started_at,
   // or the frozen cumulative value at the moment the stage was completed.
