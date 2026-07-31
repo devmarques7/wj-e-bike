@@ -3,8 +3,7 @@ import { motion, useMotionValue } from "framer-motion";
 import { useNavigate } from "react-router-dom";
 import { QrCode, CalendarPlus, Pause, Play, Plus } from "lucide-react";
 import { GooeyActions } from "@/components/ui/gooey-actions";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
-import EPassScanner from "@/components/dashboard/wallet/EPassScanner";
+import ScanEPassDialog from "@/components/dashboard/wallet/ScanEPassDialog";
 import useShift from "@/hooks/useShift";
 
 /**
@@ -165,17 +164,7 @@ export default function FleetMenu({ showShift = true }: FleetMenuProps) {
         />
       </motion.div>
 
-      <Dialog open={scanOpen} onOpenChange={setScanOpen}>
-        <DialogContent className="sm:max-w-md rounded-3xl">
-          <DialogHeader>
-            <DialogTitle className="font-light">Scan E-Pass</DialogTitle>
-            <DialogDescription>
-              Point the camera at a rider's E-Pass to open their bike instantly.
-            </DialogDescription>
-          </DialogHeader>
-          <EPassScanner active={scanOpen} onNavigate={() => setScanOpen(false)} />
-        </DialogContent>
-      </Dialog>
+      <ScanEPassDialog open={scanOpen} onOpenChange={setScanOpen} />
     </>
   );
 }
