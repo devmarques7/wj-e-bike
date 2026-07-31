@@ -137,6 +137,7 @@ export function GooeyActions({
   const pointerIdRef = React.useRef<number | null>(null);
   const pressOriginRef = React.useRef({ x: 0, y: 0 });
   const dragHandedOffRef = React.useRef(false);
+  const gestureCleanupRef = React.useRef<(() => void) | null>(null);
 
   const uid = React.useId().replace(/[^a-zA-Z0-9]/g, "");
   const filterId = `wj-goo-${uid}`;
@@ -354,11 +355,57 @@ export function GooeyActions({
     return -1;
   }, []);
 
+  const updateGesturePointer = React.useCallback((clientX: number, clientY: number) => {
+    const root = rootRef.current;
+    if (root) {
+      const rect = root.getBoundingClientRect();
+      pointerRef.current = { x: clientX - rect.left, y: clientY - rect.top, inside: true };
+    }
+
+    if (!holdingRef.current) return;
+    // Pointer enter/leave is unreliable during capture; hit-test the mounted
+    // action buttons against the finger's viewport coordinates instead.
+    const idx = findActionUnderPoint(clientX, clientY);
+    activeGestureActionRef.current = idx;
+    hoverIdxRef.current = idx;
+    if (idx >= 0) showLabelFor(idx);
+    else hideLabel();
+  }, [findActionUnderPoint, hideLabel, showLabelFor]);
+
+  const endGesture = React.useCallback((pointerId: number, commit: boolean, captureTarget?: HTMLElement) => {
+    if (pointerIdRef.current !== pointerId) return;
+    clearHold();
+    const idx = activeGestureActionRef.current;
+    const wasHolding = holdingRef.current;
+
+    // Mark the pointer as released before closing. This guarantees that the
+    // close guard cannot mistake a legitimate pointer-up for an incidental
+    // event emitted while the finger is still down.
+    pressedRef.current = false;
+    holdingRef.current = false;
+    pointerIdRef.current = null;
+    activeGestureActionRef.current = -1;
+    dragHandedOffRef.current = false;
+    gestureCleanupRef.current?.();
+    gestureCleanupRef.current = null;
+
+    if (captureTarget?.hasPointerCapture(pointerId)) {
+      captureTarget.releasePointerCapture(pointerId);
+    }
+    if (commit && wasHolding && idx >= 0 && actions[idx]) onSelect?.(actions[idx].id);
+    if (wasHolding) setIsOpen(false);
+    release();
+  }, [actions, clearHold, onSelect, setIsOpen]);
+
   // A single captured pointer owns hold, reveal, drag-to-action and release.
+  // Window listeners deliberately remain active for the whole gesture: some
+  // mobile browsers momentarily retarget events when the satellites animate.
   const onCorePointerDown = (e: React.PointerEvent<HTMLButtonElement>) => {
     if (!holdToOpen) return;
     e.preventDefault();
     e.stopPropagation();
+
+    gestureCleanupRef.current?.();
 
     try {
       (e.currentTarget as HTMLElement).setPointerCapture(e.pointerId);
@@ -378,62 +425,46 @@ export function GooeyActions({
     dragHandedOffRef.current = false;
 
     clearHold();
+    const pointerId = e.pointerId;
+    const captureTarget = e.currentTarget;
+    const onMove = (event: PointerEvent) => {
+      if (event.pointerId !== pointerId || !pressedRef.current) return;
+      event.preventDefault();
+      const origin = pressOriginRef.current;
+      const distance = Math.hypot(event.clientX - origin.x, event.clientY - origin.y);
+      if (!holdingRef.current && distance > 12 && !dragHandedOffRef.current) {
+        dragHandedOffRef.current = onPressDrag?.(event, distance) === true;
+      }
+      updateGesturePointer(event.clientX, event.clientY);
+    };
+    const onUp = (event: PointerEvent) => {
+      if (event.pointerId === pointerId) endGesture(pointerId, true, captureTarget);
+    };
+    const onCancel = (event: PointerEvent) => {
+      if (event.pointerId === pointerId) endGesture(pointerId, false, captureTarget);
+    };
+    const cleanup = () => {
+      window.removeEventListener("pointermove", onMove);
+      window.removeEventListener("pointerup", onUp);
+      window.removeEventListener("pointercancel", onCancel);
+    };
+    gestureCleanupRef.current = cleanup;
+    window.addEventListener("pointermove", onMove, { passive: false });
+    window.addEventListener("pointerup", onUp);
+    window.addEventListener("pointercancel", onCancel);
+
     holdTimerRef.current = window.setTimeout(() => {
-      if (!pressedRef.current) return;
+      if (!pressedRef.current || pointerIdRef.current !== pointerId) return;
       holdingRef.current = true;
       setIsOpen(true);
     }, holdDelay);
     onPressDrag?.(e.nativeEvent, 0);
   };
 
-  const onCorePointerMove = (e: React.PointerEvent<HTMLButtonElement>) => {
-    if (!pressedRef.current || pointerIdRef.current !== e.pointerId) return;
-    e.preventDefault();
-
-    const origin = pressOriginRef.current;
-    const distance = Math.hypot(e.clientX - origin.x, e.clientY - origin.y);
-    if (!holdingRef.current) {
-      if (distance > 12 && !dragHandedOffRef.current) {
-        dragHandedOffRef.current = onPressDrag?.(e.nativeEvent, distance) === true;
-      }
-      return;
-    }
-
-    const root = rootRef.current;
-    if (root) {
-      const rect = root.getBoundingClientRect();
-      pointerRef.current = { x: e.clientX - rect.left, y: e.clientY - rect.top, inside: true };
-    }
-
-    // Pointer enter/leave is unreliable during capture; hit-test mounted actions.
-    const idx = findActionUnderPoint(e.clientX, e.clientY);
-    activeGestureActionRef.current = idx;
-    hoverIdxRef.current = idx;
-    if (idx >= 0) showLabelFor(idx);
-    else hideLabel();
-  };
-
-  const finishCoreGesture = (e: React.PointerEvent<HTMLButtonElement>, commit: boolean) => {
-    if (pointerIdRef.current !== e.pointerId) return;
+  React.useEffect(() => () => {
     clearHold();
-    const idx = activeGestureActionRef.current;
-    if (commit && holdingRef.current && idx >= 0 && actions[idx]) onSelect?.(actions[idx].id);
-
-    pressedRef.current = false;
-    pointerIdRef.current = null;
-    activeGestureActionRef.current = -1;
-    dragHandedOffRef.current = false;
-    if (holdingRef.current) {
-      holdingRef.current = false;
-      setIsOpen(false);
-    }
-    if (e.currentTarget.hasPointerCapture(e.pointerId)) {
-      e.currentTarget.releasePointerCapture(e.pointerId);
-    }
-    release();
-  };
-
-  React.useEffect(() => clearHold, [clearHold]);
+    gestureCleanupRef.current?.();
+  }, [clearHold]);
 
   const focusSat = (i: number) => {
     setActiveIdx(i);
@@ -609,9 +640,6 @@ export function GooeyActions({
             }
           }}
           onPointerDown={onCorePointerDown}
-          onPointerMove={onCorePointerMove}
-          onPointerUp={(event) => finishCoreGesture(event, true)}
-          onPointerCancel={(event) => finishCoreGesture(event, false)}
           className={cn(
             "pointer-events-auto absolute grid cursor-pointer place-items-center rounded-full border-0 p-0",
             "text-primary-foreground text-xs font-medium tracking-[0.18em] uppercase touch-none",
