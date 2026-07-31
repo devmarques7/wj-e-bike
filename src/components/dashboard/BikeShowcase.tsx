@@ -4,6 +4,8 @@ import { motion, AnimatePresence } from "framer-motion";
 import useEmblaCarousel from "embla-carousel-react";
 import { Bike, Plus, Loader2 } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
+import { useTheme } from "@/contexts/ThemeContext";
+import { MeshGradient } from "@paper-design/shaders-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import BikePickerDialog, { LinkedBike } from "@/components/dashboard/BikePickerDialog";
