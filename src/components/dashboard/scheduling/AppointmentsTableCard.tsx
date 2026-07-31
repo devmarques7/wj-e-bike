@@ -500,7 +500,11 @@ export default function AppointmentsTableCard({
                   <TableHead className="text-muted-foreground text-[10px] uppercase tracking-wider font-medium">{t("workshop.cols.customer")}</TableHead>
                   <TableHead className="text-muted-foreground text-[10px] uppercase tracking-wider font-medium">{t("workshop.cols.plan")}</TableHead>
                   <TableHead className="text-muted-foreground text-[10px] uppercase tracking-wider font-medium">{t("workshop.cols.service")}</TableHead>
-                  <TableHead className="text-muted-foreground text-[10px] uppercase tracking-wider font-medium">{t("workshop.cols.mechanic")}</TableHead>
+                  <TableHead className="text-muted-foreground text-[10px] uppercase tracking-wider font-medium">
+                    {isCustomer
+                      ? t("workshop.cols.countdown", "Days left")
+                      : t("workshop.cols.mechanic")}
+                  </TableHead>
                   <TableHead className="text-muted-foreground text-[10px] uppercase tracking-wider font-medium">{t("workshop.cols.status")}</TableHead>
                   <TableHead className="text-muted-foreground text-[10px] uppercase tracking-wider font-medium text-right w-[80px]">
                     {t("workshop.cols.actions")}
@@ -656,7 +660,51 @@ export default function AppointmentsTableCard({
                             </div>
                           </TableCell>
                           <TableCell className="text-xs text-muted-foreground align-middle">
-                            {apt.mechanic_name ? (
+                            {isCustomer ? (
+                              (() => {
+                                const terminal =
+                                  apt.status === "completed" ||
+                                  apt.status === "canceled" ||
+                                  apt.status === "no_show";
+                                if (terminal) return <span className="text-muted-foreground/50">—</span>;
+                                const delta = dayDelta(apt.scheduled_date);
+                                const late = delta < 0 || isOverdue(apt);
+                                const lateDays = Math.max(0, -delta);
+                                return (
+                                  <div className="flex flex-col items-start gap-1">
+                                    <span
+                                      className={cn(
+                                        "tabular-nums text-xs font-medium",
+                                        late ? "text-orange-500" : "text-foreground",
+                                      )}
+                                    >
+                                      {late
+                                        ? lateDays > 0
+                                          ? t("workshop.cols.days_late", {
+                                              n: lateDays,
+                                              defaultValue: "{{n}} d late",
+                                            })
+                                          : t("workshop.cols.late_today", { defaultValue: "Late today" })
+                                        : delta === 0
+                                          ? t("workshop.cols.today", { defaultValue: "Today" })
+                                          : t("workshop.cols.in_days", {
+                                              n: delta,
+                                              defaultValue: "in {{n}} d",
+                                            })}
+                                    </span>
+                                    {late && (
+                                      <CustomerAppointmentActionsMenu
+                                        appointment={apt}
+                                        variant="reschedule"
+                                        onViewDetails={() => setReviewTarget(apt)}
+                                        onReschedule={rescheduleAppointment}
+                                        onCancel={cancelAppointment}
+                                      />
+                                    )}
+                                  </div>
+                                );
+                              })()
+                            ) : apt.mechanic_name ? (
                               apt.mechanic_name
                             ) : canClaim && !effectiveReadOnly && apt.status !== "completed" && apt.status !== "canceled" ? (
                               <Button
