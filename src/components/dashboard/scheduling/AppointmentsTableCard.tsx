@@ -549,6 +549,12 @@ export default function AppointmentsTableCard({
                               setReviewTarget(apt);
                               return;
                             }
+                            /* Completed → full service history (assessment,
+                               notes, photos, billing). */
+                            if (!apt.isRequest && apt.status === "completed") {
+                              setReviewTarget(apt);
+                              return;
+                            }
                             const bike = (apt as any).bike_id as string | null | undefined;
                             if (bike) {
                               navigate(
