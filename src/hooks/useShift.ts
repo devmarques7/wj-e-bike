@@ -16,6 +16,7 @@ export type ShiftRow = {
   status: string;
   /** Total paused minutes accumulated today (closed breaks only). */
   break_minutes: number;
+  created_at?: string | null;
 };
 
 export type ShiftBreak = {
@@ -27,7 +28,7 @@ export type ShiftBreak = {
 };
 
 const SELECT_COLS =
-  "id, shift_date, clock_in, clock_out, worked_minutes, scheduled_minutes, status, break_minutes";
+  "id, shift_date, clock_in, clock_out, worked_minutes, scheduled_minutes, status, break_minutes, created_at";
 
 const BREAK_COLS = "id, started_at, ended_at, duration_seconds, reason";
 
@@ -64,7 +65,22 @@ async function loadFor(userId: string) {
     .eq("user_id", userId)
     .eq("shift_date", today)
     .maybeSingle();
-  const row = (data as ShiftRow | null) ?? null;
+  let row = (data as ShiftRow | null) ?? null;
+  // Legacy/incomplete rows: a running shift without clock_in freezes the timer
+  // at worked_minutes. Backfill it so the clock keeps ticking every second.
+  if (row && !row.clock_in && row.status !== "completed" && !row.clock_out) {
+    const base = new Date(
+      new Date(row.created_at ?? new Date().toISOString()).getTime() -
+        (row.worked_minutes ?? 0) * 60_000,
+    ).toISOString();
+    const { data: fixed } = await supabase
+      .from("staff_shifts")
+      .update({ clock_in: base })
+      .eq("id", row.id)
+      .select(SELECT_COLS)
+      .maybeSingle();
+    row = (fixed as ShiftRow | null) ?? { ...row, clock_in: base };
+  }
   let breaks: ShiftBreak[] = [];
   if (row) {
     const { data: br } = await supabase
@@ -102,14 +118,15 @@ const openBreakOf = (breaks: ShiftBreak[]) => breaks.find((b) => !b.ended_at) ??
  * `clock_in` is written once (first entry of the day) and never overwritten.
  */
 function netWorkedSeconds(row: ShiftRow | null, breaks: ShiftBreak[], nowMs: number) {
-  if (!row?.clock_in) return (row?.worked_minutes ?? 0) * 60;
+  const startRef = row?.clock_in ?? row?.created_at ?? null;
+  if (!row || !startRef) return (row?.worked_minutes ?? 0) * 60;
   const open = openBreakOf(breaks);
   const endMs = row.clock_out
     ? new Date(row.clock_out).getTime()
     : open
       ? new Date(open.started_at).getTime()
       : nowMs;
-  const gross = Math.max(0, Math.floor((endMs - new Date(row.clock_in).getTime()) / 1000));
+  const gross = Math.max(0, Math.floor((endMs - new Date(startRef).getTime()) / 1000));
   return Math.max(0, gross - closedBreakSeconds(breaks));
 }
 
