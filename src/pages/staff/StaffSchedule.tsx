@@ -340,40 +340,10 @@ export default function StaffSchedule() {
                 {dayList.filter((a) => a.status === "completed").length}/{dayList.length}
               </Badge>
             </div>
-            {dayList.length === 0 ? (
-              <p className="text-xs text-muted-foreground">No appointments scheduled for today.</p>
-            ) : (
-              <div className="flex-1 flex flex-col gap-2 overflow-y-auto max-h-[180px] pr-1">
-                {dayList.slice(0, 4).map((a) => (
-                  <div
-                    key={a.id}
-                    className="flex items-center gap-2 p-2 rounded-lg bg-muted/30"
-                  >
-                    <div
-                      className={cn(
-                        "w-1.5 h-6 rounded-full shrink-0",
-                        a.status === "completed"
-                          ? "bg-wj-green"
-                          : a.status === "in_progress"
-                            ? "bg-wj-green animate-pulse"
-                            : "bg-amber-400",
-                      )}
-                    />
-                    <div className="flex-1 min-w-0">
-                      <p className="text-[11px] font-medium text-foreground truncate">
-                        {a.customer_name ?? a.customer_email ?? "—"}
-                      </p>
-                      <p className="text-[10px] text-muted-foreground truncate">
-                        {a.service_name ?? "—"}
-                      </p>
-                    </div>
-                    <Badge variant="outline" className="text-[10px] shrink-0">
-                      {a.scheduled_start_time.slice(0, 5)}
-                    </Badge>
-                  </div>
-                ))}
-              </div>
-            )}
+            <TodayProgressList
+              appointments={dayList}
+              onChanged={() => setScheduleVersion((v) => v + 1)}
+            />
           </motion.div>
 
           {/* Row 2 — My Weekly Schedule (reusing team week with [me]) */}
