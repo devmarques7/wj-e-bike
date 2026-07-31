@@ -100,6 +100,7 @@ export function GooeyActions({
   defaultOpen = false,
   onOpenChange,
   onSelect,
+  coreX = 0.5,
   coreY = 0.62,
   reducedMotion,
   holdToOpen = false,
