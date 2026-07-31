@@ -19,6 +19,8 @@ export default function ShiftTracker() {
     resume,
     finish,
     row,
+    breakSec,
+    breakCount,
   } = useShift();
   const constraintsRef = useRef(null);
   const [confirmOpen, setConfirmOpen] = useState(false);
@@ -220,9 +222,21 @@ export default function ShiftTracker() {
                 )}
               </div>
 
+              {/* Live pause summary */}
+              {!isCompleted && breakCount > 0 && (
+                <div className="flex items-center justify-between rounded-xl bg-white/10 border border-white/20 px-3 py-2">
+                  <span className="text-[10px] uppercase tracking-wider text-white/60">
+                    Breaks today · {breakCount}
+                  </span>
+                  <span className="text-xs font-semibold text-white tabular-nums">
+                    {formatTime(breakSec)}
+                  </span>
+                </div>
+              )}
+
               {/* Completed summary */}
               {isCompleted && row && (
-                <div className="grid grid-cols-3 gap-2 rounded-xl bg-white/10 border border-white/20 p-2">
+                <div className="grid grid-cols-4 gap-2 rounded-xl bg-white/10 border border-white/20 p-2">
                   <div className="text-center">
                     <p className="text-[9px] uppercase tracking-wider text-white/60 mb-0.5">Clock in</p>
                     <p className="text-xs font-semibold text-white tabular-nums">{formatClock(row.clock_in)}</p>
@@ -230,6 +244,10 @@ export default function ShiftTracker() {
                   <div className="text-center border-l border-white/20">
                     <p className="text-[9px] uppercase tracking-wider text-white/60 mb-0.5">Clock out</p>
                     <p className="text-xs font-semibold text-white tabular-nums">{formatClock(row.clock_out)}</p>
+                  </div>
+                  <div className="text-center border-l border-white/20">
+                    <p className="text-[9px] uppercase tracking-wider text-white/60 mb-0.5">Breaks</p>
+                    <p className="text-xs font-semibold text-white tabular-nums">{formatDuration(row.break_minutes ?? 0)}</p>
                   </div>
                   <div className="text-center border-l border-white/20">
                     <p className="text-[9px] uppercase tracking-wider text-white/60 mb-0.5">Total</p>
