@@ -124,23 +124,20 @@ export default function StaffOverview() {
         {/* Hero row (reference layout): analytics · next job · priority list.
             Mobile-first order keeps the next appointment on top. */}
         <div className="grid grid-cols-12 gap-4 lg:gap-6 items-stretch">
-          <div className="col-span-12 md:col-span-12 xl:col-span-5 order-3 xl:order-1 min-h-[280px]">
+          <div className="col-span-12 md:col-span-7 xl:col-span-7 order-2 md:order-1 min-h-[280px]">
             <WeeklyWorkloadChart userId={user?.id} />
           </div>
-          <div className="col-span-12 md:col-span-6 xl:col-span-4 order-1 xl:order-2 min-h-[280px]">
+          <div className="col-span-12 md:col-span-5 xl:col-span-5 order-1 md:order-2 min-h-[280px]">
             <NextAppointmentCard userId={user?.id} />
-          </div>
-          <div className="col-span-12 md:col-span-6 xl:col-span-3 order-2 xl:order-3 min-h-[280px]">
-            <TodayPriorityQueue userId={user?.id} />
           </div>
         </div>
 
         {/* Shift · capacity · priority queue row */}
         <div className="grid grid-cols-12 gap-4 lg:gap-6 items-stretch">
-          <div className="col-span-12 md:col-span-6 min-h-[260px]">
+          <div className="col-span-12 md:col-span-6 xl:col-span-4 min-h-[260px]">
             <ShiftTracker />
           </div>
-          <div className="col-span-12 md:col-span-6 min-h-[260px]">
+          <div className="col-span-12 md:col-span-6 xl:col-span-4 min-h-[260px]">
             <WorkloadGauge
               pct={stats.currentLoadPct}
               completedToday={stats.completedToday}
@@ -148,6 +145,9 @@ export default function StaffOverview() {
               weeklyHours={stats.weeklyHours}
               targetHours={stats.targetHours}
             />
+          </div>
+          <div className="col-span-12 md:col-span-12 xl:col-span-4 min-h-[260px]">
+            <TodayPriorityQueue userId={user?.id} />
           </div>
         </div>
 
