@@ -74,7 +74,7 @@ export default function UnifiedDashboardLayout({ children }: UnifiedDashboardLay
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.4 }}
-            className="flex-1 flex flex-col h-fit lg:m-4 lg:rounded-3xl lg:bg-background/40 lg:backdrop-blur-md lg:border lg:border-border/30 lg:overflow-hidden lg:min-h-[calc(100vh-5rem)] pb-4 lg:pb-6"
+            className="flex-1 flex flex-col h-fit w-full lg:my-4 lg:rounded-3xl lg:bg-background/40 lg:backdrop-blur-md lg:border lg:border-border/30 lg:overflow-hidden lg:min-h-[calc(100vh-5rem)] pb-4 lg:pb-6"
           >
             <div className="px-4 lg:px-6 pt-4">
               <AutoBreadcrumbs />
