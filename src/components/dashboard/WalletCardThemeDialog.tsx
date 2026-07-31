@@ -1,4 +1,5 @@
-import { Check, Crown, ArrowRight } from "lucide-react";
+import { useState } from "react";
+import { Check, Crown, ArrowRight, Loader2, Trash2 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import {
   Dialog,
@@ -11,12 +12,29 @@ import { WALLET_CARD_THEMES } from "@/lib/wallet/cardThemes";
 import { meshPaletteFor, tierFromPlan } from "./CardMeshBackground";
 import { cn } from "@/lib/utils";
 import WalletMemberCard from "@/components/dashboard/WalletMemberCard";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import { Textarea } from "@/components/ui/textarea";
+import { supabase } from "@/integrations/supabase/client";
+import { toast } from "sonner";
 
 interface WalletCardThemeDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   themeId?: string | null;
   onSelect: (themeId: string) => void;
+  /** Bike whose registration/subscription this card represents. */
+  bikeId?: string | null;
+  /** Called after the bike registration was archived (soft-deleted). */
+  onCancelled?: (bikeId: string) => void;
   preview?: {
     label?: string;
     bikeName?: string;
@@ -32,10 +50,37 @@ export default function WalletCardThemeDialog({
   onOpenChange,
   themeId,
   onSelect,
+  bikeId,
+  onCancelled,
   preview,
 }: WalletCardThemeDialogProps) {
   const navigate = useNavigate();
+  const [confirmOpen, setConfirmOpen] = useState(false);
+  const [reason, setReason] = useState("");
+  const [submitting, setSubmitting] = useState(false);
+
+  /** Soft-delete: archives the bike registration and cancels the plan when no bikes remain. */
+  const handleCancelSubscription = async () => {
+    if (!bikeId) return;
+    setSubmitting(true);
+    const { error } = await supabase.rpc("fn_cancel_bike_subscription", {
+      p_bike_id: bikeId,
+      p_reason: reason.trim() || null,
+    });
+    setSubmitting(false);
+    if (error) {
+      toast.error(error.message || "Could not cancel this subscription");
+      return;
+    }
+    toast.success("Subscription cancelled and bike registration archived");
+    setConfirmOpen(false);
+    setReason("");
+    onOpenChange(false);
+    onCancelled?.(bikeId);
+  };
+
   return (
+    <>
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
@@ -101,7 +146,61 @@ export default function WalletCardThemeDialog({
             );
           })}
         </div>
+
+        {bikeId && (
+          <div className="mt-2 border-t border-border pt-4">
+            <button
+              type="button"
+              onClick={() => setConfirmOpen(true)}
+              className="group flex w-full items-center gap-3 rounded-2xl border border-destructive/30 bg-destructive/10 px-4 py-3 text-left transition-colors hover:bg-destructive/20"
+            >
+              <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-destructive/20">
+                <Trash2 className="h-4 w-4 text-destructive" />
+              </span>
+              <span className="min-w-0 flex-1">
+                <span className="block text-sm font-semibold text-foreground">
+                  Cancel subscription for this bike
+                </span>
+                <span className="block text-xs text-muted-foreground">
+                  Removes this card and archives the bike registration.
+                </span>
+              </span>
+              <ArrowRight className="h-4 w-4 shrink-0 text-destructive transition-transform group-hover:translate-x-0.5" />
+            </button>
+          </div>
+        )}
       </DialogContent>
     </Dialog>
+
+    <AlertDialog open={confirmOpen} onOpenChange={(o) => !submitting && setConfirmOpen(o)}>
+      <AlertDialogContent>
+        <AlertDialogHeader>
+          <AlertDialogTitle>Cancel subscription for this bike?</AlertDialogTitle>
+          <AlertDialogDescription>
+            The card is removed from your wallet and {preview?.bikeName || "this bike"} is archived.
+            Nothing is deleted from our records — the registration and its service history stay stored
+            in the archived registrations table and can be restored by our team.
+          </AlertDialogDescription>
+        </AlertDialogHeader>
+        <Textarea
+          value={reason}
+          onChange={(e) => setReason(e.target.value)}
+          placeholder="Reason (optional)"
+          className="min-h-[80px]"
+        />
+        <AlertDialogFooter>
+          <AlertDialogCancel disabled={submitting}>Keep subscription</AlertDialogCancel>
+          <AlertDialogAction
+            onClick={(e) => { e.preventDefault(); handleCancelSubscription(); }}
+            disabled={submitting}
+            className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+          >
+            {submitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+            Cancel subscription
+          </AlertDialogAction>
+        </AlertDialogFooter>
+      </AlertDialogContent>
+    </AlertDialog>
+    </>
   );
 }
