@@ -56,6 +56,7 @@ import AppointmentActionsMenu from "@/components/dashboard/scheduling/Appointmen
 import CustomerAppointmentActionsMenu from "@/components/dashboard/scheduling/CustomerAppointmentActionsMenu";
 import AppointmentCompletionDrawer from "@/components/dashboard/scheduling/AppointmentCompletionDrawer";
 import AppointmentReviewHistoryDialog from "@/components/dashboard/scheduling/AppointmentReviewHistoryDialog";
+import AppointmentsEmptyState from "@/components/dashboard/scheduling/AppointmentsEmptyState";
 import FloatingActiveAppointment from "@/components/dashboard/scheduling/FloatingActiveAppointment";
 import { useAuth } from "@/contexts/AuthContext";
 
@@ -376,7 +377,7 @@ export default function AppointmentsTableCard({
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.2 }}
-        className={cn("bg-background/60 backdrop-blur-md border border-border/30 rounded-2xl overflow-hidden min-h-[320px] max-h-[640px] flex flex-col", className)}
+        className={cn("bg-background/60 backdrop-blur-md border border-border/30 rounded-2xl overflow-hidden min-h-[420px] h-full max-h-[640px] flex flex-col", className)}
       >
         <TableHeaderBar
           title={title ?? t("workshop.appts.title")}
@@ -475,15 +476,22 @@ export default function AppointmentsTableCard({
           }
         />
 
-        <div className="overflow-x-auto overflow-y-auto flex-1 min-h-0">
+        <div className="overflow-x-auto overflow-y-auto flex-1 min-h-0 flex flex-col">
           {loading ? (
             <div className="flex-1 flex items-center justify-center gap-2 text-sm text-muted-foreground">
               <Loader2 className="h-4 w-4 animate-spin" /> {t("workshop.appts.loading")}
             </div>
           ) : filteredSorted.length === 0 ? (
-            <div className="flex-1 flex items-center justify-center text-sm text-muted-foreground">
-              {t("workshop.appts.empty")}
-            </div>
+            <AppointmentsEmptyState
+              hideCta={effectiveReadOnly && !isCustomer}
+              onCreate={() =>
+                navigate(
+                  isCustomer
+                    ? "/dashboard/garage"
+                    : "/dashboard/staff/schedule",
+                )
+              }
+            />
           ) : (
             <Table>
               <TableHeader>
