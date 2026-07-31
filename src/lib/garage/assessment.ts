@@ -215,3 +215,79 @@ export function computeAssessment(answers: AssessmentAnswers): AssessmentResult 
     origin: originOpt.id,
   };
 }
+/* ------------------------------------------------------------------ */
+/*  Merged condition model                                             */
+/* ------------------------------------------------------------------ */
+
+export interface MergedMetric {
+  key: string;
+  label: string;
+  value: number;
+  unit: string;
+  detail: string;
+  chart: "ring" | "bars" | "wave";
+  /** True when the value comes from a registered staff assessment. */
+  assessed?: boolean;
+}
+
+export interface AssessmentLike {
+  scores: Record<string, number> | null;
+  overall_score: number;
+  condition_label?: string;
+  created_at?: string;
+}
+
+/**
+ * Single source of truth for "Overall condition".
+ *
+ * Blends the deterministic telemetry health model with the latest registered
+ * staff assessment: every inspected point overrides its telemetry value, the
+ * remaining points keep the computed wear curve, and the final percentage is a
+ * weighted average using the assessment weights. It stays honest — the bike can
+ * never score above the last registered assessment, and a critical brake/frame
+ * point pulls the total down.
+ */
+export function mergeAssessedHealth<T extends MergedMetric>(
+  metrics: T[],
+  assessment?: AssessmentLike | null,
+): { metrics: T[]; overall: number; label: string; assessed: boolean } {
+  const scores = assessment?.scores ?? null;
+
+  const merged = metrics.map((m) => {
+    const s = scores?.[m.key];
+    return s == null
+      ? m
+      : ({ ...m, value: s, detail: `Assessed · ${m.detail}`, assessed: true } as T);
+  });
+
+  const weightOf = (key: string) =>
+    PART_QUESTIONS.find((q) => q.key === key)?.weight ?? 0.1;
+
+  let sum = 0;
+  let weight = 0;
+  for (const m of merged) {
+    const w = weightOf(m.key);
+    sum += m.value * w;
+    weight += w;
+  }
+  let overall = weight
+    ? Math.round(sum / weight)
+    : Math.round(merged.reduce((s, m) => s + m.value, 0) / Math.max(1, merged.length));
+
+  if (assessment) {
+    // Honest cap: condition can only degrade after the last inspection.
+    overall = Math.min(overall, assessment.overall_score);
+  }
+
+  const byKey = new Map(merged.map((m) => [m.key, m.value]));
+  const critical = Math.min(byKey.get("brakes") ?? 100, byKey.get("frame") ?? 100);
+  if (critical < 40) overall = Math.min(overall, critical + 15);
+  overall = Math.max(0, Math.min(100, overall));
+
+  return {
+    metrics: merged,
+    overall,
+    label: conditionLabel(overall),
+    assessed: !!assessment,
+  };
+}
