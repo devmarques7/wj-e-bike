@@ -41,9 +41,9 @@ export interface GooeyActionsProps
   /** Hold duration in ms before opening (default 500). */
   holdDelay?: number;
   /**
-   * Fired while the core is pressed but the menu has NOT opened yet, once the
-   * finger travels past a small threshold. Lets the host start a drag gesture
-   * instead of the bloom (returning true cancels the pending hold).
+   * Fired immediately when the core is pressed. The host can start a manual
+   * drag gesture while this component keeps tracking the same pointer for the
+   * pending hold. When the hold completes, `open` lets the host pause dragging.
    */
   onPressDrag?: (event: PointerEvent, distance: number) => boolean | void;
 }
@@ -356,9 +356,11 @@ export function GooeyActions({
     }
     holdingRef.current = false;
     pressedRef.current = true;
-    const origin = { x: e.clientX, y: e.clientY };
-    let handedToDrag = false;
     clearHold();
+    // Start host dragging from the original pointer event. Crucially, keep our
+    // listeners and hold timer alive: moving the Fleet button must not cancel
+    // the long press that later changes the same gesture into action picking.
+    onPressDrag?.(e.nativeEvent, 0);
     holdTimerRef.current = window.setTimeout(() => {
       if (!pressedRef.current) return;
       holdingRef.current = true;
@@ -372,39 +374,32 @@ export function GooeyActions({
       ev.preventDefault();
       const root = rootRef.current;
       if (!root) return;
-      if (!holdingRef.current && !handedToDrag && onPressDrag) {
-        const dist = Math.hypot(ev.clientX - origin.x, ev.clientY - origin.y);
-        if (dist > 12 && onPressDrag(ev, dist) === true) {
-          handedToDrag = true;
-          clearHold();
-          pressedRef.current = false;
-          cleanup();
-          release();
-          return;
-        }
-      }
       const r = root.getBoundingClientRect();
       pointerRef.current = { x: ev.clientX - r.left, y: ev.clientY - r.top, inside: true };
     };
     const cleanup = () => {
       window.removeEventListener("pointermove", onMove);
       window.removeEventListener("pointerup", onUp);
+      window.removeEventListener("pointercancel", onCancel);
     };
-    const onUp = (ev: PointerEvent) => {
+    const finishGesture = (ev: PointerEvent, selectAction: boolean) => {
       if (ev.pointerId !== e.pointerId) return;
       cleanup();
       clearHold();
       pressedRef.current = false;
       if (holdingRef.current) {
         const idx = hoverIdxRef.current;
-        if (idx >= 0 && actions[idx]) onSelect?.(actions[idx].id);
+        if (selectAction && idx >= 0 && actions[idx]) onSelect?.(actions[idx].id);
         holdingRef.current = false;
         setIsOpen(false);
       }
       release();
     };
+    const onUp = (ev: PointerEvent) => finishGesture(ev, true);
+    const onCancel = (ev: PointerEvent) => finishGesture(ev, false);
     window.addEventListener("pointermove", onMove, { passive: false });
     window.addEventListener("pointerup", onUp);
+    window.addEventListener("pointercancel", onCancel);
   };
 
   React.useEffect(() => clearHold, [clearHold]);

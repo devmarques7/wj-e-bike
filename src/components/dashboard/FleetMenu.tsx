@@ -50,7 +50,7 @@ export default function FleetMenu() {
   return (
     <>
       <motion.div
-        drag
+        drag={!menuOpen}
         dragListener={false}
         dragControls={dragControls}
         dragMomentum={false}
@@ -63,7 +63,7 @@ export default function FleetMenu() {
           coreIcon={<Plus className="h-6 w-6" strokeWidth={2.2} />}
           actions={actions}
           holdToOpen
-          holdDelay={500}
+          holdDelay={5000}
           onPressDrag={(event) => {
             if (menuOpen) return false;
             dragControls.start(event);
