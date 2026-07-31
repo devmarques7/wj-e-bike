@@ -380,7 +380,8 @@ export function useSchedulingData(opts?: { date?: string; customerUserId?: strin
       if (status === "in_progress") {
         // Starting a job implies the mechanic is on the clock: start/resume shift.
         await ensureShiftActive();
-        patch.work_started_at = new Date().toISOString();
+        // The appointment timer only starts on "Start Control" inside the
+        // quality control drawer — never when the status alone flips.
       }
       if (status === "completed") patch.work_ended_at = new Date().toISOString();
       const { error } = await supabase.from("appointments").update(patch).eq("id", id);
