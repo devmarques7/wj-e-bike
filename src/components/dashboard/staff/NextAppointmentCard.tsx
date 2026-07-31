@@ -36,7 +36,6 @@ export default function NextAppointmentCard({ userId }: Props) {
           .from("appointments")
           .update({
             status: "in_progress",
-            work_started_at: new Date().toISOString(),
             assigned_mechanic_id: appointment.assigned_mechanic_id ?? userId,
           })
           .eq("id", appointment.id);
@@ -120,7 +119,7 @@ export default function NextAppointmentCard({ userId }: Props) {
             className="mt-4 w-full h-11 rounded-2xl gap-2 bg-wj-green text-white hover:bg-wj-green/90"
           >
             {running ? <ShieldCheck className="h-4 w-4" /> : <Play className="h-4 w-4" />}
-            {running ? "Continue quality control" : "Start appointment"}
+            {running ? "Continue control" : "Start Control"}
           </Button>
         </>
       )}
