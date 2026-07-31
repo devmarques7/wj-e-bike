@@ -177,41 +177,22 @@ export default function StaffSchedule() {
   );
   const workingDays = Object.values(availableHoursPerDay).filter((h) => h > 0).length;
 
-  // Current week range (Mon..Sun)
-  const now = new Date();
-  const startOfWeek = new Date(now);
-  const dow = (now.getDay() + 6) % 7; // Mon=0
-  startOfWeek.setDate(now.getDate() - dow);
-  startOfWeek.setHours(0, 0, 0, 0);
-  const endOfWeek = new Date(startOfWeek);
-  endOfWeek.setDate(startOfWeek.getDate() + 6);
-  const inThisWeek = (d: string) => {
-    const x = new Date(d + "T00:00:00");
-    return x >= startOfWeek && x <= endOfWeek;
-  };
-  const weekAppts = mineAppts.filter((a) => inThisWeek(a.scheduled_date));
-
-  const weeklyAppointments = weekAppts.length;
-  const weeklyCapacity = weeklyAvailableHours > 0 ? weeklyAvailableHours : (me?.weekly_capacity ?? 40);
-
-  const weeklyUsedHours =
-    weekAppts.reduce((acc, a) => acc + (a.duration_minutes ?? 0), 0) / 60;
-  const workloadPercentage = Math.min(
-    100,
-    Math.round((weeklyUsedHours / Math.max(1, weeklyCapacity)) * 100),
-  );
-
-  const completed = weekAppts.filter((a) => a.status === "completed").length;
-  const inProgress = weekAppts.filter((a) => a.status === "in_progress").length;
-  const weeklyHours = Math.round(
-    weekAppts
-      .filter((a) => a.status === "completed" || a.status === "in_progress")
-      .reduce((acc, a) => acc + (a.duration_minutes ?? 0), 0) / 60,
-  );
-  const durs = weekAppts.filter((a) => a.duration_minutes);
-  const avgDuration = durs.length
-    ? Math.round(durs.reduce((acc, a) => acc + (a.duration_minutes ?? 0), 0) / durs.length)
-    : 0;
+  /* Every weekly figure below is fed by the live week hook so the page stays
+     in sync with any booking made by customers, admins or the assistant. */
+  const weeklyAppointments = week.jobs;
+  const weeklyCapacity =
+    week.capacityMinutes > 0
+      ? Math.round(week.capacityMinutes / 60)
+      : weeklyAvailableHours > 0
+        ? weeklyAvailableHours
+        : (me?.weekly_capacity ?? 40);
+  const weeklyUsedHours = week.bookedMinutes / 60;
+  const workloadPercentage = week.pct;
+  const isFullWeek = week.isFull;
+  const completed = week.completed;
+  const inProgress = week.inProgress;
+  const weeklyHours = Math.round(week.workedMinutes / 60);
+  const avgDuration = week.avgDurationMinutes;
 
   const kpiData = [
     {
@@ -239,7 +220,9 @@ export default function StaffSchedule() {
       label: "My Workload",
       value: `${workloadPercentage}%`,
       change:
-        workloadPercentage > 80
+        isFullWeek
+          ? "week full"
+          : workloadPercentage > 80
           ? "very busy"
           : workloadPercentage > 60
             ? "balanced"
