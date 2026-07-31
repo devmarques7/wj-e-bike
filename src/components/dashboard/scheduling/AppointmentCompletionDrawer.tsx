@@ -497,7 +497,29 @@ export default function AppointmentCompletionDrawer({
             {/* Active stage panel */}
             <div className="col-span-12 md:col-span-8 lg:col-span-9 overflow-hidden flex flex-col">
               <AnimatePresence mode="wait">
-                {activeStage && activeProgress ? (
+                {activeStageId === BRIEFING_ID ? (
+                  <BikeBriefingPanel
+                    key="briefing"
+                    briefing={briefing}
+                    loading={briefingLoading}
+                    customerName={appointment?.customer_name}
+                    acknowledged={briefingAck}
+                    onAcknowledge={() => {
+                      setBriefingAck(true);
+                      const first = stages.find((s) => !progress[s.id]?.completed_at) ?? stages[0];
+                      setActiveStageId(first?.id ?? DELIVERY_ID);
+                    }}
+                  />
+                ) : activeStageId === DELIVERY_ID ? (
+                  <DeliveryChecklistPanel
+                    key="delivery"
+                    items={deliveryItems}
+                    checked={deliveryChecked}
+                    onToggle={(id) =>
+                      setDeliveryChecked((prev) => ({ ...prev, [id]: !prev[id] }))
+                    }
+                  />
+                ) : activeStage && activeProgress ? (
                   <motion.div
                     key={activeStage.id}
                     initial={{ opacity: 0, y: 10 }}
@@ -648,14 +670,21 @@ export default function AppointmentCompletionDrawer({
                     done: stages.filter((s) => !!progress[s.id]?.completed_at).length,
                     total: stages.length,
                   })}
+                  {!allDeliveryChecked && " · delivery checklist pending"}
                 </div>
                 <Button
                   size="sm"
-                  disabled={!allStagesCompleted || saving}
-                  onClick={completeAppointment}
+                  disabled={!briefingAck || !allStagesCompleted || !allDeliveryChecked || saving}
+                  onClick={() => {
+                    if (!allDeliveryChecked) {
+                      setActiveStageId(DELIVERY_ID);
+                      return;
+                    }
+                    completeAppointment();
+                  }}
                   className={cn(
                     "h-9 text-xs",
-                    allStagesCompleted
+                    allStagesCompleted && allDeliveryChecked && briefingAck
                       ? "bg-wj-green hover:bg-wj-green/90 text-black"
                       : "bg-muted text-muted-foreground",
                   )}
