@@ -8,6 +8,7 @@ import { AuthProvider } from "@/contexts/AuthContext";
 import { ThemeProvider } from "@/contexts/ThemeContext";
 import { SystemStatusProvider } from "@/hooks/useSystemStatus";
 import { SelectedBikeProvider } from "@/contexts/SelectedBikeContext";
+import { SchedulingAvailabilityProvider } from "@/contexts/SchedulingAvailabilityContext";
 import Index from "./pages/Index";
 import Gallery from "./pages/Gallery";
 import ProductDetail from "./pages/ProductDetail";
@@ -77,6 +78,7 @@ const App = () => (
           <Sonner />
           <BrowserRouter>
             <SelectedBikeProvider>
+            <SchedulingAvailabilityProvider>
             <GlobalBreadcrumbs />
             <FleetMenuGate />
             <Routes>
@@ -142,6 +144,7 @@ const App = () => (
               {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
               <Route path="*" element={<NotFound />} />
             </Routes>
+            </SchedulingAvailabilityProvider>
             </SelectedBikeProvider>
           </BrowserRouter>
         </TooltipProvider>

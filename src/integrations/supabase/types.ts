@@ -2803,6 +2803,43 @@ export type Database = {
         Returns: boolean
       }
       is_bike_serial_available: { Args: { _serial: string }; Returns: boolean }
+      set_staff_day_availability: {
+        Args: {
+          _date: string
+          _end?: string
+          _is_working?: boolean
+          _reason?: string
+          _staff_id: string
+          _start?: string
+        }
+        Returns: {
+          created_at: string
+          end_time: string | null
+          exception_date: string
+          exception_type: string
+          id: string
+          is_working: boolean
+          reason: string | null
+          staff_id: string
+          start_time: string | null
+        }
+        SetofOptions: {
+          from: "*"
+          to: "staff_schedule_exceptions"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
+      staff_day_availability: {
+        Args: { _date: string; _staff_id: string }
+        Returns: {
+          end_time: string
+          is_working: boolean
+          max_concurrent: number
+          source: string
+          start_time: string
+        }[]
+      }
     }
     Enums: {
       app_role: "admin" | "staff" | "customer" | "guest"
