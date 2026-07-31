@@ -316,7 +316,7 @@ export default function BikeShowcase({ bikeId }: BikeShowcaseProps = {}) {
         <div className="flex items-center gap-2">
           <Link
             to="/dashboard/garage"
-            className="px-2.5 py-1 rounded-full text-[11px] bg-background/30 backdrop-blur-sm border border-border/40 text-muted-foreground hover:text-foreground hover:border-wj-green/40 transition-colors"
+            className="px-2.5 py-1 rounded-full text-[11px] bg-background/30 backdrop-blur-sm border border-border/40 text-primary-foreground/70 hover:text-primary-foreground hover:border-wj-green/40 transition-colors"
           >
             Garage
           </Link>
