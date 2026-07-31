@@ -10,6 +10,8 @@ import {
   ChevronLeft,
   ArrowUpDown,
   Layers,
+  UserPlus,
+  Wand2,
 } from "lucide-react";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { TableHeaderBar } from "@/components/ui/table-header-bar";
@@ -40,6 +42,16 @@ import {
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useSchedulingData, type AppointmentRow } from "@/hooks/scheduling/useSchedulingData";
+import { useAutoDispatch } from "@/hooks/scheduling/useAutoDispatch";
+import {
+  TASK_FILTERS,
+  compareTasks,
+  isTaskOverdue,
+  isTodayScope,
+  matchesFilter,
+  taskBucket,
+  type TaskFilter,
+} from "@/lib/scheduling/taskPriority";
 import AppointmentActionsMenu from "@/components/dashboard/scheduling/AppointmentActionsMenu";
 import CustomerAppointmentActionsMenu from "@/components/dashboard/scheduling/CustomerAppointmentActionsMenu";
 import AppointmentCompletionDrawer from "@/components/dashboard/scheduling/AppointmentCompletionDrawer";
