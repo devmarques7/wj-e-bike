@@ -26,6 +26,7 @@ const fmtHMS = (totalSec: number) => {
 export function ShiftTag() {
   const {
     userId,
+    row,
     loading,
     working,
     status,
@@ -36,6 +37,7 @@ export function ShiftTag() {
     finish: handleFinishAction,
   } = useShift();
   const [open, setOpen] = useState(false);
+  const [tab, setTab] = useState<"shift" | "job">("shift");
   const [confirmOpen, setConfirmOpen] = useState(false);
 
   /* ---- Active workshop job (global, realtime) ---- */
@@ -196,18 +198,25 @@ export function ShiftTag() {
       className="z-[9999] hidden sm:flex flex-col items-stretch"
     >
       {/* Pill */}
-      <button
-        type="button"
-        onClick={() => {
-          if (dragMoved.current) return;
-          setOpen((o) => !o);
-        }}
+      <div
         className={cn(
           "group flex items-center gap-2 rounded-full border border-border/40 bg-background/60 backdrop-blur px-3 py-1.5 shadow-lg shadow-black/10 transition-colors duration-300 hover:border-wj-green/40",
           status === "completed" && "bg-wj-green border-wj-green text-white hover:border-white/40",
           dragging ? "cursor-grabbing" : "cursor-grab",
         )}
       >
+        <button
+          type="button"
+          onClick={() => {
+            if (dragMoved.current) return;
+            if (open && tab === "shift") setOpen(false);
+            else {
+              setTab("shift");
+              setOpen(true);
+            }
+          }}
+          className="flex items-center gap-2"
+        >
         <GripVertical className="h-3 w-3 text-muted-foreground/60 -ml-1" />
         <span className="relative flex h-2 w-2">
           {status === "active" && (
@@ -225,6 +234,7 @@ export function ShiftTag() {
         <span className={cn("text-[10px] uppercase tracking-wider hidden md:inline", status === "completed" ? "text-white/80" : "text-muted-foreground")}>
           {label}
         </span>
+        </button>
 
         {/* Active job timer — extends the pill in width */}
         <AnimatePresence initial={false}>
@@ -238,9 +248,21 @@ export function ShiftTag() {
               className="flex items-center gap-2 overflow-hidden"
             >
               <span className="h-4 w-px bg-border/60 shrink-0" />
-              <span
+              <motion.button
+                type="button"
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+                onClick={() => {
+                  if (dragMoved.current) return;
+                  if (open && tab === "job") setOpen(false);
+                  else {
+                    setTab("job");
+                    setOpen(true);
+                  }
+                }}
                 className={cn(
-                  "flex items-center gap-1.5 rounded-full px-2 py-0.5 border shrink-0",
+                  "flex items-center gap-1.5 rounded-full px-2 py-0.5 border shrink-0 transition-colors",
+                  open && tab === "job" && "ring-1 ring-wj-green/50",
                   isPaused
                     ? "bg-amber-500/10 border-amber-400/40"
                     : "bg-wj-green/10 border-wj-green/30",
@@ -261,11 +283,11 @@ export function ShiftTag() {
                 >
                   {fmtHMS(jobElapsed)}
                 </span>
-              </span>
+              </motion.button>
             </motion.span>
           )}
         </AnimatePresence>
-      </button>
+      </div>
 
       {/* Expanded panel */}
       <AnimatePresence>
