@@ -42,6 +42,8 @@ export type CustomerAppointment = {
   service_color: string | null;
   service_reward_points: number | null;
   mechanic_name: string | null;
+  completed_by: string | null;
+  completed_by_name: string | null;
   bike_model: string | null;
   qc_progress: QcProgress[];
 };
@@ -82,18 +84,17 @@ export function useCustomerAppointments() {
       );
       const apptIds = rows.map((a) => a.id);
 
-      const [svcRes, mechRes, qcRes, bikeRes] = await Promise.all([
+      const [svcRes, staffRes, qcRes, bikeRes] = await Promise.all([
         svcIds.length
           ? supabase
               .from("service_types")
               .select("id, name, color, reward_points")
               .in("id", svcIds)
           : Promise.resolve({ data: [] as any[] }),
-        mechIds.length
-          ? supabase
-              .from("profiles")
-              .select("user_id, full_name")
-              .in("user_id", mechIds)
+        // Customers cannot read staff profiles directly (RLS), so resolve the
+        // mechanic / completed-by names through a security-definer function.
+        apptIds.length
+          ? supabase.rpc("get_appointment_staff", { _appointment_ids: apptIds })
           : Promise.resolve({ data: [] as any[] }),
         apptIds.length
           ? supabase
@@ -112,7 +113,9 @@ export function useCustomerAppointments() {
       ]);
 
       const svcMap = new Map((svcRes.data ?? []).map((s: any) => [s.id, s]));
-      const mechMap = new Map((mechRes.data ?? []).map((m: any) => [m.user_id, m]));
+      const staffMap = new Map(
+        ((staffRes as any)?.data ?? []).map((s: any) => [s.appointment_id, s]),
+      );
       const qcMap = new Map<string, QcProgress[]>();
       (qcRes.data ?? []).forEach((q: any) => {
         const arr = qcMap.get(q.appointment_id) ?? [];
@@ -124,13 +127,15 @@ export function useCustomerAppointments() {
       setAppointments(
         rows.map((a) => {
           const s = a.service_type_id ? (svcMap.get(a.service_type_id) as any) : null;
-          const m = a.assigned_mechanic_id ? (mechMap.get(a.assigned_mechanic_id) as any) : null;
+          const st = staffMap.get(a.id) as any;
           return {
             ...a,
             service_name: s?.name ?? null,
             service_color: s?.color ?? null,
             service_reward_points: s?.reward_points ?? null,
-            mechanic_name: m?.full_name ?? null,
+            mechanic_name: st?.mechanic_name ?? st?.completed_by_name ?? null,
+            completed_by: st?.completed_by ?? (a as any).completed_by ?? null,
+            completed_by_name: st?.completed_by_name ?? null,
             bike_model: bikeModel,
             qc_progress: qcMap.get(a.id) ?? [],
           } as CustomerAppointment;
