@@ -38,7 +38,7 @@ export interface DispatchPlan {
   unassignable: string[];
 }
 
-const ACTIVE = ["pending", "confirmed", "in_progress", "rescheduled"];
+const ACTIVE = ["pending", "confirmed", "in_progress", "rescheduled"] as const;
 const DEFAULT_DURATION = 45;
 const BUFFER = 15;
 
