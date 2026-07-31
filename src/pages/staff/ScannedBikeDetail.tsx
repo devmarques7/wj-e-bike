@@ -147,11 +147,13 @@ export default function ScannedBikeDetail() {
 
             <div className="col-span-12 lg:col-span-8 flex flex-col gap-4 lg:gap-6">
               <BikeHealthGrid metrics={health.metrics} />
-              <AppointmentsTableCard
-                customerUserId={owner?.userId ?? undefined}
-                includeRequests
-                title="Service history & requests"
-              />
+              {owner?.userId && (
+                <AppointmentsTableCard
+                  customerUserId={owner.userId}
+                  includeRequests
+                  title="Service history & requests"
+                />
+              )}
             </div>
             <div className="col-span-12 lg:col-span-4">
               <BikeAssistantCard className="h-full" />
