@@ -22,6 +22,11 @@ import {
 } from "@/lib/ai/diagnosisFlow";
 import { judgeFreeText } from "@/lib/ai/diagnosisJudge";
 import {
+  SOLUTION_BOOK,
+  SOLUTION_FIXED,
+  SOLUTION_OPTIONS,
+} from "@/lib/ai/repairSkills";
+import {
   BACK_TO_DAYS,
   NO_FIT_OPTION,
   bookingPrompt,
@@ -72,10 +77,14 @@ function loadConfig(): AssistantConfig {
   }
 }
 
-/** Minimum time the assistant "analyses" before answering (feels deliberate). */
-const MIN_THINKING_MS = 2000;
-/** Diagnosis steps are deterministic — keep them snappy. */
-const FLOW_THINKING_MS = 550;
+/**
+ * Minimum time the assistant "analyses" before answering. Every reply — even a
+ * deterministic one — is held for at least 2.5s so it always reads as a real
+ * analysis instead of an instant canned response.
+ */
+const MIN_THINKING_MS = 2500;
+/** Diagnosis steps run through the same 2.5s analysis window. */
+const FLOW_THINKING_MS = 2500;
 
 const THINKING_PHRASES = [
   "Reading your request...",
@@ -427,10 +436,32 @@ export function useBikeAssistant(options: BikeAssistantOptions = {}) {
       const history = [...messages, { id: uid(), role: "user" as const, content: prompt }];
       setStatus("thinking");
 
+      /** Rotating "analysing" copy while the minimum window runs. */
+      const startPhrases = () => {
+        const phrases = pickPhrases();
+        setThinkingPhrase(phrases[0]);
+        let i = 0;
+        const timer = window.setInterval(() => {
+          i = (i + 1) % phrases.length;
+          setThinkingPhrase(phrases[i]);
+        }, 900);
+        return () => {
+          window.clearInterval(timer);
+          setThinkingPhrase("");
+        };
+      };
+
+      /** Every deterministic step still "analyses" for the full window. */
+      const analyse = async (ms = FLOW_THINKING_MS) => {
+        const stop = startPhrases();
+        await wait(ms);
+        stop();
+      };
+
       /* ---------- 0a. Active booking flow: 0 tokens ---------- */
       const bookingSession = bookingRef.current;
       if (bookingSession && bookingSession.phase !== "done") {
-        await wait(FLOW_THINKING_MS);
+        await analyse();
         await handleBookingAnswer(bookingSession, prompt);
         setSavedCalls((n) => n + 1);
         setStatus("idle");
@@ -440,6 +471,26 @@ export function useBikeAssistant(options: BikeAssistantOptions = {}) {
       /* ---------- 0. Active diagnosis flow: 0 tokens ---------- */
       const session = diagnosisRef.current;
       if (session && session.phase !== "done") {
+        /* ---------- 0b. Solution step: local repair skills ---------- */
+        if (session.phase === "solution") {
+          await analyse();
+          const choice = matchOption(prompt, SOLUTION_OPTIONS) ?? prompt;
+          setSavedCalls((n) => n + 1);
+          if (choice === SOLUTION_FIXED) {
+            setSession({ ...session, phase: "done" });
+            pushAssistant(
+              "Great — I've logged the fix on your bike history. If it comes back, tell me and I'll book it straight away.",
+              { action: { type: "navigate", to: "/dashboard/garage", label: "Open my garage" } },
+            );
+            setStatus("idle");
+            return;
+          }
+          void SOLUTION_BOOK;
+          await finishDiagnosis(session);
+          setStatus("idle");
+          return;
+        }
+
         const active = currentPrompt(session);
         const options = active?.options ?? [];
         const matched = matchOption(prompt, options);
@@ -482,7 +533,7 @@ export function useBikeAssistant(options: BikeAssistantOptions = {}) {
           return;
         }
 
-        await wait(FLOW_THINKING_MS);
+        await analyse();
         const next = applyAnswer(session, matched ?? prompt);
         setSession(next);
         setSavedCalls((n) => n + 1);
