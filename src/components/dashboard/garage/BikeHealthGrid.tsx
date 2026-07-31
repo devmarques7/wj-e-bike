@@ -69,8 +69,10 @@ interface BikeHealthGridProps {
 
 /** Bike health board — one card per wear criterion, scored in percent. */
 export default function BikeHealthGrid({ metrics, onAssess, assessment }: BikeHealthGridProps) {
+  // Metrics arrive already merged with the assessment (mergeAssessedHealth);
+  // only override here when a raw telemetry list is passed in.
   const shown = metrics.map((m) =>
-    assessment && assessment.scores?.[m.key] != null
+    assessment && assessment.scores?.[m.key] != null && !m.detail.startsWith("Assessed")
       ? { ...m, value: assessment.scores[m.key], detail: `Assessed · ${m.detail}` }
       : m,
   );
