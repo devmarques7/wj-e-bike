@@ -286,14 +286,14 @@ export default function StaffSchedule() {
               <Badge
                 className={cn(
                   "text-[10px]",
-                  workloadPercentage > 80
+                  isFullWeek || workloadPercentage > 80
                     ? "bg-red-500/20 text-red-400 border-red-500/30"
                     : workloadPercentage > 60
                       ? "bg-amber-500/20 text-amber-400 border-amber-500/30"
                       : "bg-wj-green/20 text-wj-green border-wj-green/30",
                 )}
               >
-                {workloadPercentage}% of capacity
+                {isFullWeek ? `Full · ${workloadPercentage}%` : `${workloadPercentage}% of capacity`}
               </Badge>
             </div>
 
@@ -317,7 +317,11 @@ export default function StaffSchedule() {
               <span>
                 {Math.round(weeklyUsedHours * 10) / 10}h used · {weeklyAppointments} appointments
               </span>
-              <span>capacity {weeklyCapacity}h</span>
+              <span>
+                {isFullWeek
+                  ? "no capacity left this week"
+                  : `${Math.max(0, Math.round((weeklyCapacity - weeklyUsedHours) * 10) / 10)}h free of ${weeklyCapacity}h`}
+              </span>
             </div>
           </motion.div>
 
