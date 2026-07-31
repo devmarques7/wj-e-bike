@@ -57,6 +57,7 @@ import CustomerAppointmentActionsMenu from "@/components/dashboard/scheduling/Cu
 import AppointmentCompletionDrawer from "@/components/dashboard/scheduling/AppointmentCompletionDrawer";
 import AppointmentReviewHistoryDialog from "@/components/dashboard/scheduling/AppointmentReviewHistoryDialog";
 import FloatingActiveAppointment from "@/components/dashboard/scheduling/FloatingActiveAppointment";
+import { useAuth } from "@/contexts/AuthContext";
 
 const formatRelative = (
   iso: string | null,
@@ -155,7 +156,10 @@ export default function AppointmentsTableCard({
   className,
 }: AppointmentsTableCardProps) {
   const { t, i18n } = useTranslation();
+  const { user: authUser } = useAuth();
   const isCustomer = !!customerUserId;
+  // Staff already get the running job inside the floating shift pill (ShiftTag).
+  const showFloatingJob = !isCustomer && authUser?.role !== "staff";
   const effectiveReadOnly = readOnly || isCustomer;
   const [activeTab, setActiveTab] = useState("day");
   const [statusFilter, setStatusFilter] = useState<TaskFilter>("pending");
@@ -788,7 +792,7 @@ export default function AppointmentsTableCard({
         }}
       />
 
-      {!isCustomer && (
+      {showFloatingJob && (
         <FloatingActiveAppointment
           appointment={activeAppointment}
           onOpen={() => activeAppointment && setCompletionTarget(activeAppointment)}

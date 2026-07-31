@@ -2,11 +2,14 @@
 
 import { useState, useEffect, useRef, useMemo } from "react";
 import { createPortal } from "react-dom";
-import { GripVertical, Play, Pause, Square, Loader2, Activity } from "lucide-react";
+import { GripVertical, Play, Pause, Square, Loader2, Activity, Wrench, ShieldCheck, ChevronRight, Bell } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { cn } from "@/lib/utils";
 import { useShift } from "@/hooks/useShift";
 import { FinishShiftDialog } from "@/components/dashboard/FinishShiftDialog";
+import { useActiveWork } from "@/hooks/workshop/useActiveWork";
+import { useWorkPause } from "@/lib/workshop/workPause";
+import AppointmentCompletionDrawer from "@/components/dashboard/scheduling/AppointmentCompletionDrawer";
 const fmtHMS = (totalSec: number) => {
   const s = Math.max(0, Math.floor(totalSec));
   const h = Math.floor(s / 3600);
@@ -34,6 +37,54 @@ export function ShiftTag() {
   } = useShift();
   const [open, setOpen] = useState(false);
   const [confirmOpen, setConfirmOpen] = useState(false);
+
+  /* ---- Active workshop job (global, realtime) ---- */
+  const { appointment, refetch } = useActiveWork();
+  const { isPaused, workNow } = useWorkPause();
+  const [qcOpen, setQcOpen] = useState(false);
+  const [, setTick] = useState(0);
+  useEffect(() => {
+    if (!appointment?.work_started_at) return;
+    const i = setInterval(() => setTick((t) => t + 1), 1000);
+    return () => clearInterval(i);
+  }, [appointment?.work_started_at]);
+
+  const jobStart = appointment?.work_started_at
+    ? new Date(appointment.work_started_at).getTime()
+    : null;
+  const jobElapsed = jobStart ? Math.max(0, Math.floor((workNow() - jobStart) / 1000)) : 0;
+  const hasJob = !!appointment && !!jobStart;
+
+  const activityFeed = useMemo(() => {
+    if (!appointment || !jobStart) return [] as { id: string; label: string; meta: string; tone: string }[];
+    const startedAt = new Date(jobStart).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
+    const feed = [
+      {
+        id: "started",
+        label: `Job started · ${appointment.service_name ?? "Service"}`,
+        meta: startedAt,
+        tone: "green",
+      },
+    ];
+    if (appointment.priority && appointment.priority !== "normal") {
+      feed.push({
+        id: "priority",
+        label: appointment.priority === "emergency" ? "Emergency priority job" : "VIP customer job",
+        meta: appointment.priority.toUpperCase(),
+        tone: "amber",
+      });
+    }
+    if (isPaused) {
+      feed.push({ id: "paused", label: "Timer paused with your shift", meta: "Paused", tone: "amber" });
+    }
+    feed.push({
+      id: "qc",
+      label: "Quality Control pending completion",
+      meta: fmtHMS(jobElapsed),
+      tone: "green",
+    });
+    return feed;
+  }, [appointment, jobStart, isPaused, jobElapsed]);
 
   const elRef = useRef<HTMLDivElement>(null);
   const [bounds, setBounds] = useState({ left: 0, top: 0, right: 0, bottom: 0 });
@@ -174,6 +225,46 @@ export function ShiftTag() {
         <span className={cn("text-[10px] uppercase tracking-wider hidden md:inline", status === "completed" ? "text-white/80" : "text-muted-foreground")}>
           {label}
         </span>
+
+        {/* Active job timer — extends the pill in width */}
+        <AnimatePresence initial={false}>
+          {hasJob && (
+            <motion.span
+              key="job"
+              initial={{ width: 0, opacity: 0, marginLeft: 0 }}
+              animate={{ width: "auto", opacity: 1, marginLeft: 4 }}
+              exit={{ width: 0, opacity: 0, marginLeft: 0 }}
+              transition={{ type: "spring", stiffness: 320, damping: 32 }}
+              className="flex items-center gap-2 overflow-hidden"
+            >
+              <span className="h-4 w-px bg-border/60 shrink-0" />
+              <span
+                className={cn(
+                  "flex items-center gap-1.5 rounded-full px-2 py-0.5 border shrink-0",
+                  isPaused
+                    ? "bg-amber-500/10 border-amber-400/40"
+                    : "bg-wj-green/10 border-wj-green/30",
+                )}
+              >
+                <motion.span
+                  animate={isPaused ? { rotate: 0 } : { rotate: [0, -18, 12, 0] }}
+                  transition={{ duration: 2.4, repeat: Infinity, ease: "easeInOut" }}
+                  className="flex"
+                >
+                  <Wrench className={cn("h-3 w-3", isPaused ? "text-amber-400" : "text-wj-green")} />
+                </motion.span>
+                <span
+                  className={cn(
+                    "text-xs font-mono font-bold tabular-nums",
+                    isPaused ? "text-amber-400" : "text-wj-green",
+                  )}
+                >
+                  {fmtHMS(jobElapsed)}
+                </span>
+              </span>
+            </motion.span>
+          )}
+        </AnimatePresence>
       </button>
 
       {/* Expanded panel */}
@@ -228,6 +319,83 @@ export function ShiftTag() {
                 Shift completed for today.
               </div>
             )}
+
+            {/* Live workshop activity */}
+            <AnimatePresence initial={false}>
+              {hasJob && (
+                <motion.div
+                  key="job-panel"
+                  initial={{ opacity: 0, height: 0 }}
+                  animate={{ opacity: 1, height: "auto" }}
+                  exit={{ opacity: 0, height: 0 }}
+                  transition={{ duration: 0.24, ease: [0.22, 1, 0.36, 1] }}
+                  className="overflow-hidden"
+                >
+                  <div className="mt-1 pt-2 border-t border-border/40 flex flex-col gap-1.5 w-[280px]">
+                    <div className="flex items-center gap-1.5 px-2">
+                      <Bell className="h-3 w-3 text-muted-foreground" />
+                      <span className="text-[10px] uppercase tracking-wider text-muted-foreground">
+                        Live activity
+                      </span>
+                    </div>
+
+                    <div className="flex flex-col gap-1 px-1">
+                      {activityFeed.map((item, i) => (
+                        <motion.div
+                          key={item.id}
+                          initial={{ opacity: 0, x: -8 }}
+                          animate={{ opacity: 1, x: 0 }}
+                          transition={{ delay: 0.05 * i, duration: 0.22 }}
+                          className="flex items-center gap-2 rounded-lg px-2 py-1.5 bg-muted/30"
+                        >
+                          <span
+                            className={cn(
+                              "h-1.5 w-1.5 rounded-full shrink-0",
+                              item.tone === "amber" ? "bg-amber-400" : "bg-wj-green animate-pulse",
+                            )}
+                          />
+                          <span className="text-[11px] text-foreground truncate flex-1">{item.label}</span>
+                          <span className="text-[10px] text-muted-foreground tabular-nums shrink-0">
+                            {item.meta}
+                          </span>
+                        </motion.div>
+                      ))}
+                    </div>
+
+                    {/* Process ongoing → opens Quality Control */}
+                    <motion.button
+                      type="button"
+                      whileHover={{ scale: 1.01 }}
+                      whileTap={{ scale: 0.985 }}
+                      onClick={() => {
+                        setQcOpen(true);
+                        setOpen(false);
+                      }}
+                      className="mt-1 flex items-center gap-2.5 rounded-xl border border-wj-green/40 bg-wj-green/10 px-2.5 py-2 text-left hover:bg-wj-green/20 transition-colors"
+                    >
+                      <span className="relative w-8 h-8 rounded-lg bg-wj-green/15 flex items-center justify-center shrink-0">
+                        <ShieldCheck className="h-4 w-4 text-wj-green" />
+                        <span
+                          className={cn(
+                            "absolute -top-0.5 -right-0.5 w-2 h-2 rounded-full",
+                            isPaused ? "bg-amber-400" : "bg-wj-green animate-ping",
+                          )}
+                        />
+                      </span>
+                      <span className="min-w-0 flex-1">
+                        <span className="block text-[10px] uppercase tracking-wider text-muted-foreground leading-none">
+                          Process ongoing
+                        </span>
+                        <span className="block text-xs font-medium text-foreground truncate mt-0.5">
+                          {appointment?.customer_name ?? appointment?.service_name ?? "Appointment"}
+                        </span>
+                      </span>
+                      <ChevronRight className="h-3.5 w-3.5 text-wj-green shrink-0" />
+                    </motion.button>
+                  </div>
+                </motion.div>
+              )}
+            </AnimatePresence>
           </motion.div>
         )}
       </AnimatePresence>
@@ -239,6 +407,16 @@ export function ShiftTag() {
           setOpen(false);
         }}
         working={working}
+      />
+
+      <AppointmentCompletionDrawer
+        appointment={appointment}
+        open={qcOpen && !!appointment}
+        onOpenChange={setQcOpen}
+        onCompleted={() => {
+          setQcOpen(false);
+          refetch();
+        }}
       />
     </motion.div>,
     document.body,
