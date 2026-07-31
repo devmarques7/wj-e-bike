@@ -110,6 +110,8 @@ export default function AppointmentCompletionDrawer({
   /* Final condition validation (same SSBike flow used on the E-Pass page). */
   const [assessOpen, setAssessOpen] = useState(false);
   const [assessDone, setAssessDone] = useState(false);
+  /* True when the assessment was opened as the final step of completing. */
+  const completeAfterAssessRef = useRef(false);
 
   const { briefing, loading: briefingLoading } = useBikeBriefing(appointment?.id, open);
   const { workNow } = useWorkPause();
@@ -753,7 +755,10 @@ export default function AppointmentCompletionDrawer({
                     size="sm"
                     variant={assessDone ? "outline" : "default"}
                     disabled={saving}
-                    onClick={() => setAssessOpen(true)}
+                    onClick={() => {
+                      completeAfterAssessRef.current = false;
+                      setAssessOpen(true);
+                    }}
                     className={cn(
                       "h-8 text-xs shrink-0",
                       !assessDone && "bg-wj-green hover:bg-wj-green/90 text-black",
@@ -790,6 +795,7 @@ export default function AppointmentCompletionDrawer({
                     /* Close the job with the same guided SSBike condition
                        assessment used on the E-Pass page. */
                     if (assessBikeId && !assessDone) {
+                      completeAfterAssessRef.current = true;
                       setAssessOpen(true);
                       return;
                     }
@@ -825,7 +831,10 @@ export default function AppointmentCompletionDrawer({
             onSaved={(res) => {
               setAssessDone(true);
               setAssessOpen(false);
-              void completeAppointment(res?.overall ?? null);
+              if (completeAfterAssessRef.current) {
+                completeAfterAssessRef.current = false;
+                void completeAppointment(res?.overall ?? null);
+              }
             }}
           />
         ) : null}
