@@ -83,6 +83,7 @@ export type AppointmentRow = {
   updated_at: string | null;
   work_started_at: string | null;
   work_ended_at: string | null;
+  bike_id?: string | null;
 };
 
 // Extra fields carried straight through from the appointments row via `select("*")`.
