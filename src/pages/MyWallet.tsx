@@ -406,7 +406,7 @@ export default function MyWallet() {
                     label={t("e_pass.bike", { defaultValue: "Bike" })}
                     bikeName={bike.model || t("e_pass.no_bike")}
                     serial={bike.serial || undefined}
-                    planName={currentPlan?.name ?? "Free"}
+                    planName={planForBike(bike.id)?.name ?? "Free"}
                     memberName={user?.name || "Guest"}
                     cardNumber={cardNumber}
                   />
@@ -521,7 +521,14 @@ export default function MyWallet() {
                 revisionDate={nextRevision}
                 bikeName={garageBike?.model || activeBikeName}
                 upgradeOptions={upgradeOptions}
-                onUpgrade={() => navigate("/membership-plans")}
+                contextLabel={
+                  activePendingPlan
+                    ? `${activePendingPlan.name} · awaiting payment`
+                    : undefined
+                }
+                onUpgrade={() =>
+                  activeBike?.id ? setPlanDialogBikeId(activeBike.id) : navigate("/membership-plans")
+                }
                 onBook={() => navigate("/dashboard/garage")}
               />
             </div>
@@ -532,7 +539,9 @@ export default function MyWallet() {
                 onScan={() => setScanOpen(true)}
                 onAddCard={() => setPickerOpen(true)}
                 onTips={() => navigate("/dashboard/garage")}
-                onPlans={() => navigate("/membership-plans")}
+                onPlans={() =>
+                  activeBike?.id ? setPlanDialogBikeId(activeBike.id) : navigate("/membership-plans")
+                }
                 onAllBikes={() => navigate("/dashboard/bike")}
               />
             </div>
