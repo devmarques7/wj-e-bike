@@ -75,6 +75,8 @@ export type AppointmentRow = {
   customer_name: string | null;
   customer_email: string | null;
   mechanic_name: string | null;
+  completed_by?: string | null;
+  completed_by_name?: string | null;
   service_name: string | null;
   service_color: string | null;
   plan_name: string | null;
@@ -222,7 +224,11 @@ export function useSchedulingData(opts?: { date?: string; customerUserId?: strin
 
       const userIds = Array.from(new Set((appts ?? []).map((a) => a.user_id)));
       const mechIds = Array.from(
-        new Set((appts ?? []).map((a) => a.assigned_mechanic_id).filter(Boolean) as string[]),
+        new Set(
+          (appts ?? [])
+            .flatMap((a: any) => [a.assigned_mechanic_id, a.completed_by])
+            .filter(Boolean) as string[],
+        ),
       );
       const svcIds = Array.from(
         new Set((appts ?? []).map((a) => a.service_type_id).filter(Boolean) as string[]),
@@ -285,13 +291,15 @@ export function useSchedulingData(opts?: { date?: string; customerUserId?: strin
         (appts ?? []).map((a) => {
           const p = profMap.get(a.user_id);
           const m = a.assigned_mechanic_id ? mechMap.get(a.assigned_mechanic_id) : null;
+          const done = (a as any).completed_by ? mechMap.get((a as any).completed_by) : null;
           const s = a.service_type_id ? svcMap.get(a.service_type_id) : null;
           const pl = planMap.get(a.user_id) ?? null;
           return {
             ...a,
             customer_name: p?.full_name ?? null,
             customer_email: p?.email ?? null,
-            mechanic_name: m?.full_name ?? null,
+            mechanic_name: m?.full_name ?? done?.full_name ?? null,
+            completed_by_name: done?.full_name ?? null,
             service_name: s?.name ?? null,
             service_color: s?.color ?? null,
             plan_name: pl?.name ?? null,

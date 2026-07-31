@@ -359,9 +359,20 @@ export default function AppointmentCompletionDrawer({
   const completeAppointment = async () => {
     if (!appointment) return;
     setSaving(true);
+    const { data: auth } = await supabase.auth.getUser();
+    const meId = auth?.user?.id ?? null;
     const { error } = await supabase
       .from("appointments")
-      .update({ status: "completed", work_ended_at: new Date().toISOString() })
+      .update({
+        status: "completed",
+        work_ended_at: new Date().toISOString(),
+        // Register who actually finished the job, and claim the appointment
+        // when it was never assigned to a mechanic.
+        completed_by: meId,
+        ...(appointment.assigned_mechanic_id || !meId
+          ? {}
+          : { assigned_mechanic_id: meId }),
+      })
       .eq("id", appointment.id);
     setSaving(false);
     if (error) {

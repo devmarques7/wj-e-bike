@@ -253,8 +253,16 @@ export default function AppointmentReviewHistoryDialog({
               </DetailField>
               <DetailField icon={UserCog} label={t("workshop.cols.mechanic")}>
                 <div className="font-medium truncate">
-                  {appointment.mechanic_name ?? t("workshop.cols.unassigned")}
+                  {appointment.mechanic_name ??
+                    appointment.completed_by_name ??
+                    t("workshop.cols.unassigned")}
                 </div>
+                {appointment.completed_by_name ? (
+                  <div className="text-[10px] text-muted-foreground truncate mt-0.5">
+                    {t("workshop.review.completed_by", { defaultValue: "Completed by" })}:{" "}
+                    {appointment.completed_by_name}
+                  </div>
+                ) : null}
               </DetailField>
               <DetailField icon={ShieldCheck} label={t("workshop.cols.plan")}>
                 {appointment.plan_name ? (

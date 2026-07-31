@@ -230,6 +230,7 @@ export type Database = {
           assigned_mechanic_id: string | null
           bike_id: string | null
           booked_via: string
+          completed_by: string | null
           confirmation_sent_at: string | null
           created_at: string
           duration_minutes: number | null
@@ -259,6 +260,7 @@ export type Database = {
           assigned_mechanic_id?: string | null
           bike_id?: string | null
           booked_via?: string
+          completed_by?: string | null
           confirmation_sent_at?: string | null
           created_at?: string
           duration_minutes?: number | null
@@ -288,6 +290,7 @@ export type Database = {
           assigned_mechanic_id?: string | null
           bike_id?: string | null
           booked_via?: string
+          completed_by?: string | null
           confirmation_sent_at?: string | null
           created_at?: string
           duration_minutes?: number | null
@@ -2764,6 +2767,16 @@ export type Database = {
           isOneToOne: true
           isSetofReturn: false
         }
+      }
+      get_appointment_staff: {
+        Args: { _appointment_ids: string[] }
+        Returns: {
+          appointment_id: string
+          completed_by: string
+          completed_by_name: string
+          mechanic_id: string
+          mechanic_name: string
+        }[]
       }
       get_available_slots: {
         Args: { _date: string; _mechanic_id?: string; _service_type_id: string }
