@@ -60,9 +60,16 @@ function resolveCycle(bike: Bike) {
 interface ServiceCountdownProps {
   /** Bike selected by the page-level BikeTabs selector. */
   bikeId?: string | null;
+  /**
+   * Render a bike that does not belong to the logged-in user (E-Pass scan).
+   * When provided the component skips its own fetch and uses this record.
+   */
+  externalBike?: Partial<Bike> & { id: string; model: string } | null;
+  /** Owner of the external bike, used to preset the booking dialog. */
+  externalOwner?: { userId: string | null; name: string | null; email: string | null } | null;
 }
 
-export default function ServiceCountdown({ bikeId }: ServiceCountdownProps = {}) {
+export default function ServiceCountdown({ bikeId, externalBike, externalOwner }: ServiceCountdownProps = {}) {
   const navigate = useNavigate();
   const { user } = useAuth();
   const videoRef = useRef<HTMLVideoElement>(null);
@@ -85,6 +92,21 @@ export default function ServiceCountdown({ bikeId }: ServiceCountdownProps = {})
   const isRealUser = !!user && !isDemo;
 
   const loadBikes = useCallback(async () => {
+    if (externalBike) {
+      setBikes([
+        {
+          id: externalBike.id,
+          model: externalBike.model,
+          serial: externalBike.serial ?? null,
+          purchased_at: externalBike.purchased_at ?? null,
+          last_service_at: externalBike.last_service_at ?? null,
+          next_service_at: externalBike.next_service_at ?? null,
+          services_completed: externalBike.services_completed ?? 0,
+        },
+      ]);
+      setLoading(false);
+      return;
+    }
     if (!isRealUser) {
       setLoading(false);
       return;
@@ -110,7 +132,7 @@ export default function ServiceCountdown({ bikeId }: ServiceCountdownProps = {})
 
     if (!error && data) setBikes(data as Bike[]);
     setLoading(false);
-  }, [isRealUser, user?.id]);
+  }, [externalBike, isRealUser, user?.id]);
 
   useEffect(() => {
     loadBikes();
@@ -185,7 +207,7 @@ export default function ServiceCountdown({ bikeId }: ServiceCountdownProps = {})
   };
 
   // ---------- Empty state (no bikes registered) ----------
-  if (!isRealUser || loading || bikes.length === 0) {
+  if ((!isRealUser && !externalBike) || loading || bikes.length === 0) {
     if (loading) {
       return (
         <div className="relative h-full min-h-[400px] rounded-3xl overflow-hidden border border-border/40 bg-card/30 backdrop-blur-md flex items-center justify-center">
@@ -328,7 +350,7 @@ export default function ServiceCountdown({ bikeId }: ServiceCountdownProps = {})
       {/* Booking dialog — reuses the admin BookAppointmentDialog with the
           current user + selected bike preset, so members go straight to
           the service + real-time availability steps. */}
-      {user?.id && (
+      {(externalOwner?.userId ?? user?.id) && (
         <BookAppointmentDialog
           open={!!bookingBike}
           onOpenChange={(v) => !v && setBookingBike(null)}
@@ -337,9 +359,10 @@ export default function ServiceCountdown({ bikeId }: ServiceCountdownProps = {})
             loadBikes();
           }}
           presetCustomer={{
-            user_id: user.id,
-            full_name: (user as any).full_name ?? (user as any).name ?? null,
-            email: user.email ?? null,
+            user_id: (externalOwner?.userId ?? user!.id) as string,
+            full_name:
+              externalOwner?.name ?? (user as any)?.full_name ?? (user as any)?.name ?? null,
+            email: externalOwner?.email ?? user?.email ?? null,
           }}
           presetBike={
             bookingBike
