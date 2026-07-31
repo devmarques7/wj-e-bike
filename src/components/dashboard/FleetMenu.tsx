@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { motion } from "framer-motion";
+import { motion, useDragControls } from "framer-motion";
 import { useNavigate } from "react-router-dom";
 import { QrCode, CalendarPlus, Pause, Play, Plus } from "lucide-react";
 import { GooeyActions } from "@/components/ui/gooey-actions";
@@ -16,6 +16,7 @@ export default function FleetMenu() {
   const navigate = useNavigate();
   const [scanOpen, setScanOpen] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
+  const dragControls = useDragControls();
   const { status, start, pause, resume, working } = useShift();
 
   const shiftRunning = status === "active";
@@ -49,7 +50,9 @@ export default function FleetMenu() {
   return (
     <>
       <motion.div
-        drag={!menuOpen}
+        drag
+        dragListener={false}
+        dragControls={dragControls}
         dragMomentum={false}
         dragElastic={0.08}
         whileDrag={{ scale: 1.03 }}
@@ -60,7 +63,12 @@ export default function FleetMenu() {
           coreIcon={<Plus className="h-6 w-6" strokeWidth={2.2} />}
           actions={actions}
           holdToOpen
-          holdDelay={1000}
+          holdDelay={500}
+          onPressDrag={(event) => {
+            if (menuOpen) return false;
+            dragControls.start(event);
+            return true;
+          }}
           radius={74}
           arc={[-160, -80]}
           magnetRange={46}
