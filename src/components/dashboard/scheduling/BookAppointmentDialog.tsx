@@ -36,6 +36,9 @@ import {
 import { cn } from "@/lib/utils";
 import { supabase } from "@/integrations/supabase/client";
 import { isSlotSelectable } from "@/lib/scheduling/availability";
+import { describeSchedulingError } from "@/lib/scheduling/availabilityGuard";
+import { useSchedulingAvailability } from "@/contexts/SchedulingAvailabilityContext";
+import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
 import type { ServiceType } from "@/hooks/scheduling/useSchedulingData";
 
@@ -137,6 +140,13 @@ export default function BookAppointmentDialog({
   const [closedDows, setClosedDows] = useState<Set<number>>(new Set());
   const [forcedClosedDates, setForcedClosedDates] = useState<Set<string>>(new Set());
   const [forcedOpenDates, setForcedOpenDates] = useState<Set<string>>(new Set());
+
+  // Global availability cycle (shared with the DB guard)
+  const { user } = useAuth();
+  const { version, getAvailability, ensureAvailability } = useSchedulingAvailability();
+  const isWorkshopUser = user?.role === "staff" || user?.role === "admin";
+  const [myDayOff, setMyDayOff] = useState(false);
+  const [openingDay, setOpeningDay] = useState(false);
 
   const selectedService = useMemo(
     () => serviceTypes.find((s) => s.id === serviceId) ?? null,
@@ -371,7 +381,36 @@ export default function BookAppointmentDialog({
 
   useEffect(() => {
     if (open && step === 3 && selectedService) computeSlots();
-  }, [open, step, computeSlots, selectedService]);
+  }, [open, step, computeSlots, selectedService, version]);
+
+  /* ---------- is the logged-in mechanic available on the chosen date? ---------- */
+  useEffect(() => {
+    if (!open || step !== 3 || !isWorkshopUser || !user?.id) {
+      setMyDayOff(false);
+      return;
+    }
+    let cancelled = false;
+    getAvailability(user.id, date)
+      .then((a) => !cancelled && setMyDayOff(!a.isWorking))
+      .catch(() => !cancelled && setMyDayOff(false));
+    return () => {
+      cancelled = true;
+    };
+  }, [open, step, date, user?.id, isWorkshopUser, getAvailability, version]);
+
+  const offerOwnAvailability = async () => {
+    if (!user?.id) return;
+    setOpeningDay(true);
+    try {
+      const opened = await ensureAvailability(user.id, date);
+      if (opened) {
+        setMyDayOff(false);
+        await computeSlots();
+      }
+    } finally {
+      setOpeningDay(false);
+    }
+  };
 
   /* ---------- preload calendar availability (closed days/exceptions) ---------- */
   useEffect(() => {
@@ -442,7 +481,9 @@ export default function BookAppointmentDialog({
       onCreated?.();
       onOpenChange(false);
     } catch (e: any) {
-      toast.error(e.message ?? "Falha ao criar agendamento");
+      toast.error(describeSchedulingError(e));
+      // The DB guard rejected it — availability changed meanwhile, refresh.
+      computeSlots();
     } finally {
       setSubmitting(false);
     }
