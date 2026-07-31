@@ -35,6 +35,7 @@ import MyShiftWeekCompact from "@/components/dashboard/scheduling/MyShiftWeekCom
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { useSchedulingAvailability } from "@/contexts/SchedulingAvailabilityContext";
 import { dateKey } from "@/lib/scheduling/availabilityGuard";
+import { localYmd } from "@/lib/scheduling/localDate";
 import { useStaffWeekWorkload } from "@/hooks/staff/useStaffWeekWorkload";
 
 const DAY_KEYS = ["sun", "mon", "tue", "wed", "thu", "fri", "sat"] as const;
@@ -91,7 +92,7 @@ export default function StaffSchedule() {
     ? ["#0a0a0a", "#0d2818", "#058c42", "#10b981", "#022c1a"]
     : ["#f5f7f5", "#dff5e8", "#058c42", "#86efac", "#ecfdf5"];
 
-  const dateStr = (selectedDate ?? new Date()).toISOString().slice(0, 10);
+  const dateStr = localYmd(selectedDate ?? new Date());
   const {
     loading,
     exceptions,
@@ -116,7 +117,7 @@ export default function StaffSchedule() {
   // Load my working hours (staff_schedules) to derive real weekly availability
   useEffect(() => {
     if (!mineUserId) return;
-    const today = new Date().toISOString().slice(0, 10);
+    const today = localYmd(new Date());
     (async () => {
       const { data, error } = await supabase
         .from("staff_schedules")

@@ -45,7 +45,8 @@ interface Props {
   onCreated?: () => void;
 }
 
-const todayISO = () => new Date().toISOString().slice(0, 10);
+import { localYmd } from "@/lib/scheduling/localDate";
+const todayISO = () => localYmd(new Date());
 const pad = (n: number) => String(n).padStart(2, "0");
 const toMinutes = (t: string) => {
   const [h, m] = t.split(":").map(Number);
