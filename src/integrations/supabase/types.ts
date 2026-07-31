@@ -2501,6 +2501,56 @@ export type Database = {
       }
     }
     Functions: {
+      book_available_slot: {
+        Args: {
+          p_bike_id: string
+          p_date: string
+          p_end_time: string
+          p_mechanic_id: string
+          p_notes?: string
+          p_service_type_id: string
+          p_start_time: string
+          p_subscription_id: string
+          p_urgent?: boolean
+          p_user_id: string
+        }
+        Returns: {
+          actual_duration_minutes: number | null
+          assigned_mechanic_id: string | null
+          bike_id: string | null
+          booked_via: string
+          completed_by: string | null
+          confirmation_sent_at: string | null
+          created_at: string
+          duration_minutes: number | null
+          extra_charge_eur: number | null
+          id: string
+          is_covered_by_plan: boolean
+          notes: string | null
+          priority: string
+          priority_score: number
+          reminder_24h_sent_at: string | null
+          reschedule_count: number
+          reschedule_of: string | null
+          scheduled_date: string
+          scheduled_end_time: string | null
+          scheduled_start_time: string
+          service_type_id: string | null
+          status: Database["public"]["Enums"]["appointment_status_enum"]
+          subscription_id: string | null
+          subscription_plan_level: number | null
+          updated_at: string
+          user_id: string
+          work_ended_at: string | null
+          work_started_at: string | null
+        }
+        SetofOptions: {
+          from: "*"
+          to: "appointments"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
       fn_adjust_stock: {
         Args: {
           p_delta: number

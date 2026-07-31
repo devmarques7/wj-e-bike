@@ -109,10 +109,17 @@ export default function BikeAssistantCard({
     if (!busy) inputRef.current?.focus();
   }, [busy]);
 
+  const submitLockRef = useRef(false);
+
   const submit = async (text: string) => {
-    if (!text.trim() || busy) return;
+    if (!text.trim() || busy || submitLockRef.current) return;
+    submitLockRef.current = true;
     setValue("");
-    await send(text);
+    try {
+      await send(text);
+    } finally {
+      submitLockRef.current = false;
+    }
   };
 
   const lastAssistantId = [...messages].reverse().find((m) => m.role === "assistant")?.id ?? null;
@@ -299,7 +306,7 @@ export default function BikeAssistantCard({
                                 key={`${m.id}-opt-${i}`}
                                 type="button"
                                 onClick={() => submit(option)}
-                                disabled={busy}
+                                disabled={busy || m.id !== lastAssistantId}
                                 className="rounded-full border border-wj-green/30 bg-wj-green/5 px-3 py-1.5 text-left text-[11px] text-foreground/90 transition-colors hover:border-wj-green/60 hover:bg-wj-green/15 hover:text-wj-green disabled:opacity-50"
                               >
                                 {option}
