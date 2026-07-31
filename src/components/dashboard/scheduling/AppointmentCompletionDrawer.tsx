@@ -797,21 +797,6 @@ export default function AppointmentCompletionDrawer({
                         : "Rate battery, brakes, drivetrain and frame to update the bike overall condition."}
                     </p>
                   </div>
-                  <Button
-                    size="sm"
-                    variant={assessDone ? "outline" : "default"}
-                    disabled={saving}
-                    onClick={() => {
-                      completeAfterAssessRef.current = false;
-                      setAssessOpen(true);
-                    }}
-                    className={cn(
-                      "h-8 text-xs shrink-0",
-                      !assessDone && "bg-wj-green hover:bg-wj-green/90 text-black",
-                    )}
-                  >
-                    {assessDone ? "Review rating" : "Assess bike"}
-                  </Button>
                 </div>
               ) : null}
 
