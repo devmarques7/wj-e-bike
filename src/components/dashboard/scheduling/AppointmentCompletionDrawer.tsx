@@ -28,6 +28,7 @@ import type { AppointmentRow } from "@/hooks/scheduling/useSchedulingData";
 import { useBikeBriefing } from "@/hooks/workshop/useBikeBriefing";
 import BikeBriefingPanel from "./BikeBriefingPanel";
 import DeliveryChecklistPanel, { type DeliveryItem } from "./DeliveryChecklistPanel";
+import { useWorkPause } from "@/lib/workshop/workPause";
 
 const BRIEFING_ID = "__briefing__";
 const DELIVERY_ID = "__delivery__";
@@ -100,6 +101,7 @@ export default function AppointmentCompletionDrawer({
   const [deliveryChecked, setDeliveryChecked] = useState<Record<string, boolean>>({});
 
   const { briefing, loading: briefingLoading } = useBikeBriefing(appointment?.id, open);
+  const { workNow } = useWorkPause();
 
   const deliveryItems = useMemo<DeliveryItem[]>(() => {
     const reported = (briefing?.reportedPoints ?? []).map((p, i) => ({
