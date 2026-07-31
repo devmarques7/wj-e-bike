@@ -21,7 +21,8 @@ interface Props {
   bikeId: string;
   bikeModel?: string | null;
   customerId?: string | null;
-  onSaved?: () => void;
+  /** Receives the final validated condition (used to award E-Pass points). */
+  onSaved?: (result: { overall: number; label: string }) => void;
 }
 
 type Bubble = { id: string; role: "bot" | "user"; text: string };
@@ -132,7 +133,7 @@ export default function BikeAssessmentDialog({
       return;
     }
     toast.success(`Condition registered — ${result.overall}% (${result.label})`);
-    onSaved?.();
+    onSaved?.({ overall: result.overall, label: result.label });
     onOpenChange(false);
   };
 
