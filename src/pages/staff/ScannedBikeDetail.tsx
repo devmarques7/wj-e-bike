@@ -13,6 +13,7 @@ import AppointmentsTableCard from "@/components/dashboard/scheduling/Appointment
 import BikeAssistantCard from "@/components/dashboard/assistant/BikeAssistantCard";
 import BikeAssessmentDialog from "@/components/dashboard/garage/BikeAssessmentDialog";
 import { useBikeAssessment } from "@/hooks/garage/useBikeAssessment";
+import { mergeAssessedHealth } from "@/lib/garage/assessment";
 import { useAuth } from "@/contexts/AuthContext";
 import { useBikeById } from "@/hooks/garage/useBikeById";
 import { useServiceBriefing } from "@/hooks/staff/useServiceBriefing";
@@ -36,6 +37,11 @@ export default function ScannedBikeDetail() {
     bike?.id ?? null,
     owner?.customerId ?? null,
   );
+  /* Single source of truth for the condition shown on every card here. */
+  const condition = useMemo(
+    () => mergeAssessedHealth(health.metrics, assessment),
+    [health.metrics, assessment],
+  );
 
   const isStaffRole = user?.role === "staff" || user?.role === "admin";
   // Automated workshop briefing: appointment yes/no, reported problem,
@@ -46,7 +52,7 @@ export default function ScannedBikeDetail() {
     bikeModel: bike?.model ?? null,
     ownerName: owner?.name ?? owner?.email ?? null,
     planName: plan?.name ?? "Free",
-    metrics: health.metrics,
+    metrics: condition.metrics,
     daysToRevision,
     enabled: isStaffRole,
   });
@@ -150,7 +156,11 @@ export default function ScannedBikeDetail() {
         {!loading && bike && (
           <div className="grid grid-cols-12 gap-4 lg:gap-6">
             <div className="col-span-12 lg:col-span-8">
-              <GarageBikeCard bike={bike} overall={health.overall} metrics={health.metrics} />
+              <GarageBikeCard
+                bike={bike}
+                overall={condition.overall}
+                metrics={condition.metrics}
+              />
             </div>
 
             <div className="col-span-12 lg:col-span-4 flex flex-col gap-4 lg:gap-6">
@@ -182,7 +192,7 @@ export default function ScannedBikeDetail() {
                   {
                     slug: "health",
                     name: "Health",
-                    percent: health.overall,
+                    percent: condition.overall,
                   },
                 ]}
                 onBook={() => setBookingOpen(true)}
@@ -200,7 +210,7 @@ export default function ScannedBikeDetail() {
 
             <div className="col-span-12 lg:col-span-8 flex flex-col gap-4 lg:gap-6">
               <BikeHealthGrid
-                metrics={health.metrics}
+                metrics={condition.metrics}
                 assessment={assessment}
                 onAssess={isStaffRole ? () => setAssessOpen(true) : undefined}
               />

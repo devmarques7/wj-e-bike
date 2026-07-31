@@ -10,10 +10,13 @@ import ServiceCountdown from "@/components/dashboard/ServiceCountdown";
 import BikeTabs from "@/components/dashboard/BikeTabs";
 import { useAuth } from "@/contexts/AuthContext";
 import { useSelectedBike } from "@/contexts/SelectedBikeContext";
+import { useAssessedHealth } from "@/hooks/garage/useAssessedHealth";
 
 export default function Garage() {
   const { user, isAuthenticated, isLoading: authLoading } = useAuth();
   const { bikes, bike, selectBike, health } = useSelectedBike();
+  /* Overall condition = telemetry health merged with the latest staff assessment. */
+  const condition = useAssessedHealth(bike?.id ?? null, health.metrics);
 
   const bikeTabs = useMemo(() => bikes ?? [], [bikes]);
 
@@ -43,7 +46,11 @@ export default function Garage() {
 
         <div className="grid grid-cols-12 gap-4 lg:gap-6">
           <div className="col-span-12 lg:col-span-8">
-            <GarageBikeCard bike={bike} overall={health.overall} metrics={health.metrics} />
+            <GarageBikeCard
+              bike={bike}
+              overall={condition.overall}
+              metrics={condition.metrics}
+            />
           </div>
           <div className="col-span-12 lg:col-span-4">
             <ServiceCountdown bikeId={bike?.id} />
@@ -51,7 +58,7 @@ export default function Garage() {
 
           <div className="col-span-12 lg:col-span-8 flex flex-col gap-4 lg:gap-6">
             <div className="flex-1 min-h-0">
-              <BikeHealthGrid metrics={health.metrics} />
+              <BikeHealthGrid metrics={condition.metrics} assessment={condition.assessment} />
             </div>
             <div className="flex-none">
               <AppointmentsTableCard
