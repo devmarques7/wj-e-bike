@@ -38,8 +38,14 @@ export interface GooeyActionsProps
   reducedMotion?: boolean;
   /** Require a press-and-hold on the core before the satellites bloom. */
   holdToOpen?: boolean;
-  /** Hold duration in ms before opening (default 1000). */
+  /** Hold duration in ms before opening (default 500). */
   holdDelay?: number;
+  /**
+   * Fired while the core is pressed but the menu has NOT opened yet, once the
+   * finger travels past a small threshold. Lets the host start a drag gesture
+   * instead of the bloom (returning true cancels the pending hold).
+   */
+  onPressDrag?: (event: PointerEvent, distance: number) => boolean | void;
 }
 
 /* ---------------------------------- physics -------------------------------- */
