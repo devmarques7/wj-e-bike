@@ -75,10 +75,9 @@ export function useStaffGarageStats(period: GaragePeriod, mineOnlyMechanicId?: s
     const tomorrow = new Date(today);
     tomorrow.setDate(today.getDate() + 1);
 
-    const mine = <T extends { or: (f: string) => T }>(q: T) =>
-      mineOnlyMechanicId
-        ? q.or(`assigned_mechanic_id.eq.${mineOnlyMechanicId},assigned_mechanic_id.is.null`)
-        : q;
+    const mineFilter = `assigned_mechanic_id.eq.${mineOnlyMechanicId},assigned_mechanic_id.is.null`;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const mine = (q: any): any => (mineOnlyMechanicId ? q.or(mineFilter) : q);
 
     const [rangeRes, todayRes, tomorrowRes, activeRes, doneRes] = await Promise.all([
       mine(supabase
