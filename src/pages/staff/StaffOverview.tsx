@@ -8,7 +8,7 @@ import ShiftTracker from "@/components/dashboard/ShiftTracker";
 import NextAppointmentCard from "@/components/dashboard/staff/NextAppointmentCard";
 import WorkloadGauge from "@/components/dashboard/staff/WorkloadGauge";
 import WeeklyWorkloadChart from "@/components/dashboard/staff/WeeklyWorkloadChart";
-import TodayPriorityQueue from "@/components/dashboard/staff/TodayPriorityQueue";
+
 import { useAuth } from "@/contexts/AuthContext";
 import { Navigate } from "react-router-dom";
 import { useShift } from "@/hooks/useShift";
@@ -132,12 +132,12 @@ export default function StaffOverview() {
           </div>
         </div>
 
-        {/* Shift · capacity · priority queue row */}
+        {/* Shift · capacity row */}
         <div className="grid grid-cols-12 gap-4 lg:gap-6 items-stretch">
-          <div className="col-span-12 md:col-span-6 xl:col-span-4 min-h-[260px]">
+          <div className="col-span-12 md:col-span-6 xl:col-span-6 min-h-[260px]">
             <ShiftTracker />
           </div>
-          <div className="col-span-12 md:col-span-6 xl:col-span-4 min-h-[260px]">
+          <div className="col-span-12 md:col-span-6 xl:col-span-6 min-h-[260px]">
             <WorkloadGauge
               pct={stats.currentLoadPct}
               completedToday={stats.completedToday}
@@ -145,9 +145,6 @@ export default function StaffOverview() {
               weeklyHours={stats.weeklyHours}
               targetHours={stats.targetHours}
             />
-          </div>
-          <div className="col-span-12 md:col-span-12 xl:col-span-4 min-h-[260px]">
-            <TodayPriorityQueue userId={user?.id} />
           </div>
         </div>
 
