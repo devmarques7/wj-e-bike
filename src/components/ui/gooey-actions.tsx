@@ -340,6 +340,15 @@ export function GooeyActions({
     if (!holdToOpen) return;
     e.preventDefault();
     e.stopPropagation();
+    // Keep every subsequent event for this pointer on the core: without capture
+    // the scaling core / changing pointer-events under the finger makes the
+    // browser retarget the gesture and emit `pointercancel`, which closed the
+    // menu one frame after it bloomed (the open/close flicker).
+    try {
+      (e.currentTarget as HTMLElement).setPointerCapture(e.pointerId);
+    } catch {
+      /* no-op */
+    }
     const rootEl = rootRef.current;
     if (rootEl) {
       const r = rootEl.getBoundingClientRect();
@@ -347,6 +356,8 @@ export function GooeyActions({
     }
     holdingRef.current = false;
     pressedRef.current = true;
+    const origin = { x: e.clientX, y: e.clientY };
+    let handedToDrag = false;
     clearHold();
     holdTimerRef.current = window.setTimeout(() => {
       if (!pressedRef.current) return;
@@ -361,14 +372,27 @@ export function GooeyActions({
       ev.preventDefault();
       const root = rootRef.current;
       if (!root) return;
+      if (!holdingRef.current && !handedToDrag && onPressDrag) {
+        const dist = Math.hypot(ev.clientX - origin.x, ev.clientY - origin.y);
+        if (dist > 12 && onPressDrag(ev, dist) === true) {
+          handedToDrag = true;
+          clearHold();
+          pressedRef.current = false;
+          cleanup();
+          release();
+          return;
+        }
+      }
       const r = root.getBoundingClientRect();
       pointerRef.current = { x: ev.clientX - r.left, y: ev.clientY - r.top, inside: true };
     };
-    const onUp = (ev: PointerEvent) => {
-      if (ev.pointerId !== e.pointerId) return;
+    const cleanup = () => {
       window.removeEventListener("pointermove", onMove);
       window.removeEventListener("pointerup", onUp);
-      window.removeEventListener("pointercancel", onUp);
+    };
+    const onUp = (ev: PointerEvent) => {
+      if (ev.pointerId !== e.pointerId) return;
+      cleanup();
       clearHold();
       pressedRef.current = false;
       if (holdingRef.current) {
@@ -381,7 +405,6 @@ export function GooeyActions({
     };
     window.addEventListener("pointermove", onMove, { passive: false });
     window.addEventListener("pointerup", onUp);
-    window.addEventListener("pointercancel", onUp);
   };
 
   React.useEffect(() => clearHold, [clearHold]);
