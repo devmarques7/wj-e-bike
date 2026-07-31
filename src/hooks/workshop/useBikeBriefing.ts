@@ -78,6 +78,30 @@ export function useBikeBriefing(appointmentId: string | null | undefined, enable
       ]);
 
       const historyRows = (historyRes as any)?.data ?? [];
+
+      /* Fallback: some appointments were booked before bikes were linked.
+         Resolve the customer's active bike so the final condition assessment
+         (SSBike) can always run before completing the job. */
+      let bike = ((bikeRes as any)?.data ?? null) as BriefingBike | null;
+      if (!bike) {
+        const { data: prof } = await supabase
+          .from("customer_profiles")
+          .select("id")
+          .eq("user_id", appt.user_id)
+          .maybeSingle();
+        if (prof?.id) {
+          const { data: fallbackBike } = await supabase
+            .from("customer_bikes")
+            .select("id, model, serial, color, km, last_service_at, next_service_at, services_completed")
+            .eq("customer_id", prof.id)
+            .is("archived_at", null)
+            .eq("is_active", true)
+            .order("created_at", { ascending: true })
+            .limit(1)
+            .maybeSingle();
+          bike = (fallbackBike ?? null) as BriefingBike | null;
+        }
+      }
       const serviceIds = Array.from(
         new Set(historyRows.map((h: any) => h.service_type_id).filter(Boolean)),
       );
@@ -100,7 +124,7 @@ export function useBikeBriefing(appointmentId: string | null | undefined, enable
         durationMinutes: appt.duration_minutes ?? null,
         serviceName: (serviceRes as any)?.data?.name ?? null,
         serviceDescription: (serviceRes as any)?.data?.description ?? null,
-        bike: ((bikeRes as any)?.data ?? null) as BriefingBike | null,
+        bike,
         history: historyRows.map((h: any) => ({
           id: h.id,
           scheduled_date: h.scheduled_date,
