@@ -194,8 +194,8 @@ export default function AppointmentCompletionDrawer({
       setProgress(map);
 
       // pick first incomplete stage as active
-      const firstIncomplete = st.find((s) => !map[s.id]?.completed_at) ?? st[0] ?? null;
-      setActiveStageId(firstIncomplete?.id ?? null);
+      // stage 0 is always the briefing
+      setActiveStageId(BRIEFING_ID);
     } catch (e: any) {
       toast.error(e.message ?? t("workshop.drawer.load_error"));
     } finally {
@@ -210,6 +210,8 @@ export default function AppointmentCompletionDrawer({
       setTasks([]);
       setProgress({});
       setActiveStageId(null);
+      setBriefingAck(false);
+      setDeliveryChecked({});
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open, appointment?.id]);
