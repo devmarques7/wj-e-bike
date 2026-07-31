@@ -1414,6 +1414,7 @@ export type Database = {
           created_at: string
           currency: string
           effective_from: string
+          entitlements: Json
           features: Json
           id: string
           interval: Database["public"]["Enums"]["plan_interval_enum"]
@@ -1430,6 +1431,7 @@ export type Database = {
           created_at?: string
           currency?: string
           effective_from?: string
+          entitlements?: Json
           features?: Json
           id?: string
           interval?: Database["public"]["Enums"]["plan_interval_enum"]
@@ -1446,6 +1448,7 @@ export type Database = {
           created_at?: string
           currency?: string
           effective_from?: string
+          entitlements?: Json
           features?: Json
           id?: string
           interval?: Database["public"]["Enums"]["plan_interval_enum"]
@@ -2671,6 +2674,7 @@ export type Database = {
               created_at: string
               currency: string
               effective_from: string
+              entitlements: Json
               features: Json
               id: string
               interval: Database["public"]["Enums"]["plan_interval_enum"]
@@ -2706,6 +2710,7 @@ export type Database = {
               created_at: string
               currency: string
               effective_from: string
+              entitlements: Json
               features: Json
               id: string
               interval: Database["public"]["Enums"]["plan_interval_enum"]
