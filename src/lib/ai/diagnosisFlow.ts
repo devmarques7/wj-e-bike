@@ -14,6 +14,7 @@ import {
   type SymptomDefinition,
   type SymptomId,
 } from "./diagnosis";
+import { buildSolutionMessage } from "./repairSkills";
 
 export interface DiagnosisTag {
   /** question id, or "symptom" / "notes" */
@@ -23,7 +24,7 @@ export interface DiagnosisTag {
   answer: string;
 }
 
-export type DiagnosisPhase = "mode" | "symptom" | "questions" | "notes" | "done";
+export type DiagnosisPhase = "mode" | "symptom" | "questions" | "notes" | "solution" | "done";
 
 export type DiagnosisMode = "quick" | "full";
 
@@ -107,6 +108,10 @@ export function currentPrompt(session: DiagnosisSession): DiagnosisPrompt | null
   }
   if (session.phase === "notes") {
     return { content: NOTES_QUESTION, options: NOTES_OPTIONS };
+  }
+  if (session.phase === "solution") {
+    const solution = buildSolutionMessage(session);
+    return { content: solution.content, options: solution.options };
   }
   return null;
 }
@@ -193,7 +198,7 @@ export function applyAnswer(session: DiagnosisSession, answer: string): Diagnosi
     const skip = /^(no|nao|não|nothing|thats all|that's all|no thats all|no, that's all)/i.test(answer.trim());
     return {
       ...session,
-      phase: "done",
+      phase: "solution",
       tags: skip
         ? session.tags
         : [...session.tags, { id: "notes", label: answer, question: NOTES_QUESTION, answer }],
