@@ -51,7 +51,6 @@ export default function StaffGarage() {
       change: `${stats.today} in today · ${stats.tomorrow} tomorrow`,
       trend: "neutral" as const,
       icon: Bike,
-      pending: stats.inGarage > 0,
     },
     {
       label: "Bikes for repair",
@@ -95,7 +94,7 @@ export default function StaffGarage() {
 
   return (
     <RoleDashboardLayout>
-      <div className="p-4 lg:p-6 space-y-6">
+      <div className="w-full p-4 lg:p-6 space-y-6">
         <motion.div
           initial={{ opacity: 0, y: -10 }}
           animate={{ opacity: 1, y: 0 }}
