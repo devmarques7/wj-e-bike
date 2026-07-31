@@ -1,4 +1,6 @@
 import { motion } from "framer-motion";
+import { ClipboardCheck } from "lucide-react";
+import { Button } from "@/components/ui/button";
 import type { HealthMetric } from "@/hooks/garage/useGarageBike";
 
 /** Circular gauge in the system green. */
@@ -52,11 +54,45 @@ function Wave({ value }: { value: number }) {
   );
 }
 
+interface BikeHealthGridProps {
+  metrics: HealthMetric[];
+  /** Opens the guided condition assessment (staff/admin only). */
+  onAssess?: () => void;
+  /** Latest registered assessment, shown as the source of truth per point. */
+  assessment?: {
+    scores: Record<string, number>;
+    overall_score: number;
+    condition_label: string;
+    created_at: string;
+  } | null;
+}
+
 /** Bike health board — one card per wear criterion, scored in percent. */
-export default function BikeHealthGrid({ metrics }: { metrics: HealthMetric[] }) {
+export default function BikeHealthGrid({ metrics, onAssess, assessment }: BikeHealthGridProps) {
+  const shown = metrics.map((m) =>
+    assessment && assessment.scores?.[m.key] != null
+      ? { ...m, value: assessment.scores[m.key], detail: `Assessed · ${m.detail}` }
+      : m,
+  );
   return (
-    <div className="grid grid-cols-2 lg:grid-cols-3 gap-3 lg:gap-4">
-      {metrics.map((m, i) => (
+    <div className="space-y-3 lg:space-y-4">
+      {onAssess && (
+        <div className="flex flex-wrap items-center justify-between gap-3 rounded-3xl border border-border/30 bg-background/60 backdrop-blur-md px-4 py-3">
+          <div>
+            <p className="text-xs text-foreground">Condition assessment</p>
+            <p className="text-[10px] text-muted-foreground/80">
+              {assessment
+                ? `Last: ${assessment.overall_score}% · ${assessment.condition_label} · ${new Date(assessment.created_at).toLocaleDateString()}`
+                : "No assessment registered for this bike yet."}
+            </p>
+          </div>
+          <Button size="sm" onClick={onAssess} className="rounded-full">
+            <ClipboardCheck className="h-4 w-4" /> Assess bike
+          </Button>
+        </div>
+      )}
+      <div className="grid grid-cols-2 lg:grid-cols-3 gap-3 lg:gap-4">
+      {shown.map((m, i) => (
         <motion.div
           key={m.key}
           initial={{ opacity: 0, y: 12 }}
@@ -79,6 +115,7 @@ export default function BikeHealthGrid({ metrics }: { metrics: HealthMetric[] })
           </div>
         </motion.div>
       ))}
+      </div>
     </div>
   );
 }
