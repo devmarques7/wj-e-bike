@@ -749,7 +749,7 @@ export default function AppointmentCompletionDrawer({
                     }
                     /* Close the job with the same guided SSBike condition
                        assessment used on the E-Pass page. */
-                    if (!assessDone) {
+                    if (assessBikeId && !assessDone) {
                       setAssessOpen(true);
                       return;
                     }
@@ -767,7 +767,7 @@ export default function AppointmentCompletionDrawer({
                   ) : (
                     <CheckCircle2 className="h-3.5 w-3.5 mr-1" />
                   )}
-                  {!assessDone
+                  {assessBikeId && !assessDone
                     ? "Rate bike & complete"
                     : t("workshop.drawer.complete_appointment")}
                 </Button>
