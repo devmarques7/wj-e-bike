@@ -45,9 +45,10 @@ export default function CatalogSearchCard({ className }: { className?: string })
   const [customerId, setCustomerId] = useState<string>("");
   const [bikeId, setBikeId] = useState<string>("");
   const [note, setNote] = useState("");
+  const [customerTerm, setCustomerTerm] = useState("");
 
   const { hits, loading } = useCatalogSearch(term);
-  const { customers, bikes } = useCustomerTargets();
+  const { customers, bikes, loading: loadingCustomers } = useCustomerTargets();
   const { toast } = useToast();
 
   const results = useMemo(
@@ -70,6 +71,12 @@ export default function CatalogSearchCard({ className }: { className?: string })
     );
 
   const customerBikes = customerId ? bikes[customerId] ?? [] : [];
+  const selectedCustomer = customers.find((c) => c.id === customerId);
+  const visibleCustomers = customers.filter((c) => {
+    const q = customerTerm.trim().toLowerCase();
+    if (!q) return true;
+    return c.name.toLowerCase().includes(q) || (c.email ?? "").toLowerCase().includes(q);
+  });
 
   const saveGroup = async () => {
     if (!customerId || lines.length === 0) return;
@@ -103,6 +110,8 @@ export default function CatalogSearchCard({ className }: { className?: string })
     setGroupName("");
     setNote("");
     setBikeId("");
+    setCustomerId("");
+    setCustomerTerm("");
     setOpen(false);
   };
 
