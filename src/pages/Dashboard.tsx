@@ -2,6 +2,7 @@ import RoleDashboardLayout from "@/components/dashboard/RoleDashboardLayout";
 import BikeShowcase from "@/components/dashboard/BikeShowcase";
 import ServiceRequestCard from "@/components/dashboard/ServiceRequestCard";
 import WalletCard from "@/components/dashboard/WalletCard";
+import MemberCardCarousel from "@/components/dashboard/MemberCardCarousel";
 import ServiceCountdown from "@/components/dashboard/ServiceCountdown";
 import AppointmentsTableCard from "@/components/dashboard/scheduling/AppointmentsTableCard";
 import AccessoryCarousel from "@/components/dashboard/AccessoryCarousel";
@@ -58,7 +59,11 @@ export default function Dashboard() {
           {/* Middle Section - Columns 6-8 */}
           <div className="col-span-12 lg:col-span-3 grid grid-rows-2 gap-4 lg:gap-6">
             <ServiceRequestCard bike={bike ? { id: bike.id, model: bike.model, serial: bike.serial } : null} />
-            <WalletCard bike={bike ? { id: bike.id, model: bike.model, serial: bike.serial } : null} />
+            {bikes.length > 0 ? (
+              <MemberCardCarousel />
+            ) : (
+              <WalletCard bike={null} />
+            )}
           </div>
 
           {/* Service Countdown - Columns 9-12 */}
