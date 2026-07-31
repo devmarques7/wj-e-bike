@@ -369,7 +369,7 @@ export default function AppointmentsTableCard({
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.2 }}
-        className={cn("bg-background/60 backdrop-blur-md border border-border/30 rounded-2xl overflow-hidden min-h-[420px] h-full max-h-[640px] flex flex-col", className)}
+        className={cn("w-full bg-background/60 backdrop-blur-md border border-border/30 rounded-2xl overflow-hidden min-h-[420px] h-full flex flex-col", className)}
       >
         <TableHeaderBar
           title={title ?? t("workshop.appts.title")}
