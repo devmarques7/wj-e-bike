@@ -592,6 +592,43 @@ export function ShiftTag() {
   );
 }
 
+function QuickAction({
+  onClick,
+  working,
+  icon: Icon,
+  label,
+  tone,
+}: {
+  onClick: () => void;
+  working: boolean;
+  icon: React.ComponentType<{ className?: string }>;
+  label: string;
+  tone: "green" | "amber" | "red";
+}) {
+  const toneCls = {
+    green: "bg-wj-green text-white hover:bg-wj-green/90",
+    amber: "bg-amber-500 text-white hover:bg-amber-500/90",
+    red: "bg-destructive text-destructive-foreground hover:bg-destructive/90",
+  }[tone];
+  return (
+    <motion.button
+      type="button"
+      whileHover={{ scale: 1.04 }}
+      whileTap={{ scale: 0.95 }}
+      disabled={working}
+      onClick={onClick}
+      title={label}
+      className={cn(
+        "flex items-center gap-1 rounded-xl px-2.5 py-1.5 text-[11px] font-medium transition-colors disabled:opacity-50",
+        toneCls,
+      )}
+    >
+      {working ? <Loader2 className="h-3 w-3 animate-spin" /> : <Icon className="h-3 w-3" />}
+      <span className="hidden md:inline">{label}</span>
+    </motion.button>
+  );
+}
+
 function DetailRow({
   label,
   value,
