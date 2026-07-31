@@ -12,6 +12,7 @@ import {
   Layers,
 } from "lucide-react";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { TableHeaderBar } from "@/components/ui/table-header-bar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -338,59 +339,59 @@ export default function AppointmentsTableCard({
         transition={{ delay: 0.2 }}
         className={cn("bg-background/60 backdrop-blur-md border border-border/30 rounded-2xl overflow-hidden min-h-[320px] max-h-[640px] flex flex-col", className)}
       >
-        <div className="p-4 border-b border-border/30">
-          <Tabs value={activeTab} onValueChange={setActiveTab}>
-            <div className="flex items-center justify-between">
-              <h3 className="text-sm font-medium text-foreground">
-                {title ?? t("workshop.appts.title")}
-              </h3>
+        <TableHeaderBar
+          title={title ?? t("workshop.appts.title")}
+          primary={
+            <Tabs value={activeTab} onValueChange={setActiveTab}>
               <TabsList className="bg-muted/50">
                 <TabsTrigger value="day" className="text-xs">{t("workshop.appts.day")}</TabsTrigger>
                 <TabsTrigger value="week" className="text-xs" disabled>{t("workshop.appts.week")}</TabsTrigger>
                 <TabsTrigger value="month" className="text-xs" disabled>{t("workshop.appts.month")}</TabsTrigger>
               </TabsList>
-            </div>
-          </Tabs>
-          <div className="mt-3 flex flex-wrap items-center justify-between gap-2">
+            </Tabs>
+          }
+          filters={
             <Tabs
               value={statusFilter}
               onValueChange={(v) => setStatusFilter(v as typeof statusFilter)}
             >
-              <TabsList className="bg-muted/40 h-8 flex-wrap">
+              <TabsList className="bg-muted/40 h-8 w-max">
                 <TabsTrigger value="all" className="text-[11px] h-6 px-2.5">
                   {t("workshop.appts.all")}
                 </TabsTrigger>
-                <TabsTrigger value="requested" className="text-[11px] h-6 px-2.5">
+                <TabsTrigger value="requested" className="text-[11px] h-6 px-2.5 whitespace-nowrap">
                   <span className="inline-block w-1.5 h-1.5 rounded-full bg-sky-400 mr-1.5" />
                   {t("workshop.appts.requested", "Requested")}
                 </TabsTrigger>
-                <TabsTrigger value="pending" className="text-[11px] h-6 px-2.5">
+                <TabsTrigger value="pending" className="text-[11px] h-6 px-2.5 whitespace-nowrap">
                   <span className="inline-block w-1.5 h-1.5 rounded-full bg-amber-400 mr-1.5" />
                   {t("workshop.appts.pending")}
                 </TabsTrigger>
-                <TabsTrigger value="ongoing" className="text-[11px] h-6 px-2.5">
+                <TabsTrigger value="ongoing" className="text-[11px] h-6 px-2.5 whitespace-nowrap">
                   <span className="inline-block w-1.5 h-1.5 rounded-full bg-wj-green animate-pulse mr-1.5" />
                   {t("workshop.appts.ongoing")}
                 </TabsTrigger>
-                <TabsTrigger value="completed" className="text-[11px] h-6 px-2.5">
+                <TabsTrigger value="completed" className="text-[11px] h-6 px-2.5 whitespace-nowrap">
                   <span className="inline-block w-1.5 h-1.5 rounded-full bg-wj-green mr-1.5" />
                   {t("workshop.appts.completed")}
                 </TabsTrigger>
-                <TabsTrigger value="overdue" className="text-[11px] h-6 px-2.5">
+                <TabsTrigger value="overdue" className="text-[11px] h-6 px-2.5 whitespace-nowrap">
                   <span className="inline-block w-1.5 h-1.5 rounded-full bg-orange-500 mr-1.5" />
                   {t("workshop.appts.overdue", "Overdue")}
                 </TabsTrigger>
-                <TabsTrigger value="canceled" className="text-[11px] h-6 px-2.5">
+                <TabsTrigger value="canceled" className="text-[11px] h-6 px-2.5 whitespace-nowrap">
                   <span className="inline-block w-1.5 h-1.5 rounded-full bg-red-500 mr-1.5" />
                   {t("workshop.appts.canceled", "Canceled")}
                 </TabsTrigger>
               </TabsList>
             </Tabs>
-            <div className="flex items-center gap-2">
-              <div className="flex items-center gap-1.5">
+          }
+          controls={
+            <>
+              <div className="flex items-center gap-1.5 flex-1 min-w-[160px] sm:flex-none">
                 <Layers className="h-3.5 w-3.5 text-muted-foreground" />
                 <Select value={groupBy} onValueChange={(v) => setGroupBy(v as typeof groupBy)}>
-                  <SelectTrigger className="h-8 text-[11px] border-border/40 w-[150px]">
+                  <SelectTrigger className="h-8 text-[11px] border-border/40 w-full sm:w-[150px]">
                     <SelectValue placeholder={t("workshop.appts.group_placeholder")} />
                   </SelectTrigger>
                   <SelectContent>
@@ -405,15 +406,15 @@ export default function AppointmentsTableCard({
               <Button
                 size="sm"
                 variant="outline"
-                className="h-8 text-[11px] border-border/40 gap-1.5"
+                className="h-8 text-[11px] border-border/40 gap-1.5 whitespace-nowrap"
                 onClick={() => setSortAsc((v) => !v)}
               >
                 <ArrowUpDown className="h-3.5 w-3.5" />
                 {t("workshop.appts.sort_time")} {sortAsc ? "↑" : "↓"}
               </Button>
-            </div>
-          </div>
-        </div>
+            </>
+          }
+        />
 
         <div className="overflow-x-auto overflow-y-auto flex-1 min-h-0">
           {loading ? (
