@@ -1,10 +1,14 @@
+import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
-import { Link, Navigate, useLocation, useParams } from "react-router-dom";
+import { Link, Navigate, useLocation, useNavigate, useParams } from "react-router-dom";
 import { Loader2, Mail, Phone, ScanLine, User } from "lucide-react";
 import RoleDashboardLayout from "@/components/dashboard/RoleDashboardLayout";
 import GarageBikeCard from "@/components/dashboard/garage/GarageBikeCard";
 import BikeHealthGrid from "@/components/dashboard/garage/BikeHealthGrid";
-import ServiceCountdown from "@/components/dashboard/ServiceCountdown";
+import ServiceAllowanceCard from "@/components/dashboard/wallet/ServiceAllowanceCard";
+import BookAppointmentDialog from "@/components/dashboard/scheduling/BookAppointmentDialog";
+import { usePlanAllowance, PLAN_SERVICE_ALLOWANCE } from "@/hooks/wallet/usePlanAllowance";
+import { supabase } from "@/integrations/supabase/client";
 import AppointmentsTableCard from "@/components/dashboard/scheduling/AppointmentsTableCard";
 import BikeAssistantCard from "@/components/dashboard/assistant/BikeAssistantCard";
 import {
@@ -26,8 +30,37 @@ import { useBikeById } from "@/hooks/garage/useBikeById";
 export default function ScannedBikeDetail() {
   const { bikeId } = useParams<{ bikeId: string }>();
   const location = useLocation();
+  const navigate = useNavigate();
   const { user, isAuthenticated, isLoading } = useAuth();
-  const { bike, owner, loading, error, health } = useBikeById(bikeId);
+  const { bike, owner, loading, error, health, nextRevision, daysToRevision, refetch } =
+    useBikeById(bikeId);
+  const [plan, setPlan] = useState<{ name: string; slug: string } | null>(null);
+  const [bookingOpen, setBookingOpen] = useState(false);
+  const allowance = usePlanAllowance(plan?.slug, owner?.userId ?? null);
+
+  // Active membership of the scanned rider — feeds the allowance counters.
+  useEffect(() => {
+    if (!owner?.userId) {
+      setPlan(null);
+      return;
+    }
+    let cancelled = false;
+    (async () => {
+      const { data } = await supabase
+        .from("subscriptions")
+        .select("status, plan_versions(plans(name, slug))")
+        .eq("user_id", owner.userId)
+        .in("status", ["active", "trialing", "past_due"])
+        .limit(1)
+        .maybeSingle();
+      if (cancelled) return;
+      const p = (data as any)?.plan_versions?.plans;
+      setPlan(p ? { name: p.name, slug: p.slug } : null);
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [owner?.userId]);
 
   if (isLoading) return null;
   if (!isAuthenticated) return <Navigate to="/auth" replace />;
@@ -116,21 +149,46 @@ export default function ScannedBikeDetail() {
             </div>
 
             <div className="col-span-12 lg:col-span-4 flex flex-col gap-4 lg:gap-6">
-              {/* Same revision countdown component used in the customer garage */}
-              <ServiceCountdown
-                externalBike={{
-                  id: bike.id,
-                  model: bike.model,
-                  serial: bike.serial ?? null,
-                  purchased_at: bike.purchased_at ?? null,
-                  last_service_at: bike.last_service_at ?? null,
-                  next_service_at: bike.next_service_at ?? null,
-                  services_completed: bike.services_completed ?? 0,
-                }}
-                externalOwner={
-                  owner
-                    ? { userId: owner.userId, name: owner.name, email: owner.email }
-                    : null
+              {/* Same plan + revision panel used on the customer wallet */}
+              <ServiceAllowanceCard
+                planName={plan?.name ?? "Free"}
+                allowance={allowance}
+                revisionDays={daysToRevision}
+                revisionDate={nextRevision}
+                bikeName={bike.model}
+                contextLabel={isStaff ? `Coverage · ${ownerName}` : undefined}
+                upgradeOptions={[
+                  {
+                    slug: plan?.slug ?? "free",
+                    name: plan?.name ?? "Free",
+                    percent: Math.round(
+                      ((PLAN_SERVICE_ALLOWANCE[plan?.slug ?? "free"] ?? 1) /
+                        Math.max(...Object.values(PLAN_SERVICE_ALLOWANCE))) * 100,
+                    ),
+                    current: true,
+                  },
+                  {
+                    slug: "used",
+                    name: "Used",
+                    percent: allowance.total
+                      ? Math.round((allowance.used / allowance.total) * 100)
+                      : 0,
+                  },
+                  {
+                    slug: "health",
+                    name: "Health",
+                    percent: health.overall,
+                  },
+                ]}
+                onBook={() => setBookingOpen(true)}
+                onUpgrade={() =>
+                  isStaff && owner?.customerId
+                    ? navigate(`/dashboard/admin/crm/${owner.customerId}`)
+                    : navigate("/membership-plans")
+                }
+                manageLabel={isStaff ? "Book service" : "Manage"}
+                onManage={() =>
+                  isStaff ? setBookingOpen(true) : navigate("/dashboard/garage")
                 }
               />
 
@@ -175,6 +233,24 @@ export default function ScannedBikeDetail() {
               <BikeAssistantCard className="h-full" />
             </div>
           </div>
+        )}
+
+        {owner?.userId && (
+          <BookAppointmentDialog
+            open={bookingOpen}
+            onOpenChange={setBookingOpen}
+            onCreated={() => {
+              setBookingOpen(false);
+              refetch?.();
+            }}
+            presetCustomer={{
+              user_id: owner.userId,
+              full_name: owner.name,
+              email: owner.email,
+            }}
+            presetBike={bike ? { model: bike.model, serial: bike.serial } : undefined}
+            initialNotes={bike ? `[${bike.model}]` : undefined}
+          />
         )}
       </div>
     </RoleDashboardLayout>
