@@ -15,6 +15,7 @@ import ServiceAllowanceCard from "@/components/dashboard/wallet/ServiceAllowance
 import ScanEPassDialog from "@/components/dashboard/wallet/ScanEPassDialog";
 import { usePlanAllowance, PLAN_SERVICE_ALLOWANCE } from "@/hooks/wallet/usePlanAllowance";
 import { useGarageBike } from "@/hooks/garage/useGarageBike";
+import { useSelectedBike } from "@/contexts/SelectedBikeContext";
 import ActivityYearGrid from "@/components/dashboard/wallet/ActivityYearGrid";
 import ActivityMonthGrid from "@/components/dashboard/wallet/ActivityMonthGrid";
 import ActivityDayPanel from "@/components/dashboard/wallet/ActivityDayPanel";
@@ -287,6 +288,12 @@ export default function MyWallet() {
   }, [plans, currentPlan]);
   /** Bike condition + next revision, reused from the Garage health model. */
   const { bike: garageBike, health, nextRevision, daysToRevision } = useGarageBike(activeBike?.id ?? null);
+
+  /** Front card of the wallet defines the bike scope for the whole app. */
+  const { selectBike, bikeId: scopedBikeId } = useSelectedBike();
+  useEffect(() => {
+    if (activeBike?.id && activeBike.id !== scopedBikeId) selectBike(activeBike.id);
+  }, [activeBike?.id, scopedBikeId, selectBike]);
 
   /** Resolves the theme for a card, falling back to a distinct default per position. */
   const themeFor = (id: string) => {

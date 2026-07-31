@@ -5,7 +5,12 @@ import { supabase } from "@/integrations/supabase/client";
 import { useNavigate } from "react-router-dom";
 import WalletMemberCard from "./WalletMemberCard";
 
-export default function WalletCard() {
+interface WalletCardProps {
+  /** Bike currently selected in the garage scope — shown on the E-Pass. */
+  bike?: { id: string; model: string; serial: string | null } | null;
+}
+
+export default function WalletCard({ bike }: WalletCardProps) {
   const { user } = useAuth();
   const navigate = useNavigate();
 
@@ -76,13 +81,16 @@ export default function WalletCard() {
 
   const slug = (resolvedSlug || "free").toLowerCase();
   const data = cardData[slug] ?? cardData.free;
+  const cardNumber = bike?.serial
+    ? `4532 •••• •••• ${bike.serial.replace(/\D/g, "").slice(-4).padStart(4, "0")}`
+    : data.number;
 
   return (
     <motion.div
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ delay: 0.2 }}
-      onClick={() => navigate("/dashboard/e-pass")}
+      onClick={() => navigate(bike ? `/dashboard/e-pass?bike=${bike.id}` : "/dashboard/e-pass")}
       role="link"
       tabIndex={0}
       onKeyDown={(e) => {
@@ -96,9 +104,9 @@ export default function WalletCard() {
       <WalletMemberCard
         themeId={data.themeId}
         label="Member card"
-        bikeName="WJ Vision"
+        bikeName={bike?.model ?? "WJ Vision"}
         planName={data.tier}
-        cardNumber={data.number}
+        cardNumber={cardNumber}
         memberName={user?.name || "Guest"}
         className="h-full"
       />

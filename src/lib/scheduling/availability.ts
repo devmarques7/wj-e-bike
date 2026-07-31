@@ -1,3 +1,4 @@
+import { getBikeScope } from "@/lib/ai/bikeScope";
 /**
  * Shared service-availability layer.
  *
@@ -142,6 +143,8 @@ export interface BookSlotInput {
   durationMinutes?: number;
   urgent?: boolean;
   notes?: string;
+  /** Bike this booking is for; defaults to the rider's active bike. */
+  bikeId?: string | null;
 }
 
 export async function bookSlot(input: BookSlotInput) {
@@ -150,6 +153,7 @@ export async function bookSlot(input: BookSlotInput) {
     .from("appointments")
     .insert({
       user_id: input.userId,
+      bike_id: input.bikeId ?? getBikeScope()?.id ?? null,
       service_type_id: input.serviceTypeId,
       assigned_mechanic_id: input.slot.mechanicId,
       subscription_id: subscriptionId,
@@ -193,6 +197,8 @@ export interface AppointmentRequestInput {
   preferredDate?: string | null;
   urgent?: boolean;
   notes?: string;
+  /** Bike this request is for; defaults to the rider's active bike. */
+  bikeId?: string | null;
 }
 
 const PERIOD_WINDOW: Record<RequestPeriod, [string | null, string | null]> = {
@@ -215,6 +221,7 @@ export async function createAppointmentRequest(input: AppointmentRequestInput) {
     .from("appointment_waitlist")
     .insert({
       user_id: input.userId,
+      bike_id: input.bikeId ?? getBikeScope()?.id ?? null,
       service_type_id: input.serviceTypeId,
       subscription_id: subscriptionId,
       preferred_date_from: dateFrom,

@@ -1,3 +1,4 @@
+import { useSelectedBike } from "@/contexts/SelectedBikeContext";
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Calendar, Clock, MapPin, Truck, Check } from "lucide-react";
@@ -37,6 +38,8 @@ export default function ServiceBooking({
 
   const isBlackTier = user?.tier === "black";
 
+  const { bike: scopedBike } = useSelectedBike();
+
   const handleBook = () => {
     setIsBooked(true);
     setTimeout(() => setIsBooked(false), 3000);
@@ -68,7 +71,9 @@ export default function ServiceBooking({
           </div>
           <div>
             <h3 className="text-base sm:text-lg font-medium text-foreground">Book Service</h3>
-            <p className="text-xs sm:text-sm text-muted-foreground">Workshop Concierge</p>
+            <p className="text-xs sm:text-sm text-muted-foreground">
+              {scopedBike ? `${scopedBike.model}${scopedBike.serial ? ` · ${scopedBike.serial}` : ""}` : "Workshop Concierge"}
+            </p>
           </div>
         </div>
       </div>

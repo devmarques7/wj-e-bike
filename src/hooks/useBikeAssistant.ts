@@ -1,3 +1,4 @@
+import { bikeScopePrompt } from "@/lib/ai/bikeScope";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
@@ -532,6 +533,8 @@ export function useBikeAssistant() {
             skills: config.enabledSkills,
             assistantName: config.name,
             tone: config.tone,
+            // The model must always know which bike the rider is talking about.
+            bikeContext: bikeScopePrompt() || undefined,
           },
         });
 

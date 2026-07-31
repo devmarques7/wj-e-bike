@@ -124,9 +124,10 @@ function pickLatestPerDay(rows: BusinessHour[]): BusinessHour[] {
 /* Hook                                                               */
 /* ------------------------------------------------------------------ */
 
-export function useSchedulingData(opts?: { date?: string; customerUserId?: string }) {
+export function useSchedulingData(opts?: { date?: string; customerUserId?: string; bikeId?: string | null }) {
   const date = opts?.date ?? todayISO();
   const customerUserId = opts?.customerUserId ?? null;
+  const bikeId = opts?.bikeId ?? null;
 
   const [businessHours, setBusinessHours] = useState<BusinessHour[]>([]);
   const [exceptions, setExceptions] = useState<BusinessHourException[]>([]);
@@ -213,6 +214,7 @@ export function useSchedulingData(opts?: { date?: string; customerUserId?: strin
       } else {
         apptQuery = apptQuery.eq("scheduled_date", date);
       }
+      if (bikeId) apptQuery = apptQuery.eq("bike_id", bikeId);
       const { data: appts, error: aerr } = await apptQuery;
       if (aerr) throw aerr;
 
@@ -302,7 +304,7 @@ export function useSchedulingData(opts?: { date?: string; customerUserId?: strin
     } finally {
       setLoading(false);
     }
-  }, [date, customerUserId]);
+  }, [date, customerUserId, bikeId]);
 
   useEffect(() => {
     fetchAll();
@@ -311,7 +313,7 @@ export function useSchedulingData(opts?: { date?: string; customerUserId?: strin
   // Realtime: refresh whenever this scope's appointments change
   useEffect(() => {
     const channel = supabase
-      .channel(`sched-${customerUserId ?? "all"}-${date}`)
+      .channel(`sched-${customerUserId ?? "all"}-${bikeId ?? "any"}-${date}`)
       .on(
         "postgres_changes",
         {
@@ -326,7 +328,7 @@ export function useSchedulingData(opts?: { date?: string; customerUserId?: strin
     return () => {
       supabase.removeChannel(channel);
     };
-  }, [customerUserId, date, fetchAll]);
+  }, [customerUserId, bikeId, date, fetchAll]);
 
   /* ------------------- mutations ------------------- */
 

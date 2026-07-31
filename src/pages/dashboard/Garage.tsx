@@ -1,6 +1,6 @@
 import { useMemo } from "react";
 import { motion } from "framer-motion";
-import { Navigate, useSearchParams } from "react-router-dom";
+import { Navigate } from "react-router-dom";
 import RoleDashboardLayout from "@/components/dashboard/RoleDashboardLayout";
 import BikeAssistantCard from "@/components/dashboard/assistant/BikeAssistantCard";
 import AppointmentsTableCard from "@/components/dashboard/scheduling/AppointmentsTableCard";
@@ -9,12 +9,11 @@ import BikeHealthGrid from "@/components/dashboard/garage/BikeHealthGrid";
 import ServiceCountdown from "@/components/dashboard/ServiceCountdown";
 import BikeTabs from "@/components/dashboard/BikeTabs";
 import { useAuth } from "@/contexts/AuthContext";
-import { useGarageBike } from "@/hooks/garage/useGarageBike";
+import { useSelectedBike } from "@/contexts/SelectedBikeContext";
 
 export default function Garage() {
   const { user, isAuthenticated, isLoading: authLoading } = useAuth();
-  const [params] = useSearchParams();
-  const { bikes, bike, selectBike, health } = useGarageBike(params.get("bike"));
+  const { bikes, bike, selectBike, health } = useSelectedBike();
 
   const bikeTabs = useMemo(() => bikes ?? [], [bikes]);
 
@@ -57,8 +56,9 @@ export default function Garage() {
             <div className="flex-none">
               <AppointmentsTableCard
                 customerUserId={user?.id}
+                bikeId={bike?.id ?? null}
                 includeRequests
-                title="Service history & requests"
+                title={bike ? `Service history — ${bike.model}` : "Service history & requests"}
               />
             </div>
           </div>

@@ -7,6 +7,7 @@ import { CartProvider } from "@/contexts/CartContext";
 import { AuthProvider } from "@/contexts/AuthContext";
 import { ThemeProvider } from "@/contexts/ThemeContext";
 import { SystemStatusProvider } from "@/hooks/useSystemStatus";
+import { SelectedBikeProvider } from "@/contexts/SelectedBikeContext";
 import Index from "./pages/Index";
 import Gallery from "./pages/Gallery";
 import ProductDetail from "./pages/ProductDetail";
@@ -75,6 +76,7 @@ const App = () => (
           <Toaster />
           <Sonner />
           <BrowserRouter>
+            <SelectedBikeProvider>
             <GlobalBreadcrumbs />
             <FleetMenuGate />
             <Routes>
@@ -140,6 +142,7 @@ const App = () => (
               {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
               <Route path="*" element={<NotFound />} />
             </Routes>
+            </SelectedBikeProvider>
           </BrowserRouter>
         </TooltipProvider>
         </SystemStatusProvider>

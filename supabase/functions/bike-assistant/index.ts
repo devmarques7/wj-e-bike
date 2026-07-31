@@ -426,6 +426,8 @@ Deno.serve(async (req) => {
       tone = "concise",
       // Deterministic layer already answered these — the model only sees a summary.
       localContext = "",
+      // Which bike the rider currently has selected in the dashboard.
+      bikeContext = "",
       // "json" = strict JSON extraction call (diagnosis judge). No tools, no
       // chatty system prompt, and enough budget so the JSON is never truncated.
       mode = "chat",
@@ -493,7 +495,7 @@ Ground every fact in tool data — never invent prices, dates, models or ids.
 Be brief: max ~120 words, bullet lists, one clear next step.
 Call at most one tool per turn unless strictly required, and never re-fetch data already present in this conversation.
 Write actions (create/reschedule/cancel/register/request) require an explicit user confirmation in the previous message; if it is missing, ask one short confirmation question instead of calling the tool.
-If the needed skill is off, say which skill to enable.${localContext ? `\nKnown context: ${String(localContext).slice(0, 800)}` : ""}`;
+If the needed skill is off, say which skill to enable.${bikeContext ? `\nActive bike context: ${String(bikeContext).slice(0, 600)}` : ""}${localContext ? `\nKnown context: ${String(localContext).slice(0, 800)}` : ""}`;
 
     const convo: any[] = [{ role: "system", content: system }, ...trimmed];
 

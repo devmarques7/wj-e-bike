@@ -114,6 +114,8 @@ interface AppointmentsTableCardProps {
   customerUserId?: string;
   /** Also list scheduling requests (waitlist) as rows with a "requested" status. */
   includeRequests?: boolean;
+  /** Scope every row to a single bike (customer garage view). */
+  bikeId?: string | null;
   /** Optional extra classes for the card root. */
   className?: string;
 }
@@ -129,6 +131,7 @@ export default function AppointmentsTableCard({
   mineOnlyMechanicId,
   customerUserId,
   includeRequests = false,
+  bikeId,
   className,
 }: AppointmentsTableCardProps) {
   const { t, i18n } = useTranslation();
@@ -157,7 +160,7 @@ export default function AppointmentsTableCard({
     cancelAppointment,
     deleteAppointment,
     refetch,
-  } = useSchedulingData({ customerUserId });
+  } = useSchedulingData({ customerUserId, bikeId });
 
   /* Scheduling requests (waitlist) — shown alongside real appointments. */
   const [requestRows, setRequestRows] = useState<ApptRow[]>([]);
@@ -171,10 +174,11 @@ export default function AppointmentsTableCard({
       let q = supabase
         .from("appointment_waitlist")
         .select(
-          "id, user_id, service_type_id, subscription_id, preferred_date_from, preferred_time_from, status, created_at",
+          "id, user_id, service_type_id, subscription_id, preferred_date_from, preferred_time_from, status, created_at, bike_id",
         )
         .order("created_at", { ascending: false });
       if (customerUserId) q = q.eq("user_id", customerUserId);
+      if (bikeId) q = q.eq("bike_id", bikeId);
       const { data } = await q;
       if (cancelled) return;
       const rows = (data ?? []) as any[];
@@ -247,7 +251,7 @@ export default function AppointmentsTableCard({
     return () => {
       cancelled = true;
     };
-  }, [includeRequests, customerUserId, appointments.length, serviceTypes]);
+  }, [includeRequests, customerUserId, bikeId, appointments.length, serviceTypes]);
 
   const activeAppointment =
     appointments.find((a) => a.status === "in_progress" && a.work_started_at) ?? null;

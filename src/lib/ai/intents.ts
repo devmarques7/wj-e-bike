@@ -1,3 +1,4 @@
+import { getBikeScope } from "@/lib/ai/bikeScope";
 import { supabase } from "@/integrations/supabase/client";
 import type { AssistantSkillId } from "./skills";
 import { matchSymptom, type SymptomId } from "./diagnosis";
@@ -71,6 +72,31 @@ function skillOff(skill: AssistantSkillId, ctx: IntentContext): LocalAnswer | nu
 
 async function myBike(ctx: IntentContext): Promise<LocalAnswer | null> {
   if (!ctx.userId) return null;
+  // The rider is looking at a specific bike — answer about THAT one.
+  const scoped = getBikeScope();
+  if (scoped) {
+    const next = scoped.nextServiceAt ? new Date(scoped.nextServiceAt) : null;
+    const days = next ? Math.ceil((next.getTime() - Date.now()) / 86_400_000) : null;
+    const content = [
+      `**${scoped.model}**${scoped.serial ? ` · ${scoped.serial}` : ""}`,
+      `· ${scoped.km ?? 0} km · ${scoped.servicesCompleted ?? 0} services completed`,
+      scoped.lastServiceAt ? `· Last service: ${scoped.lastServiceAt}` : null,
+      next
+        ? `· Next revision: ${scoped.nextServiceAt}${days !== null ? ` (${days >= 0 ? `in ${days} days` : `${Math.abs(days)} days overdue`})` : ""}`
+        : "· Next revision: not scheduled",
+    ]
+      .filter(Boolean)
+      .join("\n");
+    return {
+      source: "local",
+      skill: "my_bike",
+      content,
+      action:
+        next && next.getTime() < Date.now()
+          ? { type: "navigate", to: "/dashboard/garage", label: "Book the revision" }
+          : undefined,
+    };
+  }
   const { data } = await supabase
     .from("customer_bikes")
     .select("model, serial, color, km, last_service_at, next_service_at, services_completed")
