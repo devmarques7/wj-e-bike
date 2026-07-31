@@ -225,6 +225,18 @@ export function GooeyActions({
     if (labelRef.current) labelRef.current.style.opacity = "0";
   }, []);
 
+  // Stable indirections: the animation loop must NEVER be torn down because a
+  // parent re-created the `actions` array (that reset the clock and collapsed
+  // the satellites mid-hold, producing an open/close flicker loop).
+  const applyOneRef = React.useRef(applyOne);
+  const centerRef = React.useRef(center);
+  const showLabelForRef = React.useRef(showLabelFor);
+  const hideLabelRef = React.useRef(hideLabel);
+  applyOneRef.current = applyOne;
+  centerRef.current = center;
+  showLabelForRef.current = showLabelFor;
+  hideLabelRef.current = hideLabel;
+
   const layoutInstant = React.useCallback(
     (opened: boolean) => {
       const r = params.current.radius;
@@ -241,7 +253,7 @@ export function GooeyActions({
 
   React.useEffect(() => {
     openRef.current = isOpen;
-    toggleAtRef.current = nowRef.current;
+    toggleAtRef.current = performance.now() / 1000;
     if (!isOpen) hideLabel();
     if (staticMode) layoutInstant(isOpen);
   }, [isOpen, staticMode, layoutInstant, hideLabel]);
@@ -251,21 +263,20 @@ export function GooeyActions({
     const breathe = mkSpring(1);
     let raf = 0;
     let last = 0;
-    let start = 0;
 
     const frame = (now: number) => {
       raf = requestAnimationFrame(frame);
-      if (!start) start = now;
       let dt = (now - last) / 1000;
       last = now;
       if (!(dt > 0) || dt > 0.05) dt = 0.016;
-      const t = (now - start) / 1000;
+      // Absolute clock: survives loop restarts so `toggleAtRef` stays valid.
+      const t = now / 1000;
       nowRef.current = t;
 
       const cfg = params.current;
       const opened = openRef.current;
       const p = pointerRef.current;
-      const c = center();
+      const c = centerRef.current();
       const staggerSec = cfg.stagger / 1000;
 
       let hoverAny = -1;
@@ -306,12 +317,12 @@ export function GooeyActions({
         spring(s.x, tx, cfg.stiffness, cfg.damping, dt);
         spring(s.y, ty, cfg.stiffness, cfg.damping, dt);
         spring(s.s, ts, 300, 20, dt);
-        applyOne(i);
+        applyOneRef.current(i);
       }
 
-      if (hoverAny >= 0) showLabelFor(hoverAny);
-      else if (focusedRef.current >= 0) showLabelFor(focusedRef.current);
-      else hideLabel();
+      if (hoverAny >= 0) showLabelForRef.current(hoverAny);
+      else if (focusedRef.current >= 0) showLabelForRef.current(focusedRef.current);
+      else hideLabelRef.current();
       hoverIdxRef.current = hoverAny;
 
       spring(breathe, opened ? 1.06 : 1, 200, 18, dt);
@@ -323,7 +334,7 @@ export function GooeyActions({
     last = performance.now();
     raf = requestAnimationFrame(frame);
     return () => cancelAnimationFrame(raf);
-  }, [staticMode, ringKey, applyOne, center, showLabelFor, hideLabel]);
+  }, [staticMode, ringKey]);
 
   const track = (e: React.PointerEvent) => {
     const root = rootRef.current;
