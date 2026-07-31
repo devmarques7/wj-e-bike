@@ -99,6 +99,9 @@ export default function AppointmentCompletionDrawer({
   const [tick, setTick] = useState(0);
   const [briefingAck, setBriefingAck] = useState(false);
   const [deliveryChecked, setDeliveryChecked] = useState<Record<string, boolean>>({});
+  /* Final condition validation (same SSBike flow used on the E-Pass page). */
+  const [assessOpen, setAssessOpen] = useState(false);
+  const [assessDone, setAssessDone] = useState(false);
 
   const { briefing, loading: briefingLoading } = useBikeBriefing(appointment?.id, open);
   const { workNow } = useWorkPause();
@@ -113,6 +116,7 @@ export default function AppointmentCompletionDrawer({
   }, [briefing]);
 
   const allDeliveryChecked = deliveryItems.every((i) => deliveryChecked[i.id]);
+  const assessBikeId = briefing?.bike?.id ?? ((appointment as any)?.bike_id as string | undefined) ?? null;
 
   // ticker for live timer
   useEffect(() => {
