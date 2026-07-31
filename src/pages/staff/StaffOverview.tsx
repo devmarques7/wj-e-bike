@@ -5,7 +5,9 @@ import StaffKPICard from "@/components/dashboard/StaffKPICard";
 import KPICarousel from "@/components/dashboard/KPICarousel";
 import AppointmentsTableCard from "@/components/dashboard/scheduling/AppointmentsTableCard";
 import ShiftTracker from "@/components/dashboard/ShiftTracker";
-import StaffWorkloadMeter from "@/components/dashboard/StaffWorkloadMeter";
+import NextAppointmentCard from "@/components/dashboard/staff/NextAppointmentCard";
+import WorkloadGauge from "@/components/dashboard/staff/WorkloadGauge";
+import WeeklyWorkloadChart from "@/components/dashboard/staff/WeeklyWorkloadChart";
 import { useAuth } from "@/contexts/AuthContext";
 import { Navigate } from "react-router-dom";
 import { useShift } from "@/hooks/useShift";
@@ -118,33 +120,32 @@ export default function StaffOverview() {
           ))}
         </KPICarousel>
 
-        {/* Mobile: ShiftTracker sits alone right below the KPIs */}
-        <div className="lg:hidden min-h-[200px]">
-          <ShiftTracker />
-        </div>
-
-        {/* Main Content Grid - 12 Columns */}
-        <div className="grid grid-cols-12 gap-4 lg:gap-6 h-full">
-          {/* Appointments / tasks table - 8 columns (same as Admin Workshop) */}
-          <div className="col-span-12 lg:col-span-8 h-full min-h-[500px]">
-            <AppointmentsTableCard mineOnlyMechanicId={user?.id} />
+        {/* Mobile-first hero row: what to do next + shift control */}
+        <div className="grid grid-cols-12 gap-4 lg:gap-6">
+          <div className="col-span-12 md:col-span-6 xl:col-span-4 order-1">
+            <NextAppointmentCard userId={user?.id} />
           </div>
-
-          {/* Right Sidebar - 4 columns (stacked) */}
-          <div className="col-span-12 lg:col-span-4 flex flex-col gap-4 lg:gap-6 h-full">
-            {/* Shift Tracker - desktop only; mobile instance lives above the grid */}
-            <div className="hidden lg:block min-h-[200px] flex-1">
-              <ShiftTracker />
-            </div>
-
-            {/* Workload Meter (preserved & relocated into unified layout) */}
-            <StaffWorkloadMeter
-              currentLoad={stats.currentLoadPct}
-              weeklyHours={stats.weeklyHours}
-              targetHours={stats.targetHours || 40}
+          <div className="col-span-12 md:col-span-6 xl:col-span-4 order-2 min-h-[220px]">
+            <ShiftTracker />
+          </div>
+          <div className="col-span-12 xl:col-span-4 order-3">
+            <WorkloadGauge
+              pct={stats.currentLoadPct}
               completedToday={stats.completedToday}
               totalToday={stats.totalToday}
+              weeklyHours={stats.weeklyHours}
+              targetHours={stats.targetHours}
             />
+          </div>
+        </div>
+
+        {/* Analytics + appointments grid */}
+        <div className="grid grid-cols-12 gap-4 lg:gap-6">
+          <div className="col-span-12 xl:col-span-4 min-h-[260px]">
+            <WeeklyWorkloadChart userId={user?.id} />
+          </div>
+          <div className="col-span-12 xl:col-span-8 min-h-[500px]">
+            <AppointmentsTableCard mineOnlyMechanicId={user?.id} />
           </div>
         </div>
       </div>
