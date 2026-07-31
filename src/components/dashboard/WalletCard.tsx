@@ -2,10 +2,12 @@ import { motion } from "framer-motion";
 import { useAuth } from "@/contexts/AuthContext";
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import { useNavigate } from "react-router-dom";
 import WalletMemberCard from "./WalletMemberCard";
 
 export default function WalletCard() {
   const { user } = useAuth();
+  const navigate = useNavigate();
 
   // Card visuals per plan slug — same E-Pass themes used in My Wallet
   const cardData: Record<string, { tier: string; number: string; themeId: string }> = {
@@ -80,7 +82,16 @@ export default function WalletCard() {
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ delay: 0.2 }}
-      className="h-full min-h-[180px] rounded-3xl overflow-hidden relative group"
+      onClick={() => navigate("/dashboard/e-pass")}
+      role="link"
+      tabIndex={0}
+      onKeyDown={(e) => {
+        if (e.key === "Enter" || e.key === " ") {
+          e.preventDefault();
+          navigate("/dashboard/e-pass");
+        }
+      }}
+      className="h-full min-h-[180px] rounded-3xl overflow-hidden relative group cursor-pointer transition-transform hover:scale-[1.01] focus:outline-none focus-visible:ring-2 focus-visible:ring-primary"
     >
       <WalletMemberCard
         themeId={data.themeId}
