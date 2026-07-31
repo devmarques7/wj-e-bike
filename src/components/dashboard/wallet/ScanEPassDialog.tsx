@@ -7,13 +7,18 @@ import EPassScanner from "@/components/dashboard/wallet/EPassScanner";
 interface ScanEPassDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  bikeId: string;
-  bikeName: string;
-  memberName: string;
-  planName: string;
+  /** Omit these to render the scanner-only version of the dialog. */
+  bikeId?: string;
+  bikeName?: string;
+  memberName?: string;
+  planName?: string;
 }
 
-/** Full-size scannable E-Pass QR used at the workshop counter. */
+/**
+ * Single reusable E-Pass dialog.
+ * With bike details it shows "My pass" + "Scan a pass"; without them it opens
+ * straight into the auto-detecting scanner (used by Fleet, staff pages, etc.).
+ */
 export default function ScanEPassDialog({
   open,
   onOpenChange,
@@ -23,6 +28,24 @@ export default function ScanEPassDialog({
   planName,
 }: ScanEPassDialogProps) {
   const [tab, setTab] = useState("my-pass");
+  const showMyPass = Boolean(bikeId);
+
+  if (!showMyPass) {
+    return (
+      <Dialog open={open} onOpenChange={onOpenChange}>
+        <DialogContent className="sm:max-w-md rounded-3xl">
+          <DialogHeader>
+            <DialogTitle className="font-light">Scan E-Pass</DialogTitle>
+            <DialogDescription>
+              Point the camera at a rider's E-Pass to open their bike instantly.
+            </DialogDescription>
+          </DialogHeader>
+          <EPassScanner active={open} onNavigate={() => onOpenChange(false)} />
+        </DialogContent>
+      </Dialog>
+    );
+  }
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-md rounded-3xl">
@@ -49,9 +72,9 @@ export default function ScanEPassDialog({
             </div>
 
             <div className="grid grid-cols-3 gap-3 text-center">
-              <Info label="Member" value={memberName} />
-              <Info label="Plan" value={planName} />
-              <Info label="Bike" value={bikeName} />
+              <Info label="Member" value={memberName ?? "—"} />
+              <Info label="Plan" value={planName ?? "—"} />
+              <Info label="Bike" value={bikeName ?? "—"} />
             </div>
           </TabsContent>
 
