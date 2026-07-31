@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
+import BikeAssessmentDialog from "@/components/dashboard/garage/BikeAssessmentDialog";
 import { useTranslation } from "react-i18next";
 import {
   Clock,
@@ -47,6 +48,7 @@ interface Props {
   onOpenChange: (open: boolean) => void;
   onCompleted: () => void;
 }
+
 
 type Stage = {
   id: string;
@@ -99,6 +101,9 @@ export default function AppointmentCompletionDrawer({
   const [tick, setTick] = useState(0);
   const [briefingAck, setBriefingAck] = useState(false);
   const [deliveryChecked, setDeliveryChecked] = useState<Record<string, boolean>>({});
+  /* Final condition validation (same SSBike flow used on the E-Pass page). */
+  const [assessOpen, setAssessOpen] = useState(false);
+  const [assessDone, setAssessDone] = useState(false);
 
   const { briefing, loading: briefingLoading } = useBikeBriefing(appointment?.id, open);
   const { workNow } = useWorkPause();
@@ -113,6 +118,7 @@ export default function AppointmentCompletionDrawer({
   }, [briefing]);
 
   const allDeliveryChecked = deliveryItems.every((i) => deliveryChecked[i.id]);
+  const assessBikeId = briefing?.bike?.id ?? ((appointment as any)?.bike_id as string | undefined) ?? null;
 
   // ticker for live timer
   useEffect(() => {
@@ -120,6 +126,12 @@ export default function AppointmentCompletionDrawer({
     const i = setInterval(() => setTick((t) => t + 1), 1000);
     return () => clearInterval(i);
   }, [open]);
+
+  // Reset the final assessment gate whenever a new job is opened.
+  useEffect(() => {
+    setAssessDone(false);
+    setAssessOpen(false);
+  }, [appointment?.id, open]);
 
   // Global appointment start (drives the live cumulative timer)
   const workStartedAtMs = useMemo(() => {
@@ -673,6 +685,7 @@ export default function AppointmentCompletionDrawer({
                     total: stages.length,
                   })}
                   {!allDeliveryChecked && " · delivery checklist pending"}
+                  {allDeliveryChecked && assessBikeId && !assessDone && " · final condition rating pending"}
                 </div>
                 <Button
                   size="sm"
@@ -680,6 +693,12 @@ export default function AppointmentCompletionDrawer({
                   onClick={() => {
                     if (!allDeliveryChecked) {
                       setActiveStageId(DELIVERY_ID);
+                      return;
+                    }
+                    /* Close the job with the same guided SSBike condition
+                       assessment used on the E-Pass page. */
+                    if (assessBikeId && !assessDone) {
+                      setAssessOpen(true);
                       return;
                     }
                     completeAppointment();
@@ -696,11 +715,27 @@ export default function AppointmentCompletionDrawer({
                   ) : (
                     <CheckCircle2 className="h-3.5 w-3.5 mr-1" />
                   )}
-                  {t("workshop.drawer.complete_appointment")}
+                  {assessBikeId && !assessDone
+                    ? "Rate bike & complete"
+                    : t("workshop.drawer.complete_appointment")}
                 </Button>
               </div>
             </div>
           </div>
+        )}
+
+        {assessBikeId && (
+          <BikeAssessmentDialog
+            open={assessOpen}
+            onOpenChange={setAssessOpen}
+            bikeId={assessBikeId}
+            bikeModel={briefing?.bike?.model ?? null}
+            onSaved={() => {
+              setAssessDone(true);
+              setAssessOpen(false);
+              void completeAppointment();
+            }}
+          />
         )}
       </SheetContent>
     </Sheet>
