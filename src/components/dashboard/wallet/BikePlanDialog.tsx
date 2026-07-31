@@ -124,6 +124,9 @@ export default function BikePlanDialog({
             {plans.map((p) => {
               const isCurrent = currentPlan?.planVersionId === p.planVersionId;
               const active = selected?.planVersionId === p.planVersionId;
+              const cur = currentPlan?.entitlements.services_per_year ?? 0;
+              const mine = p.entitlements.services_per_year;
+              const moreServices = mine < 0 ? cur >= 0 : cur >= 0 && mine > cur;
               return (
                 <button
                   key={p.planVersionId}
@@ -143,6 +146,11 @@ export default function BikePlanDialog({
                         {isCurrent && (
                           <span className="text-[10px] uppercase tracking-widest text-muted-foreground border border-border/60 rounded-full px-2 py-0.5">
                             Current
+                          </span>
+                        )}
+                        {!isCurrent && moreServices && (
+                          <span className="text-[10px] uppercase tracking-widest text-wj-green border border-wj-green/40 rounded-full px-2 py-0.5">
+                            {mine < 0 ? "Unlimited services" : `+${mine - cur} services`}
                           </span>
                         )}
                       </div>

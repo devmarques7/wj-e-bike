@@ -76,7 +76,7 @@ export default function ServiceAllowanceCard({
             icon={<CalendarCheck className="h-5 w-5" />}
             label={`${planName} · services / 12 months`}
             action={<Plus className="h-4 w-4" />}
-            onAction={onBook}
+            onAction={onUpgrade}
           />
           <div className="my-3 border-t border-dashed border-border/60" />
           <StatRow
