@@ -86,7 +86,6 @@ const CONFIG: Record<UserRole, DashboardNavConfig> = {
       { icon: LayoutDashboard, label: "Overview", href: "/dashboard/staff" },
       { icon: Wrench,          label: "Garage",   href: "/dashboard/staff/garage" },
       { icon: Calendar,        label: "Manage",   href: "/dashboard/staff/schedule" },
-      { icon: MessageSquare,   label: "Feedback", href: "/dashboard/staff/feedback" },
     ],
     more: [],
   },

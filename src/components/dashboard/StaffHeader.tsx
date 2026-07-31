@@ -15,7 +15,6 @@ const navItems = [
   { icon: LayoutDashboard, label: "Overview", href: "/dashboard/staff" },
   { icon: Wrench, label: "My Tasks", href: "/dashboard/staff/tasks" },
   { icon: Calendar, label: "Schedule", href: "/dashboard/staff/schedule" },
-  { icon: MessageSquare, label: "Feedback", href: "/dashboard/staff/feedback" },
 ];
 
 export default function StaffHeader() {
