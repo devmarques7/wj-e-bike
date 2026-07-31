@@ -7,6 +7,7 @@ import StaffKPICard from "@/components/dashboard/StaffKPICard";
 import KPICarousel from "@/components/dashboard/KPICarousel";
 import GarageAssistantCard from "@/components/dashboard/garage/GarageAssistantCard";
 import CatalogSearchCard from "@/components/dashboard/garage/CatalogSearchCard";
+import RecentEPassCard from "@/components/dashboard/garage/RecentEPassCard";
 import AppointmentsTableCard from "@/components/dashboard/scheduling/AppointmentsTableCard";
 import { useAuth } from "@/contexts/AuthContext";
 import { useStaffGarageStats, GARAGE_PERIODS, type GaragePeriod } from "@/hooks/staff/useStaffGarageStats";
@@ -158,6 +159,9 @@ export default function StaffGarage() {
         </KPICarousel>
 
         <div className="grid grid-cols-12 gap-4 lg:gap-6">
+          <div className="col-span-12">
+            <RecentEPassCard />
+          </div>
           <div className="col-span-12 lg:col-span-7">
             <GarageAssistantCard className="h-[520px]" />
           </div>

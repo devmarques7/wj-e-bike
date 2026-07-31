@@ -17,6 +17,7 @@ import { mergeAssessedHealth } from "@/lib/garage/assessment";
 import { useAuth } from "@/contexts/AuthContext";
 import { useBikeById } from "@/hooks/garage/useBikeById";
 import { useServiceBriefing } from "@/hooks/staff/useServiceBriefing";
+import { recordEPassVisit } from "@/lib/garage/recentEpass";
 
 /**
  * E-Pass identification screen: opened right after a QR scan.
@@ -44,6 +45,19 @@ export default function ScannedBikeDetail() {
   );
 
   const isStaffRole = user?.role === "staff" || user?.role === "admin";
+  // Remember this review for the session so staff can come back to it.
+  useEffect(() => {
+    if (!bike?.id || !isStaffRole) return;
+    recordEPassVisit({
+      bikeId: bike.id,
+      model: bike.model ?? null,
+      serial: bike.serial ?? null,
+      ownerName: owner?.name ?? owner?.email ?? null,
+      imageUrl: (bike as any).image_url ?? (bike as any).imageUrl ?? null,
+      overall: condition.overall ?? null,
+    });
+  }, [bike?.id, bike?.model, bike?.serial, owner?.name, owner?.email, condition.overall, isStaffRole]);
+
   // Automated workshop briefing: appointment yes/no, reported problem,
   // plan coverage, parts to review and the booking window.
   const briefing = useServiceBriefing({
