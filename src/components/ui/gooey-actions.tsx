@@ -391,7 +391,11 @@ export function GooeyActions({
   return (
     <div
       ref={rootRef}
-      className={cn("relative select-none", className)}
+      className={cn(
+        "relative select-none",
+        isOpen ? "pointer-events-auto" : "pointer-events-none",
+        className,
+      )}
       style={{ width: 300, height: 260, ...style }}
       onPointerMove={track}
       onPointerLeave={release}
