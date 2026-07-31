@@ -111,9 +111,6 @@ export default function ScannedBikeDetail() {
 
   const isStaff = user?.role === "staff" || user?.role === "admin";
   const garageHref = isStaff ? "/dashboard/staff/garage" : "/dashboard/garage";
-  // Where the scan started (e.g. /dashboard/garage?bike=<own-bike-id>), so the
-  // breadcrumb takes the rider back to their own bike exactly as they left it.
-      : garageHref;
   const ownerName = owner?.name || owner?.email || "Unknown customer";
 
   return (
