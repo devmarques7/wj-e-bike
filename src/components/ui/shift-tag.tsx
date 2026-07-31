@@ -51,6 +51,10 @@ export function ShiftTag() {
     return () => clearInterval(i);
   }, [appointment?.work_started_at]);
 
+  useEffect(() => {
+    if (!appointment) setTab("shift");
+  }, [appointment]);
+
   const jobStart = appointment?.work_started_at
     ? new Date(appointment.work_started_at).getTime()
     : null;
@@ -299,9 +303,7 @@ export function ShiftTag() {
             transition={{ duration: 0.18 }}
             className={cn(
               "mt-2 rounded-2xl border p-2 flex flex-col gap-1.5 min-w-[200px] shadow-xl",
-              status === "completed"
-                ? "bg-wj-green border-wj-green/40 shadow-wj-green/30 text-white"
-                : "bg-background/80 backdrop-blur-xl border-border/40 shadow-black/20",
+              "bg-background/80 backdrop-blur-xl border-border/40 shadow-black/20",
             )}
           >
             {/* Tabs — one per timer */}
@@ -534,6 +536,30 @@ export function ShiftTag() {
       />
     </motion.div>,
     document.body,
+  );
+}
+
+function DetailRow({
+  label,
+  value,
+  highlight,
+}: {
+  label: string;
+  value: string;
+  highlight?: boolean;
+}) {
+  return (
+    <div className="flex items-center justify-between px-2 py-1 rounded-lg hover:bg-muted/30 transition-colors">
+      <span className="text-[10px] uppercase tracking-wider text-muted-foreground">{label}</span>
+      <span
+        className={cn(
+          "text-[11px] tabular-nums truncate max-w-[150px] text-right",
+          highlight ? "font-mono font-bold text-wj-green" : "text-foreground",
+        )}
+      >
+        {value}
+      </span>
+    </div>
   );
 }
 
