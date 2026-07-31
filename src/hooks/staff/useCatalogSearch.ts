@@ -101,52 +101,59 @@ export function useCatalogSearch(term: string) {
   return { hits, loading, refresh: run };
 }
 
-export type CustomerOption = { id: string; user_id: string; name: string };
+export type CustomerOption = { id: string; user_id: string; name: string; email?: string | null };
 export type BikeOption = { id: string; label: string };
 
 /** Customers + their bikes, used to address a basket to a client/bike. */
 export function useCustomerTargets() {
   const [customers, setCustomers] = useState<CustomerOption[]>([]);
   const [bikes, setBikes] = useState<Record<string, BikeOption[]>>({});
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     (async () => {
-      const { data: cps } = await supabase
-        .from("customer_profiles")
-        .select("id, user_id")
-        .limit(500);
-      if (!cps?.length) return;
-      const ids = cps.map((c) => c.user_id);
-      const [{ data: profiles }, { data: bikeRows }] = await Promise.all([
-        supabase.from("profiles").select("user_id, full_name, email").in("user_id", ids),
-        supabase
-          .from("customer_bikes")
-          .select("id, customer_id, model, serial")
-          .eq("is_active", true),
-      ]);
-      const byUser = new Map((profiles ?? []).map((p: any) => [p.user_id, p]));
-      setCustomers(
-        cps
-          .map((c) => ({
-            id: c.id,
-            user_id: c.user_id,
-            name:
-              byUser.get(c.user_id)?.full_name ||
-              byUser.get(c.user_id)?.email ||
-              "Customer",
-          }))
-          .sort((a, b) => a.name.localeCompare(b.name)),
-      );
-      const grouped: Record<string, BikeOption[]> = {};
-      (bikeRows ?? []).forEach((b: any) => {
-        (grouped[b.customer_id] ||= []).push({
-          id: b.id,
-          label: `${b.model}${b.serial ? ` · ${b.serial}` : ""}`,
+      setLoading(true);
+      try {
+        const [{ data: cps }, { data: bikeRows }] = await Promise.all([
+          supabase.from("customer_profiles").select("id, user_id").limit(1000),
+          supabase
+            .from("customer_bikes")
+            .select("id, customer_id, model, serial")
+            .eq("is_active", true),
+        ]);
+        const ids = (cps ?? []).map((c) => c.user_id);
+        const { data: profiles } = ids.length
+          ? await supabase.from("profiles").select("user_id, full_name, email").in("user_id", ids)
+          : { data: [] as any[] };
+
+        const byUser = new Map((profiles ?? []).map((p: any) => [p.user_id, p]));
+        setCustomers(
+          (cps ?? [])
+            .map((c) => {
+              const p = byUser.get(c.user_id);
+              return {
+                id: c.id,
+                user_id: c.user_id,
+                name: p?.full_name || p?.email || "Unnamed member",
+                email: p?.email ?? null,
+              };
+            })
+            .sort((a, b) => a.name.localeCompare(b.name)),
+        );
+
+        const grouped: Record<string, BikeOption[]> = {};
+        (bikeRows ?? []).forEach((b: any) => {
+          (grouped[b.customer_id] ||= []).push({
+            id: b.id,
+            label: `${b.model}${b.serial ? ` · ${b.serial}` : ""}`,
+          });
         });
-      });
-      setBikes(grouped);
+        setBikes(grouped);
+      } finally {
+        setLoading(false);
+      }
     })();
   }, []);
 
-  return useMemo(() => ({ customers, bikes }), [customers, bikes]);
+  return useMemo(() => ({ customers, bikes, loading }), [customers, bikes, loading]);
 }
