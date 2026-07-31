@@ -883,9 +883,26 @@ export default function BookAppointmentDialog({
                       <p className="text-xs text-muted-foreground">
                         Sem horários disponíveis nesta data.
                       </p>
-                      <p className="text-[10px] text-muted-foreground/70">
-                        Tente outra data no calendário.
-                      </p>
+                      {isWorkshopUser && myDayOff ? (
+                        <>
+                          <p className="text-[10px] text-muted-foreground/70 max-w-[240px]">
+                            Não tens disponibilidade marcada neste dia. Queres abrir a tua
+                            disponibilidade para libertar o workload?
+                          </p>
+                          <Button
+                            size="sm"
+                            className="mt-2 h-7 rounded-full bg-wj-green hover:bg-wj-green/90 text-white text-[11px]"
+                            onClick={offerOwnAvailability}
+                            disabled={openingDay}
+                          >
+                            {openingDay ? "A abrir…" : "Abrir a minha disponibilidade"}
+                          </Button>
+                        </>
+                      ) : (
+                        <p className="text-[10px] text-muted-foreground/70">
+                          Tente outra data no calendário.
+                        </p>
+                      )}
                     </div>);
                     return (
                     <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 animate-in fade-in-0 duration-200">
