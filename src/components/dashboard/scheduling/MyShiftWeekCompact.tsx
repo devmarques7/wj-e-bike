@@ -45,7 +45,7 @@ type ShiftRow = {
 };
 
 const trim = (t: string | null | undefined) => (t ? t.slice(0, 5) : "");
-const ymd = (d: Date) => d.toISOString().slice(0, 10);
+import { localYmd as ymd } from "@/lib/scheduling/localDate";
 function startOfWeek(d: Date) {
   const date = new Date(d);
   date.setDate(date.getDate() - date.getDay());

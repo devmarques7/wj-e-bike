@@ -4,7 +4,7 @@ import { useAppointmentsRealtimeTick } from "@/hooks/scheduling/useAppointmentsR
 import type { AppointmentRow } from "@/hooks/scheduling/useSchedulingData";
 
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
-const ymd = (d: Date) => d.toISOString().slice(0, 10);
+import { localYmd as ymd } from "@/lib/scheduling/localDate";
 
 /**
  * "What do I do next?" — resolves the running job first, otherwise the closest

@@ -71,7 +71,7 @@ type ApptRow = {
 };
 
 const trim = (t: string | null | undefined) => (t ? t.slice(0, 5) : "");
-const ymd = (d: Date) => d.toISOString().slice(0, 10);
+import { localYmd as ymd } from "@/lib/scheduling/localDate";
 
 function startOfWeek(d: Date) {
   // Sunday-start week (Sun = first, Sat = last)

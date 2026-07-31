@@ -3,7 +3,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAppointmentsRealtimeTick } from "@/hooks/scheduling/useAppointmentsRealtime";
 
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
-const ymd = (d: Date) => d.toISOString().slice(0, 10);
+import { localYmd as ymd } from "@/lib/scheduling/localDate";
 const parseHM = (t: string | null) => {
   if (!t) return 0;
   const [h, m] = t.slice(0, 5).split(":").map(Number);

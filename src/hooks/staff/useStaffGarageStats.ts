@@ -10,7 +10,7 @@ export const GARAGE_PERIODS: { id: GaragePeriod; label: string }[] = [
   { id: "month", label: "30 days" },
 ];
 
-const ymd = (d: Date) => d.toISOString().slice(0, 10);
+import { localYmd as ymd } from "@/lib/scheduling/localDate";
 
 export function rangeFor(period: GaragePeriod) {
   const today = new Date();
