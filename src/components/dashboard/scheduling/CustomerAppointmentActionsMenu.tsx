@@ -48,6 +48,8 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { Calendar } from "@/components/ui/calendar";
 import { cn } from "@/lib/utils";
 import type { AppointmentRow } from "@/hooks/scheduling/useSchedulingData";
+import QuickSlotPicker from "@/components/dashboard/scheduling/QuickSlotPicker";
+import { isTaskOverdue } from "@/lib/scheduling/taskPriority";
 
 interface Props {
   appointment: AppointmentRow;
@@ -95,6 +97,7 @@ export default function CustomerAppointmentActionsMenu({
     appointment.status === "no_show";
 
   const slots = useMemo(() => timeSlots(), []);
+  const overdue = isTaskOverdue(appointment as any);
 
   return (
     <>
@@ -149,6 +152,16 @@ export default function CustomerAppointmentActionsMenu({
             </DialogDescription>
           </DialogHeader>
           <div className="space-y-3">
+            <QuickSlotPicker
+              serviceTypeId={appointment.service_type_id}
+              enabled={rescheduleOpen}
+              urgent={overdue}
+              selected={{ date: format(date, "yyyy-MM-dd"), start: time }}
+              onSelect={(s) => {
+                setDate(new Date(`${s.date}T00:00:00`));
+                setTime(s.start.slice(0, 5));
+              }}
+            />
             <div className="space-y-1.5">
               <Label className="text-[10px] uppercase tracking-wider text-muted-foreground">
                 {t("workshop.actions.date", "Date")}
