@@ -80,6 +80,7 @@ export default function MyWallet() {
   /** Per-card colour themes, persisted locally. */
   const [cardThemes, setCardThemes] = useState<Record<string, string>>(() => loadWalletThemes());
   const [editingCardId, setEditingCardId] = useState<string | null>(null);
+  const [archivedRefresh, setArchivedRefresh] = useState(0);
   const [scanOpen, setScanOpen] = useState(false);
   /** Year activity map + folder history state. */
   const [activityYear, setActivityYear] = useState(() => new Date().getFullYear());
@@ -542,6 +543,8 @@ export default function MyWallet() {
           record={selectedRecord}
           onOpenChange={(o) => !o && setSelectedRecord(null)}
         />
+
+        <ArchivedBikesTable refreshKey={archivedRefresh} />
       </div>
 
       <WalletCardThemeDialog
