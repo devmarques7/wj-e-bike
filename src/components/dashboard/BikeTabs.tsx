@@ -27,7 +27,7 @@ export default function BikeTabs({ bikes, activeId, onSelect, className = "" }: 
       initial={{ opacity: 0, y: -8 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.3 }}
-      className={`flex flex-wrap items-center gap-2 ${className}`}
+      className={`flex flex-nowrap items-center gap-2 overflow-x-auto scrollbar-hide md:flex-wrap md:overflow-visible ${className}`}
     >
       {bikes.map((b) => {
         const active = b.id === activeId;
@@ -35,7 +35,7 @@ export default function BikeTabs({ bikes, activeId, onSelect, className = "" }: 
           <button
             key={b.id}
             onClick={() => onSelect(b.id)}
-            className={`inline-flex items-center gap-2 rounded-full border px-3 py-1.5 text-xs transition-colors ${
+            className={`shrink-0 inline-flex items-center gap-2 rounded-full border px-3 py-1.5 text-xs transition-colors ${
               active
                 ? "border-wj-green/50 bg-wj-green/10 text-foreground"
                 : "border-border/40 text-muted-foreground hover:text-foreground hover:border-border"
