@@ -36,6 +36,7 @@ import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { useSchedulingAvailability } from "@/contexts/SchedulingAvailabilityContext";
 import { dateKey } from "@/lib/scheduling/availabilityGuard";
 import { localYmd } from "@/lib/scheduling/localDate";
+import TodayProgressList from "@/components/dashboard/staff/TodayProgressList";
 import { useStaffWeekWorkload } from "@/hooks/staff/useStaffWeekWorkload";
 
 const DAY_KEYS = ["sun", "mon", "tue", "wed", "thu", "fri", "sat"] as const;
