@@ -69,7 +69,10 @@ export function useBikeAssessment(bikeId?: string | null, customerId?: string | 
         assessed_by: user?.id ?? null,
       });
       setSaving(false);
-      if (error) return { error: error.message };
+      if (error) {
+        console.error("[bike_assessments] insert failed", error);
+        return { error: error.message };
+      }
       await load();
       return { error: null, result };
     },
