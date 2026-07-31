@@ -59,6 +59,7 @@ import AdminPickupPlaces from "./pages/admin/AdminPickupPlaces";
 import StaffOverview from "./pages/staff/StaffOverview";
 import StaffGarage from "./pages/staff/StaffGarage";
 import StaffSchedule from "./pages/staff/StaffSchedule";
+import FleetMenuGate from "./components/dashboard/FleetMenuGate";
 
 
 const queryClient = new QueryClient();
@@ -74,6 +75,7 @@ const App = () => (
           <Sonner />
           <BrowserRouter>
             <GlobalBreadcrumbs />
+            <FleetMenuGate />
             <Routes>
               <Route path="/" element={<Index />} />
               <Route path="/gallery" element={<Gallery />} />
