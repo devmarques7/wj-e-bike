@@ -2,12 +2,14 @@ import { Pencil } from "lucide-react";
 import type { ReactNode } from "react";
 import { cn } from "@/lib/utils";
 import { getWalletTheme } from "@/lib/wallet/cardThemes";
-import { CardWaveBackground } from "./CardWaveBackground";
+import { CardMeshBackground, tierFromPlan, type CardTier } from "./CardMeshBackground";
 
 export interface WalletMemberCardProps {
   /** Mirrors the layout (dark panel moves to the right) — used for the card back. */
   mirrored?: boolean;
   themeId?: string | null;
+  /** Overrides the plan tier used for the background palette. */
+  tier?: CardTier;
   /** Top-left label, e.g. "Member card". */
   label?: string;
   bikeName?: string;
@@ -31,6 +33,7 @@ export interface WalletMemberCardProps {
 export default function WalletMemberCard({
   mirrored,
   themeId,
+  tier,
   label = "Member card",
   bikeName,
   serial,
@@ -73,7 +76,7 @@ export default function WalletMemberCard({
 
       {/* Colour side */}
       <div className="relative flex-1 min-w-0 flex flex-col">
-        <CardWaveBackground color={theme.ink} opacity={0.08} />
+        <CardMeshBackground tier={tier ?? tierFromPlan(planName)} />
 
         {/* Oversized wordmark */}
         <span
@@ -161,6 +164,8 @@ export default function WalletMemberCard({
 }
 export interface WalletCardBackProps {
   themeId?: string | null;
+  /** Overrides the plan tier used for the background palette. */
+  tier?: CardTier;
   /** QR node rendered inside the dark panel (right side). */
   qr?: ReactNode;
   planName?: string;
@@ -175,6 +180,7 @@ export interface WalletCardBackProps {
  */
 export function WalletCardBack({
   themeId,
+  tier,
   qr,
   planName,
   label = "E-Pass",
@@ -206,7 +212,7 @@ export function WalletCardBack({
 
       {/* Colour side — details */}
       <div className="relative flex-1 min-w-0 flex flex-col p-4 sm:p-5">
-        <CardWaveBackground color={theme.ink} opacity={0.08} />
+        <CardMeshBackground tier={tier ?? tierFromPlan(planName)} />
 
         <div>
           <p className="text-[9px] uppercase tracking-[0.22em] font-medium" style={{ color: theme.inkMuted }}>
