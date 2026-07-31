@@ -171,6 +171,13 @@ export default function AppointmentsTableCard({
     refetch,
   } = useSchedulingData({ customerUserId, bikeId });
 
+  /* Global dispatch role: balances today's unassigned jobs automatically and
+     lets a mechanic claim whatever could not be placed. */
+  const { running: dispatching, dispatch, claimTask, canClaim } = useAutoDispatch({
+    enabled: !isCustomer,
+    onChanged: refetch,
+  });
+
   /* Scheduling requests (waitlist) — shown alongside real appointments. */
   const [requestRows, setRequestRows] = useState<ApptRow[]>([]);
   useEffect(() => {
