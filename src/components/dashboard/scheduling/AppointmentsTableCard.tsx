@@ -283,19 +283,29 @@ export default function AppointmentsTableCard({
   const activeAppointment =
     appointments.find((a) => a.status === "in_progress" && a.work_started_at) ?? null;
 
+  /** Rows in scope for this surface, before the status filter is applied. */
+  const scopedRows = useMemo(
+    () =>
+      ([...appointments, ...requestRows] as ApptRow[])
+        .filter((a) =>
+          mineOnlyMechanicId
+            ? a.assigned_mechanic_id === mineOnlyMechanicId || !a.assigned_mechanic_id
+            : true,
+        )
+        .filter((a) => (isCustomer ? true : isTodayScope(a))),
+    [appointments, requestRows, mineOnlyMechanicId, isCustomer],
+  );
+
+  const counts = useMemo(() => {
+    const c = Object.fromEntries(TASK_FILTERS.map((f) => [f, 0])) as Record<TaskFilter, number>;
+    for (const a of scopedRows) {
+      for (const f of TASK_FILTERS) if (matchesFilter(a, f)) c[f] += 1;
+    }
+    return c;
+  }, [scopedRows]);
+
   const filteredSorted = useMemo(() => {
-    const arr = ([...appointments, ...requestRows] as ApptRow[])
-      // Staff view: own jobs + anything not assigned yet (so unassigned work is
-      // never invisible to the workshop).
-      .filter((a) =>
-        mineOnlyMechanicId
-          ? a.assigned_mechanic_id === mineOnlyMechanicId || !a.assigned_mechanic_id
-          : true,
-      )
-      // Workshop surfaces focus on what has to be done today (late work stays
-      // visible); the customer view keeps their full history.
-      .filter((a) => (isCustomer ? true : isTodayScope(a)))
-      .filter((a) => matchesFilter(a, statusFilter));
+    const arr = scopedRows.filter((a) => matchesFilter(a, statusFilter));
     arr.sort((a, b) => {
       if (sortMode === "priority") return compareTasks(a, b);
       const cmp =
@@ -304,7 +314,7 @@ export default function AppointmentsTableCard({
       return sortAsc ? cmp : -cmp;
     });
     return arr;
-  }, [appointments, requestRows, statusFilter, sortAsc, sortMode, mineOnlyMechanicId, isCustomer]);
+  }, [scopedRows, statusFilter, sortAsc, sortMode]);
 
   /* Pagination: at most 5 rows per page; the viewport shows ~3 and scrolls. */
   const PAGE_SIZE = 5;
