@@ -105,6 +105,14 @@ type ApptRow = AppointmentRow & { isRequest?: boolean; requestStatus?: string };
 
 const isOverdue = (a: ApptRow) => isTaskOverdue(a);
 
+/** Whole-day distance between today and the appointment date (negative = late). */
+const dayDelta = (dateStr: string) => {
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  const target = new Date(`${dateStr}T00:00:00`);
+  return Math.round((target.getTime() - today.getTime()) / 86_400_000);
+};
+
 /** Status dot colour per global filter bucket. */
 const FILTER_DOT: Record<TaskFilter, string> = {
   pending: "bg-amber-400",
