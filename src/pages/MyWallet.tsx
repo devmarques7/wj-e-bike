@@ -640,6 +640,20 @@ export default function MyWallet() {
         planName={currentPlan?.name ?? "Free"}
       />
 
+      <BikePlanDialog
+        open={planDialogBikeId !== null}
+        onOpenChange={(o) => !o && setPlanDialogBikeId(null)}
+        bikeId={planDialogBikeId}
+        bikeName={
+          linkedBikes.find((b) => b.id === planDialogBikeId)?.model || activeBikeName
+        }
+        plans={bikePlanOptions}
+        currentPlan={planForBike(planDialogBikeId)}
+        pendingPlan={pendingForBike(planDialogBikeId)}
+        onRequestChange={requestChange}
+        onCancelPending={cancelPending}
+      />
+
     </RoleDashboardLayout>
   );
 }
