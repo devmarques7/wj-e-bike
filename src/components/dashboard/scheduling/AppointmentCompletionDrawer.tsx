@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
+import BikeAssessmentDialog from "@/components/dashboard/garage/BikeAssessmentDialog";
 import { useTranslation } from "react-i18next";
 import {
   Clock,
