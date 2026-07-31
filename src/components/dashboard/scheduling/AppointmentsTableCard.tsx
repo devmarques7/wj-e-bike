@@ -613,7 +613,29 @@ export default function AppointmentsTableCard({
                             </div>
                           </TableCell>
                           <TableCell className="text-xs text-muted-foreground align-middle">
-                            {apt.mechanic_name ?? (
+                            {apt.mechanic_name ? (
+                              apt.mechanic_name
+                            ) : !apt.isRequest && canClaim && !effectiveReadOnly ? (
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                className="h-6 px-2 text-[10px] gap-1 border-wj-green/40 text-wj-green hover:bg-wj-green/10"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  void claimTask({
+                                    id: apt.id,
+                                    scheduled_date: apt.scheduled_date,
+                                    scheduled_start_time: apt.scheduled_start_time,
+                                    duration_minutes: apt.duration_minutes,
+                                    assigned_mechanic_id: null,
+                                    status: apt.status as string,
+                                  });
+                                }}
+                              >
+                                <UserPlus className="h-3 w-3" />
+                                {t("workshop.appts.assign_me")}
+                              </Button>
+                            ) : (
                               <span className="text-muted-foreground/60 italic">
                                 {t("workshop.cols.unassigned")}
                               </span>
