@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { Camera, RefreshCw, SwitchCamera, ScanLine, ArrowRight, Sparkles, ZoomIn } from "lucide-react";
@@ -20,6 +20,7 @@ const isUuid = (v: string) =>
 
 export default function EPassScanner({ active, onNavigate }: Props) {
   const navigate = useNavigate();
+  const location = useLocation();
   const { user } = useAuth();
   const [decoded, setDecoded] = useState<string | null>(null);
   const [resolving, setResolving] = useState(false);
@@ -58,13 +59,17 @@ export default function EPassScanner({ active, onNavigate }: Props) {
         return;
       }
       onNavigate?.();
+      // Remember where the scan started so the breadcrumb can return the rider
+      // to the exact garage view (and selected bike) they came from.
+      const returnTo = `${location.pathname}${location.search}`;
       navigate(
         isStaff
           ? `/dashboard/staff/garage/bike/${encodeURIComponent(bikeId)}`
           : `/dashboard/garage/bike/${encodeURIComponent(bikeId)}`,
+        { state: { returnTo } },
       );
     },
-    [isStaff, navigate, onNavigate],
+    [isStaff, navigate, onNavigate, location.pathname, location.search],
   );
 
   // Auto-redirect as soon as a valid E-Pass is identified.
