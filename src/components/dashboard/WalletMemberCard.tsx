@@ -214,7 +214,7 @@ export function WalletCardBack({
       <div className="relative flex-1 min-w-0 flex flex-col p-4 sm:p-5">
         <CardMeshBackground tier={tier ?? tierFromPlan(planName)} />
 
-        <div>
+        <div className="relative z-10">
           <p className="text-[9px] uppercase tracking-[0.22em] font-medium" style={{ color: theme.inkMuted }}>
             {label}
           </p>
@@ -223,7 +223,7 @@ export function WalletCardBack({
           </span>
         </div>
 
-        <div className="mt-auto space-y-2">
+        <div className="relative z-10 mt-auto space-y-2">
           {rows.map((row) => (
             <div key={row.label} className="min-w-0">
               <p className="text-[8px] uppercase tracking-widest" style={{ color: theme.inkMuted }}>
