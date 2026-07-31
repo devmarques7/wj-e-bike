@@ -1,9 +1,10 @@
 import { motion } from "framer-motion";
 import { Link, Navigate, useLocation, useParams } from "react-router-dom";
-import { CalendarDays, Loader2, Mail, Phone, ScanLine, User } from "lucide-react";
+import { Loader2, Mail, Phone, ScanLine, User } from "lucide-react";
 import RoleDashboardLayout from "@/components/dashboard/RoleDashboardLayout";
 import GarageBikeCard from "@/components/dashboard/garage/GarageBikeCard";
 import BikeHealthGrid from "@/components/dashboard/garage/BikeHealthGrid";
+import ServiceCountdown from "@/components/dashboard/ServiceCountdown";
 import AppointmentsTableCard from "@/components/dashboard/scheduling/AppointmentsTableCard";
 import BikeAssistantCard from "@/components/dashboard/assistant/BikeAssistantCard";
 import {
@@ -15,7 +16,7 @@ import {
   BreadcrumbSeparator,
 } from "@/components/ui/breadcrumb";
 import { useAuth } from "@/contexts/AuthContext";
-import { useBikeById, REVISION_LABEL } from "@/hooks/garage/useBikeById";
+import { useBikeById } from "@/hooks/garage/useBikeById";
 
 /**
  * E-Pass identification screen: opened right after a QR scan.
@@ -26,7 +27,7 @@ export default function ScannedBikeDetail() {
   const { bikeId } = useParams<{ bikeId: string }>();
   const location = useLocation();
   const { user, isAuthenticated, isLoading } = useAuth();
-  const { bike, owner, loading, error, health, nextRevision, daysToRevision } = useBikeById(bikeId);
+  const { bike, owner, loading, error, health } = useBikeById(bikeId);
 
   if (isLoading) return null;
   if (!isAuthenticated) return <Navigate to="/auth" replace />;
@@ -114,8 +115,26 @@ export default function ScannedBikeDetail() {
               <GarageBikeCard bike={bike} overall={health.overall} metrics={health.metrics} />
             </div>
 
-            <div className="col-span-12 lg:col-span-4">
-              <div className="h-full rounded-3xl border border-border/30 bg-background/60 backdrop-blur-md p-5 space-y-4">
+            <div className="col-span-12 lg:col-span-4 flex flex-col gap-4 lg:gap-6">
+              {/* Same revision countdown component used in the customer garage */}
+              <ServiceCountdown
+                externalBike={{
+                  id: bike.id,
+                  model: bike.model,
+                  serial: bike.serial ?? null,
+                  purchased_at: bike.purchased_at ?? null,
+                  last_service_at: bike.last_service_at ?? null,
+                  next_service_at: bike.next_service_at ?? null,
+                  services_completed: bike.services_completed ?? 0,
+                }}
+                externalOwner={
+                  owner
+                    ? { userId: owner.userId, name: owner.name, email: owner.email }
+                    : null
+                }
+              />
+
+              <div className="rounded-3xl border border-border/30 bg-background/60 backdrop-blur-md p-5 space-y-3">
                 <p className="text-[10px] uppercase tracking-widest text-muted-foreground">Customer</p>
                 <div className="space-y-2 text-sm">
                   <p className="flex items-center gap-2 text-foreground">
@@ -131,22 +150,6 @@ export default function ScannedBikeDetail() {
                       <Phone className="h-4 w-4" /> {owner.phone}
                     </p>
                   )}
-                </div>
-
-                <div className="rounded-2xl border border-border/40 bg-card/40 p-4 space-y-1">
-                  <p className="flex items-center gap-2 text-[10px] uppercase tracking-widest text-muted-foreground">
-                    <CalendarDays className="h-3 w-3" /> Next revision
-                  </p>
-                  <p className="text-lg font-light text-foreground">
-                    {nextRevision ? nextRevision.toLocaleDateString() : "Not scheduled"}
-                  </p>
-                  <p className="text-xs text-muted-foreground">
-                    {daysToRevision == null
-                      ? REVISION_LABEL
-                      : daysToRevision >= 0
-                        ? `${daysToRevision} days remaining · ${REVISION_LABEL}`
-                        : `${Math.abs(daysToRevision)} days overdue · ${REVISION_LABEL}`}
-                  </p>
                 </div>
 
                 <div className="grid grid-cols-2 gap-3">
