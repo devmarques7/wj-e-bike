@@ -33,6 +33,8 @@ import StaffScheduleDialog from "@/components/dashboard/scheduling/StaffSchedule
 import TeamWeekWorkloadCompact from "@/components/dashboard/scheduling/TeamWeekWorkloadCompact";
 import MyShiftWeekCompact from "@/components/dashboard/scheduling/MyShiftWeekCompact";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
+import { useSchedulingAvailability } from "@/contexts/SchedulingAvailabilityContext";
+import { dateKey } from "@/lib/scheduling/availabilityGuard";
 
 const DAY_KEYS = ["sun", "mon", "tue", "wed", "thu", "fri", "sat"] as const;
 const WEEKDAYS_HEAT_KEYS = ["sun", "mon", "tue", "wed", "thu", "fri", "sat"] as const;
