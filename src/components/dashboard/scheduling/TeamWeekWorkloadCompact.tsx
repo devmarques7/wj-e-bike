@@ -5,6 +5,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import type { Mechanic } from "@/hooks/scheduling/useSchedulingData";
+import { useAppointmentsRealtime } from "@/hooks/scheduling/useAppointmentsRealtime";
 
 type ScheduleRow = {
   staff_id: string;
@@ -103,6 +104,10 @@ export default function TeamWeekWorkloadCompact({ mechanics }: Props) {
   useEffect(() => {
     load();
   }, [load]);
+
+  /* Stay in sync with every booking, reschedule or cancellation made anywhere
+     in the app (customer portal, admin workshop, assistant). */
+  useAppointmentsRealtime(load, mechanics.length > 0);
 
   const getEffective = (staffId: string, date: Date) => {
     const iso = ymd(date);

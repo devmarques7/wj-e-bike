@@ -35,6 +35,7 @@ import MyShiftWeekCompact from "@/components/dashboard/scheduling/MyShiftWeekCom
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { useSchedulingAvailability } from "@/contexts/SchedulingAvailabilityContext";
 import { dateKey } from "@/lib/scheduling/availabilityGuard";
+import { useStaffWeekWorkload } from "@/hooks/staff/useStaffWeekWorkload";
 
 const DAY_KEYS = ["sun", "mon", "tue", "wed", "thu", "fri", "sat"] as const;
 const WEEKDAYS_HEAT_KEYS = ["sun", "mon", "tue", "wed", "thu", "fri", "sat"] as const;
@@ -104,6 +105,14 @@ export default function StaffSchedule() {
     [mechanics, mineUserId],
   );
 
+  /**
+   * Weekly truth for this mechanic: booked minutes vs. real capacity from
+   * staff_schedules, refreshed live through the global appointments bus.
+   * The page-level `appointments` list only holds the selected day, so every
+   * "this week" figure has to come from here.
+   */
+  const { totals: week } = useStaffWeekWorkload(mineUserId || undefined);
+
   // Load my working hours (staff_schedules) to derive real weekly availability
   useEffect(() => {
     if (!mineUserId) return;
@@ -168,41 +177,22 @@ export default function StaffSchedule() {
   );
   const workingDays = Object.values(availableHoursPerDay).filter((h) => h > 0).length;
 
-  // Current week range (Mon..Sun)
-  const now = new Date();
-  const startOfWeek = new Date(now);
-  const dow = (now.getDay() + 6) % 7; // Mon=0
-  startOfWeek.setDate(now.getDate() - dow);
-  startOfWeek.setHours(0, 0, 0, 0);
-  const endOfWeek = new Date(startOfWeek);
-  endOfWeek.setDate(startOfWeek.getDate() + 6);
-  const inThisWeek = (d: string) => {
-    const x = new Date(d + "T00:00:00");
-    return x >= startOfWeek && x <= endOfWeek;
-  };
-  const weekAppts = mineAppts.filter((a) => inThisWeek(a.scheduled_date));
-
-  const weeklyAppointments = weekAppts.length;
-  const weeklyCapacity = weeklyAvailableHours > 0 ? weeklyAvailableHours : (me?.weekly_capacity ?? 40);
-
-  const weeklyUsedHours =
-    weekAppts.reduce((acc, a) => acc + (a.duration_minutes ?? 0), 0) / 60;
-  const workloadPercentage = Math.min(
-    100,
-    Math.round((weeklyUsedHours / Math.max(1, weeklyCapacity)) * 100),
-  );
-
-  const completed = weekAppts.filter((a) => a.status === "completed").length;
-  const inProgress = weekAppts.filter((a) => a.status === "in_progress").length;
-  const weeklyHours = Math.round(
-    weekAppts
-      .filter((a) => a.status === "completed" || a.status === "in_progress")
-      .reduce((acc, a) => acc + (a.duration_minutes ?? 0), 0) / 60,
-  );
-  const durs = weekAppts.filter((a) => a.duration_minutes);
-  const avgDuration = durs.length
-    ? Math.round(durs.reduce((acc, a) => acc + (a.duration_minutes ?? 0), 0) / durs.length)
-    : 0;
+  /* Every weekly figure below is fed by the live week hook so the page stays
+     in sync with any booking made by customers, admins or the assistant. */
+  const weeklyAppointments = week.jobs;
+  const weeklyCapacity =
+    week.capacityMinutes > 0
+      ? Math.round(week.capacityMinutes / 60)
+      : weeklyAvailableHours > 0
+        ? weeklyAvailableHours
+        : (me?.weekly_capacity ?? 40);
+  const weeklyUsedHours = week.bookedMinutes / 60;
+  const workloadPercentage = week.pct;
+  const isFullWeek = week.isFull;
+  const completed = week.completed;
+  const inProgress = week.inProgress;
+  const weeklyHours = Math.round(week.workedMinutes / 60);
+  const avgDuration = week.avgDurationMinutes;
 
   const kpiData = [
     {
@@ -230,7 +220,9 @@ export default function StaffSchedule() {
       label: "My Workload",
       value: `${workloadPercentage}%`,
       change:
-        workloadPercentage > 80
+        isFullWeek
+          ? "week full"
+          : workloadPercentage > 80
           ? "very busy"
           : workloadPercentage > 60
             ? "balanced"
@@ -294,14 +286,14 @@ export default function StaffSchedule() {
               <Badge
                 className={cn(
                   "text-[10px]",
-                  workloadPercentage > 80
+                  isFullWeek || workloadPercentage > 80
                     ? "bg-red-500/20 text-red-400 border-red-500/30"
                     : workloadPercentage > 60
                       ? "bg-amber-500/20 text-amber-400 border-amber-500/30"
                       : "bg-wj-green/20 text-wj-green border-wj-green/30",
                 )}
               >
-                {workloadPercentage}% of capacity
+                {isFullWeek ? `Full · ${workloadPercentage}%` : `${workloadPercentage}% of capacity`}
               </Badge>
             </div>
 
@@ -325,7 +317,11 @@ export default function StaffSchedule() {
               <span>
                 {Math.round(weeklyUsedHours * 10) / 10}h used · {weeklyAppointments} appointments
               </span>
-              <span>capacity {weeklyCapacity}h</span>
+              <span>
+                {isFullWeek
+                  ? "no capacity left this week"
+                  : `${Math.max(0, Math.round((weeklyCapacity - weeklyUsedHours) * 10) / 10)}h free of ${weeklyCapacity}h`}
+              </span>
             </div>
           </motion.div>
 

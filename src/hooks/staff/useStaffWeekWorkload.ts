@@ -21,18 +21,45 @@ export type WeekDayLoad = {
   isOff: boolean;
 };
 
+export type WeekAppt = {
+  scheduled_date: string;
+  duration_minutes: number | null;
+  status: string;
+};
+
+export type WeekTotals = {
+  /** Jobs assigned to me inside the current week (cancellations excluded). */
+  jobs: number;
+  bookedMinutes: number;
+  capacityMinutes: number;
+  /** Booked vs. available capacity, capped at 100%. */
+  pct: number;
+  completed: number;
+  inProgress: number;
+  upcoming: number;
+  /** Minutes of work already completed or running. */
+  workedMinutes: number;
+  avgDurationMinutes: number;
+  workingDays: number;
+  /** True when there is no room left in the week. */
+  isFull: boolean;
+  level: "light" | "balanced" | "busy" | "full";
+};
+
 /**
  * Per-day booked-vs-capacity load for the mechanic's current week (Mon..Sun).
  * Capacity comes from staff_schedules, load from scheduled appointment minutes.
  */
 export function useStaffWeekWorkload(userId: string | undefined) {
   const [days, setDays] = useState<WeekDayLoad[]>([]);
+  const [appointments, setAppointments] = useState<WeekAppt[]>([]);
   const [loading, setLoading] = useState(true);
   const tick = useAppointmentsRealtimeTick(!!userId);
 
   useEffect(() => {
     if (!userId || !UUID_RE.test(userId)) {
       setDays([]);
+      setAppointments([]);
       setLoading(false);
       return;
     }
@@ -70,6 +97,7 @@ export function useStaffWeekWorkload(userId: string | undefined) {
         (a: any) => a.status !== "canceled" && a.status !== "no_show",
       );
       const schedules = schRes.data ?? [];
+      setAppointments(appts as WeekAppt[]);
 
       setDays(
         dates.map((d) => {
@@ -105,7 +133,39 @@ export function useStaffWeekWorkload(userId: string | undefined) {
     };
   }, [userId, tick]);
 
-  return { days, loading };
+  const totals: WeekTotals = (() => {
+    const bookedMinutes = days.reduce((s, d) => s + d.bookedMinutes, 0);
+    const capacityMinutes = days.reduce((s, d) => s + d.capacityMinutes, 0);
+    const pct =
+      capacityMinutes > 0 ? Math.min(100, Math.round((bookedMinutes / capacityMinutes) * 100)) : 0;
+    const completed = appointments.filter((a) => a.status === "completed").length;
+    const inProgress = appointments.filter((a) => a.status === "in_progress").length;
+    const upcoming = appointments.filter(
+      (a) => a.status === "pending" || a.status === "confirmed",
+    ).length;
+    const workedMinutes = appointments
+      .filter((a) => a.status === "completed" || a.status === "in_progress")
+      .reduce((s, a) => s + (a.duration_minutes ?? 0), 0);
+    const withDur = appointments.filter((a) => a.duration_minutes);
+    return {
+      jobs: appointments.length,
+      bookedMinutes,
+      capacityMinutes,
+      pct,
+      completed,
+      inProgress,
+      upcoming,
+      workedMinutes,
+      avgDurationMinutes: withDur.length
+        ? Math.round(withDur.reduce((s, a) => s + (a.duration_minutes ?? 0), 0) / withDur.length)
+        : 0,
+      workingDays: days.filter((d) => !d.isOff).length,
+      isFull: capacityMinutes > 0 && bookedMinutes >= capacityMinutes,
+      level: pct >= 95 ? "full" : pct > 80 ? "busy" : pct > 50 ? "balanced" : "light",
+    };
+  })();
+
+  return { days, appointments, totals, loading };
 }
 
 export default useStaffWeekWorkload;
