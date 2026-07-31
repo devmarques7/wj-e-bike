@@ -25,6 +25,20 @@ import { cn } from "@/lib/utils";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import type { AppointmentRow } from "@/hooks/scheduling/useSchedulingData";
+import { useBikeBriefing } from "@/hooks/workshop/useBikeBriefing";
+import BikeBriefingPanel from "./BikeBriefingPanel";
+import DeliveryChecklistPanel, { type DeliveryItem } from "./DeliveryChecklistPanel";
+
+const BRIEFING_ID = "__briefing__";
+const DELIVERY_ID = "__delivery__";
+
+const DEFAULT_DELIVERY_ITEMS: DeliveryItem[] = [
+  { id: "d_reported", label: "All reported points were reviewed with the customer", source: "default" },
+  { id: "d_brakes", label: "Brakes and safety check after the intervention", source: "default" },
+  { id: "d_battery", label: "Battery charged and drive unit tested", source: "default" },
+  { id: "d_torque", label: "Bolts torqued and test ride performed", source: "default" },
+  { id: "d_clean", label: "Bike cleaned and ready for handover", source: "default" },
+];
 
 interface Props {
   appointment: AppointmentRow | null;
@@ -82,6 +96,21 @@ export default function AppointmentCompletionDrawer({
   const [progress, setProgress] = useState<Record<string, StageProgress>>({});
   const [activeStageId, setActiveStageId] = useState<string | null>(null);
   const [tick, setTick] = useState(0);
+  const [briefingAck, setBriefingAck] = useState(false);
+  const [deliveryChecked, setDeliveryChecked] = useState<Record<string, boolean>>({});
+
+  const { briefing, loading: briefingLoading } = useBikeBriefing(appointment?.id, open);
+
+  const deliveryItems = useMemo<DeliveryItem[]>(() => {
+    const reported = (briefing?.reportedPoints ?? []).map((p, i) => ({
+      id: `r_${i}`,
+      label: `Reviewed: ${p}`,
+      source: "reported" as const,
+    }));
+    return [...reported, ...DEFAULT_DELIVERY_ITEMS];
+  }, [briefing]);
+
+  const allDeliveryChecked = deliveryItems.every((i) => deliveryChecked[i.id]);
 
   // ticker for live timer
   useEffect(() => {
