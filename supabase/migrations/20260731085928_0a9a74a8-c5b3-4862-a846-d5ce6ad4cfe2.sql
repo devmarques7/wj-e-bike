@@ -1,0 +1,1 @@
+DROP VIEW IF EXISTS public.plan_versions_public;
