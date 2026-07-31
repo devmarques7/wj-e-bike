@@ -1,4 +1,4 @@
-import { useRef, useState } from "react";
+import { useMemo, useRef, useState } from "react";
 import { motion, useMotionValue } from "framer-motion";
 import { useNavigate } from "react-router-dom";
 import { QrCode, CalendarPlus, Pause, Play, Plus } from "lucide-react";
@@ -38,11 +38,15 @@ export default function FleetMenu() {
     else start();
   };
 
-  const actions = [
-    { id: "scan", label: "Scan E-Pass", icon: <QrCode /> },
-    { id: "book", label: "New appointment", icon: <CalendarPlus /> },
-    { id: "shift", label: shiftLabel, icon: shiftRunning ? <Pause /> : <Play /> },
-  ];
+  // Memoised so unrelated re-renders never hand GooeyActions a fresh array.
+  const actions = useMemo(
+    () => [
+      { id: "scan", label: "Scan E-Pass", icon: <QrCode /> },
+      { id: "book", label: "New appointment", icon: <CalendarPlus /> },
+      { id: "shift", label: shiftLabel, icon: shiftRunning ? <Pause /> : <Play /> },
+    ],
+    [shiftLabel, shiftRunning],
+  );
 
   const onSelect = (id: string) => {
     if (id === "scan") setScanOpen(true);
