@@ -152,6 +152,9 @@ interface AppointmentsTableCardProps {
   includeRequests?: boolean;
   /** Scope every row to a single bike (customer garage view). */
   bikeId?: string | null;
+  /** Inclusive period window; rows outside it are hidden (open jobs stay). */
+  rangeFrom?: string;
+  rangeTo?: string;
   /** Optional extra classes for the card root. */
   className?: string;
 }
@@ -168,6 +171,8 @@ export default function AppointmentsTableCard({
   customerUserId,
   includeRequests = false,
   bikeId,
+  rangeFrom,
+  rangeTo,
   className,
 }: AppointmentsTableCardProps) {
   const { t, i18n } = useTranslation();
@@ -200,7 +205,7 @@ export default function AppointmentsTableCard({
     cancelAppointment,
     deleteAppointment,
     refetch,
-  } = useSchedulingData({ customerUserId, bikeId });
+  } = useSchedulingData({ customerUserId, bikeId, rangeFrom, rangeTo });
 
   /* Global dispatch role: balances today's unassigned jobs automatically and
      lets a mechanic claim whatever could not be placed. */
@@ -312,8 +317,17 @@ export default function AppointmentsTableCard({
             ? a.assigned_mechanic_id === mineOnlyMechanicId || !a.assigned_mechanic_id
             : true,
         )
-        .filter((a) => (isCustomer ? true : isTodayScope(a))),
-    [appointments, requestRows, mineOnlyMechanicId, isCustomer],
+        .filter((a) => {
+          if (isCustomer) return true;
+          if (rangeFrom && rangeTo) {
+            const inRange = a.scheduled_date >= rangeFrom && a.scheduled_date <= rangeTo;
+            // Never lose running or late work, whatever the selected window is.
+            const bucket = taskBucket(a);
+            return inRange || bucket === "ongoing" || bucket === "overdue";
+          }
+          return isTodayScope(a);
+        }),
+    [appointments, requestRows, mineOnlyMechanicId, isCustomer, rangeFrom, rangeTo],
   );
 
   const counts = useMemo(() => {
