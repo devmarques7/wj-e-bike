@@ -170,7 +170,13 @@ export default function AppointmentCompletionDrawer({
   // Restore the per-appointment session state whenever a job is opened.
   useEffect(() => {
     if (!open || !appointment?.id) return;
-    const s = readQcSession(appointment.id);
+    const remote = ((appointment as any)?.qc_state ?? {}) as QcSession;
+    const local = readQcSession(appointment.id);
+    const s: QcSession = {
+      ack: remote.ack ?? local.ack,
+      assessDone: remote.assessDone ?? local.assessDone,
+      delivery: { ...(local.delivery ?? {}), ...(remote.delivery ?? {}) },
+    };
     setAssessDone(!!s.assessDone);
     setAssessOpen(false);
     setBriefingAck(!!s.ack || !!(appointment as any)?.work_started_at);
@@ -180,11 +186,17 @@ export default function AppointmentCompletionDrawer({
   // Persist checklist + gates in session storage.
   useEffect(() => {
     if (!open || !appointment?.id) return;
-    writeQcSession(appointment.id, {
+    const state: QcSession = {
       ack: briefingAck,
       delivery: deliveryChecked,
       assessDone,
-    });
+    };
+    writeQcSession(appointment.id, state);
+    const id = appointment.id;
+    const timer = setTimeout(() => {
+      void persistQcState(id, state);
+    }, 600);
+    return () => clearTimeout(timer);
   }, [open, appointment?.id, briefingAck, deliveryChecked, assessDone]);
 
   // Global appointment start (drives the live cumulative timer)
