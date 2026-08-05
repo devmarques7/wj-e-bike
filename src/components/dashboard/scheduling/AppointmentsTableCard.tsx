@@ -534,8 +534,12 @@ export default function AppointmentsTableCard({
                       ? t("workshop.cols.countdown", "Days left")
                       : t("workshop.cols.mechanic")}
                   </TableHead>
+                  {!isCustomer && (
+                    <TableHead className="text-muted-foreground text-[10px] uppercase tracking-wider font-medium w-[90px]">
+                      {t("workshop.cols.late", { defaultValue: "Late" })}
+                    </TableHead>
+                  )}
                   <TableHead className="text-muted-foreground text-[10px] uppercase tracking-wider font-medium">{t("workshop.cols.status")}</TableHead>
-                  {false && <TableHead />}
                   <TableHead className="text-muted-foreground text-[10px] uppercase tracking-wider font-medium text-right w-[80px]">
                     {t("workshop.cols.actions")}
                   </TableHead>
