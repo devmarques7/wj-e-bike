@@ -772,6 +772,20 @@ export default function AppointmentsTableCard({
                               </span>
                             )}
                           </TableCell>
+                          {!isCustomer && (
+                            <TableCell className="align-middle text-xs">
+                              {(() => {
+                                const late = lateFor(apt);
+                                if (!late)
+                                  return <span className="text-muted-foreground/40">—</span>;
+                                return (
+                                  <span className="tabular-nums font-medium text-orange-500">
+                                    {late} {t("workshop.cols.late_suffix", { defaultValue: "late" })}
+                                  </span>
+                                );
+                              })()}
+                            </TableCell>
+                          )}
                           <TableCell className="align-middle">
                             <TooltipProvider delayDuration={150}>
                               <Tooltip>
