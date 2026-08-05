@@ -46,10 +46,15 @@ const EMPTY: StaffStats = {
  * logged-in mechanic via `assigned_mechanic_id` / `user_id` and refresh on
  * focus + every 60s.
  */
-export function useStaffOverviewStats(userId: string | undefined) {
+export function useStaffOverviewStats(
+  userId: string | undefined,
+  range?: { from: string; to: string },
+) {
   const [stats, setStats] = useState<StaffStats>(EMPTY);
   // Any appointment change anywhere refreshes the mechanic's KPIs instantly.
   const tick = useAppointmentsRealtimeTick(!!userId);
+  const rangeFrom = range?.from;
+  const rangeTo = range?.to;
 
   useEffect(() => {
     if (!userId || !UUID_RE.test(userId)) {
@@ -66,6 +71,21 @@ export function useStaffOverviewStats(userId: string | undefined) {
       yesterday.setDate(yesterday.getDate() - 1);
       const yStr = ymd(yesterday);
 
+      /* KPI scope = the selected dashboard period (defaults to today). */
+      const scopeFrom = rangeFrom ?? todayStr;
+      const scopeTo = rangeTo ?? todayStr;
+      /* Comparison window of the same length, immediately before the scope. */
+      const spanDays =
+        Math.round(
+          (new Date(`${scopeTo}T00:00:00`).getTime() -
+            new Date(`${scopeFrom}T00:00:00`).getTime()) /
+            86_400_000,
+        ) + 1;
+      const prevTo = new Date(`${scopeFrom}T00:00:00`);
+      prevTo.setDate(prevTo.getDate() - 1);
+      const prevFrom = new Date(prevTo);
+      prevFrom.setDate(prevTo.getDate() - (spanDays - 1));
+
       // ISO week (Mon..Sun)
       const dow = (today.getDay() + 6) % 7; // 0 = Monday
       const weekStart = new Date(today);
@@ -77,14 +97,16 @@ export function useStaffOverviewStats(userId: string | undefined) {
         await Promise.all([
           supabase
             .from("appointments")
-            .select("id, status, duration_minutes")
+            .select("id, status, duration_minutes, scheduled_date, scheduled_start_time")
             .eq("assigned_mechanic_id", userId)
-            .eq("scheduled_date", todayStr),
+            .gte("scheduled_date", scopeFrom)
+            .lte("scheduled_date", scopeTo),
           supabase
             .from("appointments")
             .select("id, status")
             .eq("assigned_mechanic_id", userId)
-            .eq("scheduled_date", yStr)
+            .gte("scheduled_date", ymd(prevFrom))
+            .lte("scheduled_date", ymd(prevTo))
             .eq("status", "completed"),
           supabase
             .from("appointments")
@@ -98,6 +120,8 @@ export function useStaffOverviewStats(userId: string | undefined) {
             .eq("assigned_mechanic_id", userId)
             .eq("status", "completed")
             .not("actual_duration_minutes", "is", null)
+            .gte("scheduled_date", scopeFrom)
+            .lte("scheduled_date", scopeTo)
             .order("work_ended_at", { ascending: false })
             .limit(20),
           supabase
@@ -133,7 +157,7 @@ export function useStaffOverviewStats(userId: string | undefined) {
         ? Math.round(durations.reduce((s, n) => s + n, 0) / durations.length)
         : null;
       // Target = average planned duration_minutes across this week's appointments (fallback 60)
-      const planned = (weekAppts.data ?? [])
+      const planned = (todays.length ? todays : (weekAppts.data ?? []))
         .map((a: any) => a.duration_minutes as number)
         .filter((n) => typeof n === "number" && n > 0);
       const avgServiceTargetMinutes = planned.length
@@ -172,12 +196,16 @@ export function useStaffOverviewStats(userId: string | undefined) {
       const todayWindowMin = todaySch
         ? Math.max(0, parseHM(todaySch.end_time) - parseHM(todaySch.start_time))
         : 0;
+      const scopeDays = Math.max(1, spanDays);
       const todayBookedMin = todays
         .filter((a: any) => a.status !== "canceled" && a.status !== "no_show")
         .reduce((s: number, a: any) => s + (a.duration_minutes ?? 0), 0);
       const currentLoadPct =
         todayWindowMin > 0
-          ? Math.min(100, Math.round((todayBookedMin / todayWindowMin) * 100))
+          ? Math.min(
+              100,
+              Math.round((todayBookedMin / (todayWindowMin * scopeDays)) * 100),
+            )
           : totalToday > 0
           ? Math.min(100, totalToday * 20)
           : 0;
@@ -207,7 +235,7 @@ export function useStaffOverviewStats(userId: string | undefined) {
       clearInterval(interval);
       window.removeEventListener("focus", onFocus);
     };
-  }, [userId, tick]);
+  }, [userId, tick, rangeFrom, rangeTo]);
 
   return stats;
 }

@@ -130,8 +130,17 @@ function pickLatestPerDay(rows: BusinessHour[]): BusinessHour[] {
 /* Hook                                                               */
 /* ------------------------------------------------------------------ */
 
-export function useSchedulingData(opts?: { date?: string; customerUserId?: string; bikeId?: string | null }) {
+export function useSchedulingData(opts?: {
+  date?: string;
+  customerUserId?: string;
+  bikeId?: string | null;
+  /** Inclusive date window (overrides `date`) for period-filtered dashboards. */
+  rangeFrom?: string;
+  rangeTo?: string;
+}) {
   const date = opts?.date ?? todayISO();
+  const rangeFrom = opts?.rangeFrom ?? null;
+  const rangeTo = opts?.rangeTo ?? null;
   const customerUserId = opts?.customerUserId ?? null;
   const bikeId = opts?.bikeId ?? null;
 
@@ -224,18 +233,31 @@ export function useSchedulingData(opts?: { date?: string; customerUserId?: strin
          * must keep showing on Monday — as "ongoing" if it is in progress, or
          * as "overdue" if it was never started.
          */
-        const isToday = date === todayISO();
-        const from = new Date(`${date}T00:00:00`);
-        from.setDate(from.getDate() - 30);
-        const fromKey = localYmd(from);
-        apptQuery = isToday
-          ? apptQuery.or(
-              [
-                `scheduled_date.eq.${date}`,
-                `and(scheduled_date.lt.${date},scheduled_date.gte.${fromKey},status.in.(pending,confirmed,in_progress,rescheduled))`,
-              ].join(","),
-            )
-          : apptQuery.eq("scheduled_date", date);
+        if (rangeFrom && rangeTo) {
+          /* Period window + every still-open job from the last 30 days, so a
+             late/in-progress task is never lost from the board. */
+          const carryFrom = new Date(`${rangeFrom}T00:00:00`);
+          carryFrom.setDate(carryFrom.getDate() - 30);
+          apptQuery = apptQuery.or(
+            [
+              `and(scheduled_date.gte.${rangeFrom},scheduled_date.lte.${rangeTo})`,
+              `and(scheduled_date.lt.${todayISO()},scheduled_date.gte.${localYmd(carryFrom)},status.in.(pending,confirmed,in_progress,rescheduled))`,
+            ].join(","),
+          );
+        } else {
+          const isToday = date === todayISO();
+          const from = new Date(`${date}T00:00:00`);
+          from.setDate(from.getDate() - 30);
+          const fromKey = localYmd(from);
+          apptQuery = isToday
+            ? apptQuery.or(
+                [
+                  `scheduled_date.eq.${date}`,
+                  `and(scheduled_date.lt.${date},scheduled_date.gte.${fromKey},status.in.(pending,confirmed,in_progress,rescheduled))`,
+                ].join(","),
+              )
+            : apptQuery.eq("scheduled_date", date);
+        }
       }
       if (bikeId) apptQuery = apptQuery.eq("bike_id", bikeId);
       const { data: appts, error: aerr } = await apptQuery;
@@ -333,7 +355,7 @@ export function useSchedulingData(opts?: { date?: string; customerUserId?: strin
     } finally {
       setLoading(false);
     }
-  }, [date, customerUserId, bikeId]);
+  }, [date, customerUserId, bikeId, rangeFrom, rangeTo]);
 
   useEffect(() => {
     fetchAll();

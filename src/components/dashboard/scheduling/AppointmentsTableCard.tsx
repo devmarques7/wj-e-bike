@@ -51,6 +51,7 @@ import {
   isTodayScope,
   matchesFilter,
   taskBucket,
+  taskEndsAt,
   type TaskFilter,
 } from "@/lib/scheduling/taskPriority";
 import { statusMeta } from "@/lib/scheduling/statusModel";
@@ -113,6 +114,20 @@ const dayDelta = (dateStr: string) => {
   return Math.round((target.getTime() - today.getTime()) / 86_400_000);
 };
 
+/** Human readable lateness ("2h 15m late") for open tasks past their window. */
+const lateFor = (a: ApptRow): string | null => {
+  const open = !["completed", "canceled", "no_show"].includes(a.status);
+  if (!open) return null;
+  const diffMin = Math.floor((Date.now() - taskEndsAt(a).getTime()) / 60000);
+  if (diffMin <= 0) return null;
+  const days = Math.floor(diffMin / 1440);
+  const hours = Math.floor((diffMin % 1440) / 60);
+  const mins = diffMin % 60;
+  if (days > 0) return `${days}d ${hours}h`;
+  if (hours > 0) return `${hours}h ${mins}m`;
+  return `${mins}m`;
+};
+
 /** Status dot colour per global filter bucket. */
 const FILTER_DOT: Record<TaskFilter, string> = {
   pending: "bg-amber-400",
@@ -137,6 +152,9 @@ interface AppointmentsTableCardProps {
   includeRequests?: boolean;
   /** Scope every row to a single bike (customer garage view). */
   bikeId?: string | null;
+  /** Inclusive period window; rows outside it are hidden (open jobs stay). */
+  rangeFrom?: string;
+  rangeTo?: string;
   /** Optional extra classes for the card root. */
   className?: string;
 }
@@ -153,6 +171,8 @@ export default function AppointmentsTableCard({
   customerUserId,
   includeRequests = false,
   bikeId,
+  rangeFrom,
+  rangeTo,
   className,
 }: AppointmentsTableCardProps) {
   const { t, i18n } = useTranslation();
@@ -185,7 +205,7 @@ export default function AppointmentsTableCard({
     cancelAppointment,
     deleteAppointment,
     refetch,
-  } = useSchedulingData({ customerUserId, bikeId });
+  } = useSchedulingData({ customerUserId, bikeId, rangeFrom, rangeTo });
 
   /* Global dispatch role: balances today's unassigned jobs automatically and
      lets a mechanic claim whatever could not be placed. */
@@ -297,8 +317,17 @@ export default function AppointmentsTableCard({
             ? a.assigned_mechanic_id === mineOnlyMechanicId || !a.assigned_mechanic_id
             : true,
         )
-        .filter((a) => (isCustomer ? true : isTodayScope(a))),
-    [appointments, requestRows, mineOnlyMechanicId, isCustomer],
+        .filter((a) => {
+          if (isCustomer) return true;
+          if (rangeFrom && rangeTo) {
+            const inRange = a.scheduled_date >= rangeFrom && a.scheduled_date <= rangeTo;
+            // Never lose running or late work, whatever the selected window is.
+            const bucket = taskBucket(a);
+            return inRange || bucket === "ongoing" || bucket === "overdue";
+          }
+          return isTodayScope(a);
+        }),
+    [appointments, requestRows, mineOnlyMechanicId, isCustomer, rangeFrom, rangeTo],
   );
 
   const counts = useMemo(() => {
@@ -330,7 +359,7 @@ export default function AppointmentsTableCard({
   }, [totalPages]);
   useEffect(() => {
     setPage(0);
-  }, [statusFilter, groupBy, sortAsc, sortMode]);
+  }, [statusFilter, groupBy, sortAsc, sortMode, rangeFrom, rangeTo]);
   const pagedRows = useMemo(
     () => filteredSorted.slice(page * PAGE_SIZE, page * PAGE_SIZE + PAGE_SIZE),
     [filteredSorted, page],
@@ -505,6 +534,11 @@ export default function AppointmentsTableCard({
                       ? t("workshop.cols.countdown", "Days left")
                       : t("workshop.cols.mechanic")}
                   </TableHead>
+                  {!isCustomer && (
+                    <TableHead className="text-muted-foreground text-[10px] uppercase tracking-wider font-medium w-[90px]">
+                      {t("workshop.cols.late", { defaultValue: "Late" })}
+                    </TableHead>
+                  )}
                   <TableHead className="text-muted-foreground text-[10px] uppercase tracking-wider font-medium">{t("workshop.cols.status")}</TableHead>
                   <TableHead className="text-muted-foreground text-[10px] uppercase tracking-wider font-medium text-right w-[80px]">
                     {t("workshop.cols.actions")}
@@ -519,7 +553,7 @@ export default function AppointmentsTableCard({
                         className="border-border/30 bg-muted/20 hover:bg-muted/30 cursor-pointer"
                         onClick={() => toggleGroup(group.key)}
                       >
-                        <TableCell colSpan={7} className="py-2">
+                        <TableCell colSpan={isCustomer ? 7 : 8} className="py-2">
                           <div className="flex items-center gap-2 text-xs">
                             {collapsedGroups[group.key] ? (
                               <ChevronRight className="h-3.5 w-3.5 text-muted-foreground" />
@@ -743,6 +777,20 @@ export default function AppointmentsTableCard({
                               </span>
                             )}
                           </TableCell>
+                          {!isCustomer && (
+                            <TableCell className="align-middle text-xs">
+                              {(() => {
+                                const late = lateFor(apt);
+                                if (!late)
+                                  return <span className="text-muted-foreground/40">—</span>;
+                                return (
+                                  <span className="tabular-nums font-medium text-orange-500">
+                                    {late} {t("workshop.cols.late_suffix", { defaultValue: "late" })}
+                                  </span>
+                                );
+                              })()}
+                            </TableCell>
+                          )}
                           <TableCell className="align-middle">
                             <TooltipProvider delayDuration={150}>
                               <Tooltip>
