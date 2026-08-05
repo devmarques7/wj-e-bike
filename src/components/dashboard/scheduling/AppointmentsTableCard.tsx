@@ -51,6 +51,7 @@ import {
   isTodayScope,
   matchesFilter,
   taskBucket,
+  taskEndsAt,
   type TaskFilter,
 } from "@/lib/scheduling/taskPriority";
 import { statusMeta } from "@/lib/scheduling/statusModel";
@@ -111,6 +112,20 @@ const dayDelta = (dateStr: string) => {
   today.setHours(0, 0, 0, 0);
   const target = new Date(`${dateStr}T00:00:00`);
   return Math.round((target.getTime() - today.getTime()) / 86_400_000);
+};
+
+/** Human readable lateness ("2h 15m late") for open tasks past their window. */
+const lateFor = (a: ApptRow): string | null => {
+  const open = !["completed", "canceled", "no_show"].includes(a.status);
+  if (!open) return null;
+  const diffMin = Math.floor((Date.now() - taskEndsAt(a).getTime()) / 60000);
+  if (diffMin <= 0) return null;
+  const days = Math.floor(diffMin / 1440);
+  const hours = Math.floor((diffMin % 1440) / 60);
+  const mins = diffMin % 60;
+  if (days > 0) return `${days}d ${hours}h`;
+  if (hours > 0) return `${hours}h ${mins}m`;
+  return `${mins}m`;
 };
 
 /** Status dot colour per global filter bucket. */
