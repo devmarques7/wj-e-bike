@@ -35,6 +35,8 @@ import { awardAppointmentPoints } from "@/lib/rewards/rewards";
 
 const BRIEFING_ID = "__briefing__";
 const DELIVERY_ID = "__delivery__";
+/** Synthetic task id used to persist the "photo taken" flag of a stage. */
+const PHOTO_KEY = "__photo__";
 
 /* Session persistence: once a mechanic starts the control or checks delivery
    items, that state survives closing/re-opening the drawer in the same tab. */
