@@ -35,6 +35,8 @@ import { awardAppointmentPoints } from "@/lib/rewards/rewards";
 
 const BRIEFING_ID = "__briefing__";
 const DELIVERY_ID = "__delivery__";
+/** Synthetic task id used to persist the "photo taken" flag of a stage. */
+const PHOTO_KEY = "__photo__";
 
 /* Session persistence: once a mechanic starts the control or checks delivery
    items, that state survives closing/re-opening the drawer in the same tab. */
@@ -60,6 +62,12 @@ function writeQcSession(id: string | null | undefined, patch: QcSession) {
   } catch {
     /* ignore */
   }
+}
+
+/** Durable mirror of the QC session gates on the appointment row. */
+async function persistQcState(id: string | null | undefined, state: QcSession) {
+  if (!id) return;
+  await supabase.from("appointments").update({ qc_state: state } as any).eq("id", id);
 }
 
 const DEFAULT_DELIVERY_ITEMS: DeliveryItem[] = [
@@ -164,7 +172,13 @@ export default function AppointmentCompletionDrawer({
   // Restore the per-appointment session state whenever a job is opened.
   useEffect(() => {
     if (!open || !appointment?.id) return;
-    const s = readQcSession(appointment.id);
+    const remote = ((appointment as any)?.qc_state ?? {}) as QcSession;
+    const local = readQcSession(appointment.id);
+    const s: QcSession = {
+      ack: remote.ack ?? local.ack,
+      assessDone: remote.assessDone ?? local.assessDone,
+      delivery: { ...(local.delivery ?? {}), ...(remote.delivery ?? {}) },
+    };
     setAssessDone(!!s.assessDone);
     setAssessOpen(false);
     setBriefingAck(!!s.ack || !!(appointment as any)?.work_started_at);
@@ -174,11 +188,17 @@ export default function AppointmentCompletionDrawer({
   // Persist checklist + gates in session storage.
   useEffect(() => {
     if (!open || !appointment?.id) return;
-    writeQcSession(appointment.id, {
+    const state: QcSession = {
       ack: briefingAck,
       delivery: deliveryChecked,
       assessDone,
-    });
+    };
+    writeQcSession(appointment.id, state);
+    const id = appointment.id;
+    const timer = setTimeout(() => {
+      void persistQcState(id, state);
+    }, 600);
+    return () => clearTimeout(timer);
   }, [open, appointment?.id, briefingAck, deliveryChecked, assessDone]);
 
   // Global appointment start (drives the live cumulative timer)
@@ -271,24 +291,25 @@ export default function AppointmentCompletionDrawer({
       st.forEach((s) => {
         const row = (prRes.data ?? []).find((p: any) => p.stage_id === s.id);
         const tr = (row?.task_results ?? []) as Array<{ task_id: string; done: boolean }>;
+        const photoRow = tr.find((t) => t.task_id === PHOTO_KEY);
         map[s.id] = {
           started_at: row?.started_at ? new Date(row.started_at).getTime() : null,
           completed_at: row?.completed_at ? new Date(row.completed_at).getTime() : null,
           duration_seconds: row?.duration_seconds ?? null,
           elapsed_from_start_seconds: (row as any)?.elapsed_from_start_seconds ?? null,
-          task_done: Object.fromEntries(tr.map((t) => [t.task_id, !!t.done])),
-          has_photo: !s.requires_photo
-            ? true
-            : Array.isArray(row?.task_results)
-              ? !!(row as any)?.notes || tr.length > 0 // heuristic — UI marks via toggle below
-              : false,
+          task_done: Object.fromEntries(
+            tr.filter((t) => t.task_id !== PHOTO_KEY).map((t) => [t.task_id, !!t.done]),
+          ),
+          has_photo: !s.requires_photo ? true : !!photoRow?.done || !!row?.completed_at,
         };
       });
       setProgress(map);
 
       // stage 0 is the briefing — skip it when it was already acknowledged
       const acked =
-        !!readQcSession(appointment.id).ack || !!(appointment as any)?.work_started_at;
+        !!((appointment as any)?.qc_state?.ack) ||
+        !!readQcSession(appointment.id).ack ||
+        !!(appointment as any)?.work_started_at;
       if (acked) {
         const first = st.find((s) => !map[s.id]?.completed_at) ?? st[0];
         setActiveStageId(first?.id ?? DELIVERY_ID);
@@ -391,9 +412,10 @@ export default function AppointmentCompletionDrawer({
     return requiredTasksDone && photoOk;
   }, [activeStage, activeProgress, activeTasks]);
 
-  const persistStage = async (stage: Stage, prog: StageProgress) => {
+  const persistStage = async (stage: Stage, prog: StageProgress, silent = false) => {
     if (!appointment) return false;
     const tr = Object.entries(prog.task_done).map(([task_id, done]) => ({ task_id, done }));
+    if (stage.requires_photo) tr.push({ task_id: PHOTO_KEY, done: prog.has_photo });
     const payload = {
       appointment_id: appointment.id,
       stage_id: stage.id,
@@ -410,11 +432,26 @@ export default function AppointmentCompletionDrawer({
       .from("appointment_qc_progress")
       .upsert(payload, { onConflict: "appointment_id,stage_id" });
     if (error) {
-      toast.error(error.message);
+      if (!silent) toast.error(error.message);
       return false;
     }
     return true;
   };
+
+  /* Autosave the in-flight stage: every tick/photo the mechanic marks is
+     written to `appointment_qc_progress`, so a paused or reopened job resumes
+     exactly where it stopped instead of being re-done from scratch. */
+  useEffect(() => {
+    if (!open || !appointment?.id || !activeStage || !activeProgress) return;
+    if (activeProgress.completed_at) return;
+    const stage = activeStage;
+    const prog = activeProgress;
+    const timer = setTimeout(() => {
+      void persistStage(stage, prog, true);
+    }, 700);
+    return () => clearTimeout(timer);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [open, appointment?.id, activeStage?.id, activeProgress]);
 
   const completeActiveStage = async () => {
     if (!activeStage || !activeProgress || !canCompleteActive) return;

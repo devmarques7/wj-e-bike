@@ -240,6 +240,7 @@ export type Database = {
           notes: string | null
           priority: string
           priority_score: number
+          qc_state: Json
           reminder_24h_sent_at: string | null
           reschedule_count: number
           reschedule_of: string | null
@@ -253,6 +254,9 @@ export type Database = {
           updated_at: string
           user_id: string
           work_ended_at: string | null
+          work_paused_at: string | null
+          work_paused_seconds: number
+          work_resumed_at: string | null
           work_started_at: string | null
         }
         Insert: {
@@ -270,6 +274,7 @@ export type Database = {
           notes?: string | null
           priority?: string
           priority_score?: number
+          qc_state?: Json
           reminder_24h_sent_at?: string | null
           reschedule_count?: number
           reschedule_of?: string | null
@@ -283,6 +288,9 @@ export type Database = {
           updated_at?: string
           user_id: string
           work_ended_at?: string | null
+          work_paused_at?: string | null
+          work_paused_seconds?: number
+          work_resumed_at?: string | null
           work_started_at?: string | null
         }
         Update: {
@@ -300,6 +308,7 @@ export type Database = {
           notes?: string | null
           priority?: string
           priority_score?: number
+          qc_state?: Json
           reminder_24h_sent_at?: string | null
           reschedule_count?: number
           reschedule_of?: string | null
@@ -313,6 +322,9 @@ export type Database = {
           updated_at?: string
           user_id?: string
           work_ended_at?: string | null
+          work_paused_at?: string | null
+          work_paused_seconds?: number
+          work_resumed_at?: string | null
           work_started_at?: string | null
         }
         Relationships: [
@@ -2676,6 +2688,7 @@ export type Database = {
           notes: string | null
           priority: string
           priority_score: number
+          qc_state: Json
           reminder_24h_sent_at: string | null
           reschedule_count: number
           reschedule_of: string | null
@@ -2689,6 +2702,9 @@ export type Database = {
           updated_at: string
           user_id: string
           work_ended_at: string | null
+          work_paused_at: string | null
+          work_paused_seconds: number
+          work_resumed_at: string | null
           work_started_at: string | null
         }
         SetofOptions: {

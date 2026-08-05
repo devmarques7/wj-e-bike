@@ -36,17 +36,32 @@ const setPausedAt = (v: number | null) => {
 async function runningAppointments(userId: string) {
   const { data } = await supabase
     .from("appointments")
-    .select("id, work_started_at")
+    .select("id, work_started_at, work_paused_seconds")
     .eq("assigned_mechanic_id", userId)
     .eq("status", "in_progress")
     .not("work_started_at", "is", null);
-  return (data ?? []) as { id: string; work_started_at: string }[];
+  return (data ?? []) as {
+    id: string;
+    work_started_at: string;
+    work_paused_seconds: number | null;
+  }[];
 }
 
 /** Freeze the timer of every job currently running for this mechanic. */
 export async function pauseWork(userId: string) {
   if (!userId || pausedAt) return;
-  setPausedAt(Date.now());
+  const at = Date.now();
+  setPausedAt(at);
+  // Persist the pause on every running job so it survives reloads/devices.
+  const rows = await runningAppointments(userId);
+  await Promise.all(
+    rows.map((r) =>
+      supabase
+        .from("appointments")
+        .update({ work_paused_at: new Date(at).toISOString() } as any)
+        .eq("id", r.id),
+    ),
+  );
 }
 
 /** Resume: shift `work_started_at` forward by the paused duration. */
@@ -55,15 +70,18 @@ export async function resumeWork(userId: string) {
   setPausedAt(null);
   if (!userId || !from) return;
   const delta = Math.max(0, Date.now() - from);
-  if (delta < 1000) return;
   const rows = await runningAppointments(userId);
+  const resumedAt = new Date().toISOString();
   await Promise.all(
     rows.map((r) =>
       supabase
         .from("appointments")
         .update({
           work_started_at: new Date(new Date(r.work_started_at).getTime() + delta).toISOString(),
-        })
+          work_paused_at: null,
+          work_resumed_at: resumedAt,
+          work_paused_seconds: (r.work_paused_seconds ?? 0) + Math.floor(delta / 1000),
+        } as any)
         .eq("id", r.id),
     ),
   );
