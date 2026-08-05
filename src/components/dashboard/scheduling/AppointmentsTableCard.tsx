@@ -535,6 +535,7 @@ export default function AppointmentsTableCard({
                       : t("workshop.cols.mechanic")}
                   </TableHead>
                   <TableHead className="text-muted-foreground text-[10px] uppercase tracking-wider font-medium">{t("workshop.cols.status")}</TableHead>
+                  {false && <TableHead />}
                   <TableHead className="text-muted-foreground text-[10px] uppercase tracking-wider font-medium text-right w-[80px]">
                     {t("workshop.cols.actions")}
                   </TableHead>
