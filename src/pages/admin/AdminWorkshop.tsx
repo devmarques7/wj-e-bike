@@ -310,9 +310,7 @@ export default function AdminWorkshop() {
           {/* Appointments Table - 8 columns */}
           <div className="col-span-12 lg:col-span-8">
             <div className="space-y-4">
-              {/* Requests awaiting approval — highlighted inbox */}
-              <PendingRequestsCard mechanics={mechanics} onChanged={refetch} />
-              {/* Same global table (statuses, filters, auto-assign) used by staff */}
+              {/* Unified table: appointments + approval requests (Requested tab) */}
               <AppointmentsTableCard includeRequests />
             </div>
           </div>
