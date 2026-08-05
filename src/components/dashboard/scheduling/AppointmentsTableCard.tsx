@@ -857,6 +857,7 @@ export default function AppointmentsTableCard({
                             </TableCell>
                           )}
                           <TableCell className="align-middle">
+                            <div className="flex items-center gap-1.5 flex-wrap">
                             <TooltipProvider delayDuration={150}>
                               <Tooltip>
                                 <TooltipTrigger asChild>
@@ -891,8 +892,51 @@ export default function AppointmentsTableCard({
                                 </TooltipContent>
                               </Tooltip>
                             </TooltipProvider>
+                            {apt.isRequest &&
+                              apt.requestStatus === "waiting" &&
+                              dayDelta(apt.scheduled_date) < 0 && (
+                                <Badge className="text-[9px] h-4 px-1.5 gap-1 bg-orange-500/15 text-orange-400 border-orange-500/30 font-normal">
+                                  <AlertTriangle className="h-2.5 w-2.5" />
+                                  {t("workshop.requests.overdue", { defaultValue: "Overdue" })}
+                                </Badge>
+                              )}
+                            </div>
                           </TableCell>
-                          {!effectiveReadOnly ? (
+                          {apt.isRequest && !effectiveReadOnly ? (
+                            <TableCell
+                              className="text-right align-middle"
+                              onClick={(e) => e.stopPropagation()}
+                            >
+                              {apt.requestStatus === "waiting" ? (
+                                <div className="flex items-center justify-end gap-1.5">
+                                  <Button
+                                    size="sm"
+                                    className="h-7 px-2 text-[10px] bg-wj-green hover:bg-wj-green/90 text-black gap-1"
+                                    disabled={busyRequest === apt.id}
+                                    onClick={() => void handleApproveRequest(apt)}
+                                  >
+                                    {busyRequest === apt.id ? (
+                                      <Loader2 className="h-3 w-3 animate-spin" />
+                                    ) : (
+                                      <CheckCircle2 className="h-3 w-3" />
+                                    )}
+                                    {t("workshop.requests.approve", { defaultValue: "Approve" })}
+                                  </Button>
+                                  <Button
+                                    size="icon"
+                                    variant="ghost"
+                                    className="h-7 w-7 text-muted-foreground hover:text-red-400"
+                                    disabled={busyRequest === apt.id}
+                                    onClick={() => void handleRejectRequest(apt)}
+                                  >
+                                    <X className="h-3.5 w-3.5" />
+                                  </Button>
+                                </div>
+                              ) : (
+                                <span className="text-muted-foreground/40 text-xs">—</span>
+                              )}
+                            </TableCell>
+                          ) : !effectiveReadOnly ? (
                             <TableCell
                               className="text-right align-middle"
                               onClick={(e) => e.stopPropagation()}
