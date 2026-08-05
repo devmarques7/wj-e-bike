@@ -13,6 +13,9 @@ import {
   Layers,
   UserPlus,
   Wand2,
+  CheckCircle2,
+  X,
+  AlertTriangle,
 } from "lucide-react";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { TableHeaderBar } from "@/components/ui/table-header-bar";
@@ -55,6 +58,7 @@ import {
   type TaskFilter,
 } from "@/lib/scheduling/taskPriority";
 import { statusMeta } from "@/lib/scheduling/statusModel";
+import { approveRequest, rejectRequest } from "@/lib/scheduling/requestApproval";
 import AppointmentActionsMenu from "@/components/dashboard/scheduling/AppointmentActionsMenu";
 import CustomerAppointmentActionsMenu from "@/components/dashboard/scheduling/CustomerAppointmentActionsMenu";
 import AppointmentCompletionDrawer from "@/components/dashboard/scheduling/AppointmentCompletionDrawer";
