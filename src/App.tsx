@@ -37,7 +37,11 @@ import EPassPage from "./pages/EPassPage";
 import Profile from "./pages/Profile";
 import Chat from "./pages/Chat";
 import NotFound from "./pages/NotFound";
+import ComingSoon from "./pages/ComingSoon";
 import GlobalBreadcrumbs from "@/components/GlobalBreadcrumbs";
+import { hasEarlyAccess } from "@/lib/earlyAccess";
+import { Navigate, useLocation } from "react-router-dom";
+import { ReactNode } from "react";
 
 // Admin Pages
 import AdminOverview from "./pages/admin/AdminOverview";
@@ -68,6 +72,14 @@ import FleetMenuGate from "./components/dashboard/FleetMenuGate";
 
 const queryClient = new QueryClient();
 
+/** Blocks the whole app behind the private-preview access code. */
+const EarlyAccessGate = ({ children }: { children: ReactNode }) => {
+  const location = useLocation();
+  if (location.pathname === "/coming-soon") return <>{children}</>;
+  if (!hasEarlyAccess()) return <Navigate to="/coming-soon" replace />;
+  return <>{children}</>;
+};
+
 const App = () => (
   <QueryClientProvider client={queryClient}>
     <ThemeProvider>
@@ -83,7 +95,9 @@ const App = () => (
             <SchedulingAvailabilityProvider>
             <GlobalBreadcrumbs />
             <FleetMenuGate />
+            <EarlyAccessGate>
             <Routes>
+              <Route path="/coming-soon" element={<ComingSoon />} />
               <Route path="/" element={<Index />} />
               <Route path="/gallery" element={<Gallery />} />
               <Route path="/product/:id" element={<ProductDetail />} />
@@ -146,6 +160,7 @@ const App = () => (
               {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
               <Route path="*" element={<NotFound />} />
             </Routes>
+            </EarlyAccessGate>
             </SchedulingAvailabilityProvider>
             </SelectedBikeProvider>
           </BrowserRouter>
