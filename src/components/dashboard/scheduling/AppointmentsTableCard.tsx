@@ -220,6 +220,9 @@ export default function AppointmentsTableCard({
 
   /* Scheduling requests (waitlist) — shown alongside real appointments. */
   const [requestRows, setRequestRows] = useState<ApptRow[]>([]);
+  /** Bumped after an approve/reject so the waitlist reloads. */
+  const [requestsVersion, setRequestsVersion] = useState(0);
+  const [busyRequest, setBusyRequest] = useState<string | null>(null);
   useEffect(() => {
     if (!includeRequests) {
       setRequestRows([]);
@@ -300,6 +303,8 @@ export default function AppointmentsTableCard({
           work_ended_at: null,
           isRequest: true,
           requestStatus: r.status,
+          subscription_id: r.subscription_id ?? null,
+          bike_id: r.bike_id ?? null,
           } as ApptRow;
         }),
       );
@@ -307,7 +312,57 @@ export default function AppointmentsTableCard({
     return () => {
       cancelled = true;
     };
-  }, [includeRequests, customerUserId, bikeId, appointments.length, serviceTypes]);
+  }, [includeRequests, customerUserId, bikeId, appointments.length, serviceTypes, requestsVersion]);
+
+  /** Approve a waitlist request straight from the table (auto-assign slot). */
+  const handleApproveRequest = async (apt: ApptRow) => {
+    setBusyRequest(apt.id);
+    try {
+      const res = await approveRequest({
+        id: apt.id,
+        user_id: apt.user_id,
+        service_type_id: apt.service_type_id ?? null,
+        subscription_id: (apt as any).subscription_id ?? null,
+        bike_id: (apt as any).bike_id ?? null,
+        preferred_date_from: apt.scheduled_date,
+        preferred_time_from: apt.scheduled_start_time,
+        status: "waiting",
+        created_at: apt.updated_at ?? new Date().toISOString(),
+        duration_minutes: apt.duration_minutes ?? null,
+      });
+      if (!res.ok) {
+        toast.error(res.error ?? t("workshop.requests.failed", { defaultValue: "Request failed" }));
+        return;
+      }
+      toast.success(
+        t("workshop.requests.approved", {
+          date: res.slot!.date,
+          time: res.slot!.start_time,
+          mechanic: res.slot!.mechanic_name ?? "—",
+          defaultValue: "Approved",
+        }),
+      );
+      setRequestsVersion((v) => v + 1);
+      refetch();
+    } finally {
+      setBusyRequest(null);
+    }
+  };
+
+  /** Reject a waitlist request. */
+  const handleRejectRequest = async (apt: ApptRow) => {
+    setBusyRequest(apt.id);
+    try {
+      await rejectRequest(apt.id);
+      toast.success(t("workshop.requests.rejected", { defaultValue: "Request rejected" }));
+      setRequestsVersion((v) => v + 1);
+      refetch();
+    } catch (err: any) {
+      toast.error(err?.message ?? t("workshop.requests.failed", { defaultValue: "Request failed" }));
+    } finally {
+      setBusyRequest(null);
+    }
+  };
 
   const activeAppointment =
     appointments.find((a) => a.status === "in_progress" && a.work_started_at) ?? null;
