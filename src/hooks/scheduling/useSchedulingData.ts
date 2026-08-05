@@ -218,7 +218,21 @@ export function useSchedulingData(opts?: { date?: string; customerUserId?: strin
       if (customerUserId) {
         apptQuery = apptQuery.eq("user_id", customerUserId);
       } else {
-        apptQuery = apptQuery.eq("scheduled_date", date);
+        /**
+         * Workshop scope: the selected day plus every still-open job from the
+         * previous days (carry-over). A job started on Friday and never closed
+         * must keep showing on Monday — as "ongoing" if it is in progress, or
+         * as "overdue" if it was never started.
+         */
+        const from = new Date(`${date}T00:00:00`);
+        from.setDate(from.getDate() - 30);
+        const fromKey = localYmd(from);
+        apptQuery = apptQuery.or(
+          [
+            `scheduled_date.eq.${date}`,
+            `and(scheduled_date.lt.${date},scheduled_date.gte.${fromKey},status.in.(pending,confirmed,in_progress,rescheduled))`,
+          ].join(","),
+        );
       }
       if (bikeId) apptQuery = apptQuery.eq("bike_id", bikeId);
       const { data: appts, error: aerr } = await apptQuery;
