@@ -94,7 +94,9 @@ const ProductDetail = () => {
       setIsScrolled(window.scrollY > 50);
       
       // Update active part based on scroll position - slower transitions
-      const scrollPercent = window.scrollY / (document.body.scrollHeight - window.innerHeight);
+      const scrollRange = document.body.scrollHeight - window.innerHeight;
+      const rawPercent = scrollRange > 0 ? window.scrollY / scrollRange : 0;
+      const scrollPercent = Number.isFinite(rawPercent) ? rawPercent : 0;
       // Reduced multiplier for slower image transitions (more scroll distance per image)
       const partIndex = Math.max(
         0,
@@ -197,8 +199,8 @@ const ProductDetail = () => {
                   className="absolute inset-0"
                 >
                   <img
-                    src={productParts[activePart].image}
-                    alt={productParts[activePart].title}
+                    src={(productParts[activePart] ?? productParts[0])?.image}
+                    alt={(productParts[activePart] ?? productParts[0])?.title}
                     className="w-full h-full object-cover"
                   />
                   {/* Gradient Overlay */}
