@@ -62,6 +62,12 @@ function writeQcSession(id: string | null | undefined, patch: QcSession) {
   }
 }
 
+/** Durable mirror of the QC session gates on the appointment row. */
+async function persistQcState(id: string | null | undefined, state: QcSession) {
+  if (!id) return;
+  await supabase.from("appointments").update({ qc_state: state } as any).eq("id", id);
+}
+
 const DEFAULT_DELIVERY_ITEMS: DeliveryItem[] = [
   { id: "d_reported", label: "All reported points were reviewed with the customer", source: "default" },
   { id: "d_brakes", label: "Brakes and safety check after the intervention", source: "default" },
