@@ -685,6 +685,14 @@ export default function StaffSchedule() {
       </div>
 
       {/* My working hours editor — scoped to current user only */}
+      <DayActivitiesDialog
+        open={!!dayLogDate}
+        onOpenChange={(v) => !v && setDayLogDate(null)}
+        date={dayLogDate ?? ""}
+        mechanicId={mineUserId || null}
+        locale={locale}
+      />
+
       {me && (
         <StaffScheduleDialog
           open={mySchedOpen}
