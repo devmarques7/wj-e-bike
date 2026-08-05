@@ -365,6 +365,12 @@ export default function AppointmentsTableCard({
     [filteredSorted, page],
   );
 
+  /** Only render the "Late" column when at least one visible row is truly late. */
+  const hasLateRows = useMemo(
+    () => pagedRows.some((a) => lateFor(a) !== null),
+    [pagedRows],
+  );
+
   const groupedAppointments = useMemo(() => {
     if (groupBy === "none") return [{ key: "all", label: "", items: pagedRows }];
     const map = new Map<string, { key: string; label: string; items: ApptRow[] }>();
@@ -534,7 +540,7 @@ export default function AppointmentsTableCard({
                       ? t("workshop.cols.countdown", "Days left")
                       : t("workshop.cols.mechanic")}
                   </TableHead>
-                  {!isCustomer && (
+                  {!isCustomer && hasLateRows && (
                     <TableHead className="text-muted-foreground text-[10px] uppercase tracking-wider font-medium w-[90px]">
                       {t("workshop.cols.late", { defaultValue: "Late" })}
                     </TableHead>
@@ -777,7 +783,7 @@ export default function AppointmentsTableCard({
                               </span>
                             )}
                           </TableCell>
-                          {!isCustomer && (
+                          {!isCustomer && hasLateRows && (
                             <TableCell className="align-middle text-xs">
                               {(() => {
                                 const late = lateFor(apt);
