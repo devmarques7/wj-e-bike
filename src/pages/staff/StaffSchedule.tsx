@@ -37,6 +37,7 @@ import { useSchedulingAvailability } from "@/contexts/SchedulingAvailabilityCont
 import { dateKey } from "@/lib/scheduling/availabilityGuard";
 import { localYmd } from "@/lib/scheduling/localDate";
 import TodayProgressList from "@/components/dashboard/staff/TodayProgressList";
+import DayActivitiesDialog from "@/components/dashboard/staff/DayActivitiesDialog";
 import { useStaffWeekWorkload } from "@/hooks/staff/useStaffWeekWorkload";
 
 const DAY_KEYS = ["sun", "mon", "tue", "wed", "thu", "fri", "sat"] as const;
@@ -70,6 +71,7 @@ export default function StaffSchedule() {
   const [heatMonth, setHeatMonth] = useState(new Date().getMonth());
   const [heatYear, setHeatYear] = useState(new Date().getFullYear());
   const [monthCounts, setMonthCounts] = useState<Record<string, number>>({});
+  const [dayLogDate, setDayLogDate] = useState<string | null>(null);
   const [weeklySchedule, setWeeklySchedule] = useState<
     { day_of_week: number; is_working: boolean; start_time: string | null; end_time: string | null }[]
   >([]);
@@ -82,6 +84,7 @@ export default function StaffSchedule() {
    */
   const handleDaySelect = async (date: Date) => {
     setSelectedDate(date);
+    setDayLogDate(localYmd(date));
     if (!user?.id) return;
     const key = dateKey(date);
     if (key < dateKey(new Date())) return;
@@ -682,6 +685,14 @@ export default function StaffSchedule() {
       </div>
 
       {/* My working hours editor — scoped to current user only */}
+      <DayActivitiesDialog
+        open={!!dayLogDate}
+        onOpenChange={(v) => !v && setDayLogDate(null)}
+        date={dayLogDate ?? ""}
+        mechanicId={mineUserId || null}
+        locale={locale}
+      />
+
       {me && (
         <StaffScheduleDialog
           open={mySchedOpen}
