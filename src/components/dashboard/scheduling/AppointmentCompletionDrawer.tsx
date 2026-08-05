@@ -291,17 +291,16 @@ export default function AppointmentCompletionDrawer({
       st.forEach((s) => {
         const row = (prRes.data ?? []).find((p: any) => p.stage_id === s.id);
         const tr = (row?.task_results ?? []) as Array<{ task_id: string; done: boolean }>;
+        const photoRow = tr.find((t) => t.task_id === PHOTO_KEY);
         map[s.id] = {
           started_at: row?.started_at ? new Date(row.started_at).getTime() : null,
           completed_at: row?.completed_at ? new Date(row.completed_at).getTime() : null,
           duration_seconds: row?.duration_seconds ?? null,
           elapsed_from_start_seconds: (row as any)?.elapsed_from_start_seconds ?? null,
-          task_done: Object.fromEntries(tr.map((t) => [t.task_id, !!t.done])),
-          has_photo: !s.requires_photo
-            ? true
-            : Array.isArray(row?.task_results)
-              ? !!(row as any)?.notes || tr.length > 0 // heuristic — UI marks via toggle below
-              : false,
+          task_done: Object.fromEntries(
+            tr.filter((t) => t.task_id !== PHOTO_KEY).map((t) => [t.task_id, !!t.done]),
+          ),
+          has_photo: !s.requires_photo ? true : !!photoRow?.done || !!row?.completed_at,
         };
       });
       setProgress(map);
