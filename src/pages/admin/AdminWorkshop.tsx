@@ -37,7 +37,6 @@ import QualityControlManagerDialog from "@/components/dashboard/scheduling/Quali
 import QualityControlPreviewCard from "@/components/dashboard/scheduling/QualityControlPreviewCard";
 import ServiceTypesManagerDialog from "@/components/dashboard/scheduling/ServiceTypesManagerDialog";
 import AppointmentsTableCard from "@/components/dashboard/scheduling/AppointmentsTableCard";
-import PendingRequestsCard from "@/components/dashboard/scheduling/PendingRequestsCard";
 import AppointmentActionsMenu from "@/components/dashboard/scheduling/AppointmentActionsMenu";
 import AppointmentCompletionDrawer from "@/components/dashboard/scheduling/AppointmentCompletionDrawer";
 import AppointmentReviewHistoryDialog from "@/components/dashboard/scheduling/AppointmentReviewHistoryDialog";
@@ -310,9 +309,7 @@ export default function AdminWorkshop() {
           {/* Appointments Table - 8 columns */}
           <div className="col-span-12 lg:col-span-8">
             <div className="space-y-4">
-              {/* Requests awaiting approval — highlighted inbox */}
-              <PendingRequestsCard mechanics={mechanics} onChanged={refetch} />
-              {/* Same global table (statuses, filters, auto-assign) used by staff */}
+              {/* Unified table: appointments + approval requests (Requested tab) */}
               <AppointmentsTableCard includeRequests />
             </div>
           </div>
