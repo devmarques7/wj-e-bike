@@ -359,7 +359,7 @@ export default function AppointmentsTableCard({
   }, [totalPages]);
   useEffect(() => {
     setPage(0);
-  }, [statusFilter, groupBy, sortAsc, sortMode]);
+  }, [statusFilter, groupBy, sortAsc, sortMode, rangeFrom, rangeTo]);
   const pagedRows = useMemo(
     () => filteredSorted.slice(page * PAGE_SIZE, page * PAGE_SIZE + PAGE_SIZE),
     [filteredSorted, page],
