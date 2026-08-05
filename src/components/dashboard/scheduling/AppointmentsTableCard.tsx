@@ -559,7 +559,7 @@ export default function AppointmentsTableCard({
                         className="border-border/30 bg-muted/20 hover:bg-muted/30 cursor-pointer"
                         onClick={() => toggleGroup(group.key)}
                       >
-                        <TableCell colSpan={isCustomer ? 7 : 8} className="py-2">
+                        <TableCell colSpan={isCustomer ? 7 : hasLateRows ? 8 : 7} className="py-2">
                           <div className="flex items-center gap-2 text-xs">
                             {collapsedGroups[group.key] ? (
                               <ChevronRight className="h-3.5 w-3.5 text-muted-foreground" />
