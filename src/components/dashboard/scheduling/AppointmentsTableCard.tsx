@@ -365,6 +365,12 @@ export default function AppointmentsTableCard({
     [filteredSorted, page],
   );
 
+  /** Only render the "Late" column when at least one visible row is truly late. */
+  const hasLateRows = useMemo(
+    () => pagedRows.some((a) => lateFor(a) !== null),
+    [pagedRows],
+  );
+
   const groupedAppointments = useMemo(() => {
     if (groupBy === "none") return [{ key: "all", label: "", items: pagedRows }];
     const map = new Map<string, { key: string; label: string; items: ApptRow[] }>();
@@ -534,7 +540,7 @@ export default function AppointmentsTableCard({
                       ? t("workshop.cols.countdown", "Days left")
                       : t("workshop.cols.mechanic")}
                   </TableHead>
-                  {!isCustomer && (
+                  {!isCustomer && hasLateRows && (
                     <TableHead className="text-muted-foreground text-[10px] uppercase tracking-wider font-medium w-[90px]">
                       {t("workshop.cols.late", { defaultValue: "Late" })}
                     </TableHead>
@@ -553,7 +559,7 @@ export default function AppointmentsTableCard({
                         className="border-border/30 bg-muted/20 hover:bg-muted/30 cursor-pointer"
                         onClick={() => toggleGroup(group.key)}
                       >
-                        <TableCell colSpan={isCustomer ? 7 : 8} className="py-2">
+                        <TableCell colSpan={isCustomer ? 7 : hasLateRows ? 8 : 7} className="py-2">
                           <div className="flex items-center gap-2 text-xs">
                             {collapsedGroups[group.key] ? (
                               <ChevronRight className="h-3.5 w-3.5 text-muted-foreground" />
@@ -777,7 +783,7 @@ export default function AppointmentsTableCard({
                               </span>
                             )}
                           </TableCell>
-                          {!isCustomer && (
+                          {!isCustomer && hasLateRows && (
                             <TableCell className="align-middle text-xs">
                               {(() => {
                                 const late = lateFor(apt);
