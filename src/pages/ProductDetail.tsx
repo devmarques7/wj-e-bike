@@ -199,8 +199,8 @@ const ProductDetail = () => {
                   className="absolute inset-0"
                 >
                   <img
-                    src={productParts[activePart].image}
-                    alt={productParts[activePart].title}
+                    src={(productParts[activePart] ?? productParts[0])?.image}
+                    alt={(productParts[activePart] ?? productParts[0])?.title}
                     className="w-full h-full object-cover"
                   />
                   {/* Gradient Overlay */}
