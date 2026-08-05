@@ -1,6 +1,6 @@
 import { motion } from "framer-motion";
 import { Link, useNavigate, useLocation } from "react-router-dom";
-import { ChevronLeft, Settings, LogOut, User } from "lucide-react";
+import { ChevronLeft, LogOut, User } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import {
   DropdownMenu,
@@ -132,12 +132,6 @@ export default function UnifiedDashboardHeader() {
                 <Link to="/profile" className="flex items-center gap-2">
                   <User className="h-4 w-4" />
                   Profile
-                </Link>
-              </DropdownMenuItem>
-              <DropdownMenuItem asChild>
-                <Link to={nav.settingsHref} className="flex items-center gap-2">
-                  <Settings className="h-4 w-4" />
-                  Settings
                 </Link>
               </DropdownMenuItem>
               <DropdownMenuSeparator />
