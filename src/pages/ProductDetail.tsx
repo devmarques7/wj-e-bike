@@ -94,7 +94,9 @@ const ProductDetail = () => {
       setIsScrolled(window.scrollY > 50);
       
       // Update active part based on scroll position - slower transitions
-      const scrollPercent = window.scrollY / (document.body.scrollHeight - window.innerHeight);
+      const scrollRange = document.body.scrollHeight - window.innerHeight;
+      const rawPercent = scrollRange > 0 ? window.scrollY / scrollRange : 0;
+      const scrollPercent = Number.isFinite(rawPercent) ? rawPercent : 0;
       // Reduced multiplier for slower image transitions (more scroll distance per image)
       const partIndex = Math.max(
         0,
