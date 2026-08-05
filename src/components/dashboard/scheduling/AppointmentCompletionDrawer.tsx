@@ -306,7 +306,9 @@ export default function AppointmentCompletionDrawer({
 
       // stage 0 is the briefing — skip it when it was already acknowledged
       const acked =
-        !!readQcSession(appointment.id).ack || !!(appointment as any)?.work_started_at;
+        !!((appointment as any)?.qc_state?.ack) ||
+        !!readQcSession(appointment.id).ack ||
+        !!(appointment as any)?.work_started_at;
       if (acked) {
         const first = st.find((s) => !map[s.id]?.completed_at) ?? st[0];
         setActiveStageId(first?.id ?? DELIVERY_ID);
@@ -433,6 +435,21 @@ export default function AppointmentCompletionDrawer({
     }
     return true;
   };
+
+  /* Autosave the in-flight stage: every tick/photo the mechanic marks is
+     written to `appointment_qc_progress`, so a paused or reopened job resumes
+     exactly where it stopped instead of being re-done from scratch. */
+  useEffect(() => {
+    if (!open || !appointment?.id || !activeStage || !activeProgress) return;
+    if (activeProgress.completed_at) return;
+    const stage = activeStage;
+    const prog = activeProgress;
+    const timer = setTimeout(() => {
+      void persistStage(stage, prog);
+    }, 700);
+    return () => clearTimeout(timer);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [open, appointment?.id, activeStage?.id, activeProgress]);
 
   const completeActiveStage = async () => {
     if (!activeStage || !activeProgress || !canCompleteActive) return;
