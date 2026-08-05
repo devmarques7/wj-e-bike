@@ -411,9 +411,10 @@ export default function AppointmentCompletionDrawer({
     return requiredTasksDone && photoOk;
   }, [activeStage, activeProgress, activeTasks]);
 
-  const persistStage = async (stage: Stage, prog: StageProgress) => {
+  const persistStage = async (stage: Stage, prog: StageProgress, silent = false) => {
     if (!appointment) return false;
     const tr = Object.entries(prog.task_done).map(([task_id, done]) => ({ task_id, done }));
+    if (stage.requires_photo) tr.push({ task_id: PHOTO_KEY, done: prog.has_photo });
     const payload = {
       appointment_id: appointment.id,
       stage_id: stage.id,
@@ -430,7 +431,7 @@ export default function AppointmentCompletionDrawer({
       .from("appointment_qc_progress")
       .upsert(payload, { onConflict: "appointment_id,stage_id" });
     if (error) {
-      toast.error(error.message);
+      if (!silent) toast.error(error.message);
       return false;
     }
     return true;
@@ -445,7 +446,7 @@ export default function AppointmentCompletionDrawer({
     const stage = activeStage;
     const prog = activeProgress;
     const timer = setTimeout(() => {
-      void persistStage(stage, prog);
+      void persistStage(stage, prog, true);
     }, 700);
     return () => clearTimeout(timer);
     // eslint-disable-next-line react-hooks/exhaustive-deps
