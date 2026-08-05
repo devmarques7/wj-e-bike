@@ -1,5 +1,13 @@
+import { useMemo, useState } from "react";
 import { motion } from "framer-motion";
 import { Wrench, Calendar, Star, Clock } from "lucide-react";
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import {
+  DASHBOARD_PERIODS,
+  periodRange,
+  periodLabel,
+  type DashboardPeriod,
+} from "@/lib/scheduling/dashboardPeriod";
 import RoleDashboardLayout from "@/components/dashboard/RoleDashboardLayout";
 import StaffKPICard from "@/components/dashboard/StaffKPICard";
 import KPICarousel from "@/components/dashboard/KPICarousel";
@@ -16,7 +24,9 @@ import { useStaffOverviewStats } from "@/hooks/staff/useStaffOverviewStats";
 
 export default function StaffOverview() {
   const { user, isAuthenticated, isLoading } = useAuth();
-  const stats = useStaffOverviewStats(user?.id);
+  const [period, setPeriod] = useState<DashboardPeriod>("today");
+  const range = useMemo(() => periodRange(period), [period]);
+  const stats = useStaffOverviewStats(user?.id, range);
   const { elapsedSec, status: shiftStatus } = useShift();
 
   if (isLoading) return null;
@@ -46,13 +56,13 @@ export default function StaffOverview() {
       value: String(stats.tasksCompletedToday),
       change:
         todayDelta === 0
-          ? "Same as yesterday"
-          : `${todayDelta > 0 ? "+" : ""}${todayDelta} vs yesterday`,
+          ? "Same as previous period"
+          : `${todayDelta > 0 ? "+" : ""}${todayDelta} vs previous`,
       trend: (todayDelta >= 0 ? "up" : "down") as "up" | "down" | "neutral",
       icon: Wrench,
     },
     {
-      label: "Appointments Today",
+      label: "Appointments",
       value: String(stats.appointmentsToday),
       change: `${stats.appointmentsRemaining} remaining`,
       trend: "neutral" as const,
@@ -110,9 +120,22 @@ export default function StaffOverview() {
             Welcome back, {user?.name?.split(" ")[0]}
           </h1>
           <p className="text-sm text-muted-foreground mt-1">
-            Here's your workshop overview for today
+            Workshop overview · {periodLabel(period)}
           </p>
         </motion.div>
+
+        {/* Period filter — drives every KPI, chart and table below */}
+        <div className="overflow-x-auto -mx-1 px-1">
+          <Tabs value={period} onValueChange={(v) => setPeriod(v as DashboardPeriod)}>
+            <TabsList className="bg-muted/40 h-9 w-max">
+              {DASHBOARD_PERIODS.map((p) => (
+                <TabsTrigger key={p.id} value={p.id} className="text-xs h-7 px-3 whitespace-nowrap">
+                  {p.label}
+                </TabsTrigger>
+              ))}
+            </TabsList>
+          </Tabs>
+        </div>
 
         {/* KPI Cards - carousel on mobile, grid on desktop */}
         <KPICarousel>
@@ -134,7 +157,11 @@ export default function StaffOverview() {
         {/* Row 2 — appointments table with shift + today's workload alongside */}
         <div className="grid grid-cols-12 gap-4 lg:gap-6 items-stretch">
           <div className="col-span-12 xl:col-span-8 order-2 xl:order-1 min-h-[500px] h-full flex">
-            <AppointmentsTableCard mineOnlyMechanicId={user?.id} />
+            <AppointmentsTableCard
+              mineOnlyMechanicId={user?.id}
+              rangeFrom={range.from}
+              rangeTo={range.to}
+            />
           </div>
           <div className="col-span-12 xl:col-span-4 order-1 xl:order-2 flex flex-col gap-4 lg:gap-6 h-full">
             <div className="min-h-[260px] flex-1">
